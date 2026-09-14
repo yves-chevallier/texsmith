@@ -28,7 +28,9 @@ def test_missing_asset_raises() -> None:
 
 def test_acronym_tracking() -> None:
     state = DocumentState()
-    key = state.remember_acronym("LASER", "Light Amplification by Stimulated Emission of Radiation")
+    key = state.remember_abbreviation(
+        "LASER", "Light Amplification by Stimulated Emission of Radiation"
+    )
     assert key
     assert "LASER" in state.acronym_keys
     assert state.acronym_keys["LASER"] == key
@@ -41,8 +43,8 @@ def test_acronym_tracking() -> None:
 def test_acronym_conflict_emits_diagnostic() -> None:
     state = DocumentState()
     emitter = LoggingEmitter()
-    key = state.remember_acronym("HTTP", "Hypertext Transfer Protocol", emitter=emitter)
-    duplicate_key = state.remember_acronym("HTTP", "Different", emitter=emitter)
+    key = state.remember_abbreviation("HTTP", "Hypertext Transfer Protocol", emitter=emitter)
+    duplicate_key = state.remember_abbreviation("HTTP", "Different", emitter=emitter)
     assert duplicate_key == key
     assert state.acronyms[key] == ("HTTP", "Hypertext Transfer Protocol")
     (recorded,) = emitter.sink
@@ -53,6 +55,6 @@ def test_acronym_conflict_emits_diagnostic() -> None:
 def test_acronym_conflict_stays_quiet_without_an_emitter() -> None:
     """No emitter reachable (the default): silent, not a crash."""
     state = DocumentState()
-    key = state.remember_acronym("HTTP", "Hypertext Transfer Protocol")
-    duplicate_key = state.remember_acronym("HTTP", "Different")
+    key = state.remember_abbreviation("HTTP", "Hypertext Transfer Protocol")
+    duplicate_key = state.remember_abbreviation("HTTP", "Different")
     assert duplicate_key == key

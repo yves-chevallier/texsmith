@@ -123,13 +123,8 @@ def compute_features(
     template_context: Mapping[str, Any] | None,
 ) -> EngineFeatures:
     """Derive engine feature flags from render metadata."""
-    has_index = bool(
-        getattr(document_state, "has_index_entries", False)
-        or getattr(document_state, "index_entries", [])
-    )
-    has_glossary = bool(
-        getattr(document_state, "acronyms", {}) or getattr(document_state, "glossary", {})
-    )
+    has_index = bool(getattr(document_state, "has_index_entries", False))
+    has_glossary = bool(getattr(document_state, "acronyms", {}))
 
     index_engine: str | None = None
     if template_context:

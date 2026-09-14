@@ -25,21 +25,21 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-_MISSING = object()
+MISSING = object()
 
 
 def lookup(path: Sequence[str], contexts: Sequence[Mapping[str, Any] | None]) -> Any:
-    """The value of the dotted ``path`` in the first context that defines it, else ``_MISSING``."""
+    """The value of the dotted ``path`` in the first context that defines it, else ``MISSING``."""
     for context in contexts:
         current: Any = context
         for part in path:
             if not isinstance(current, Mapping) or part not in current:
-                current = _MISSING
+                current = MISSING
                 break
             current = current[part]
-        if current is not _MISSING:
+        if current is not MISSING:
             return current
-    return _MISSING
+    return MISSING
 
 
 @spec("var")
@@ -53,7 +53,7 @@ def run(document: Document, ctx: PassContext) -> Document:
             return node
         moustache = "{{" + ".".join(node.path) + "}}"
         value = lookup(node.path, contexts)
-        if value is _MISSING or value is None or (isinstance(value, str) and not value.strip()):
+        if value is MISSING or value is None or (isinstance(value, str) and not value.strip()):
             ctx.diagnostics.emit(
                 "var-unresolved",
                 node.span,

@@ -1,10 +1,11 @@
-"""How a document's ``emoji`` and ``code`` settings are resolved.
+"""How a document's ``code`` settings are resolved.
 
-Both are read from several places — the template's attribute defaults, the
-front matter, its ``fonts`` or ``press`` sections, the CLI overrides — and
-both are needed by a pass as well as by the renderer. They live here so that
-``passes/emoji.py`` stops importing a private name from the orchestrator it
-runs under.
+Read from several places — the template's attribute defaults, the front
+matter, its ``press`` section, the CLI overrides. ``coerce_emoji_mode``/
+``extract_emoji_mode`` moved to :mod:`texsmith.core.options` (a leaf module
+``passes/emoji.py`` can import without reaching into this package, which
+imports ``texsmith.passes`` at module level); re-exported here for existing
+callers.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.code_options import normalise_inline_options
+from texsmith.core.options import coerce_emoji_mode, extract_emoji_mode
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -22,18 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 __all__ = ["coerce_emoji_mode", "extract_emoji_mode", "resolve_code_options"]
 
 
-_EMOJI_SPECIAL_MODES = {"artifact", "symbola", "color", "black", "twemoji"}
 _CODE_ENGINES = {"minted", "listings", "verbatim", "pygments"}
-
-
-def coerce_emoji_mode(value: Any) -> str | None:
-    if not isinstance(value, str):
-        return None
-    candidate = value.strip()
-    if not candidate:
-        return None
-    lowered = candidate.lower()
-    return lowered if lowered in _EMOJI_SPECIAL_MODES else candidate
 
 
 def resolve_code_options(
@@ -81,25 +72,3 @@ def resolve_code_options(
     merged["style"] = style_candidate or "bw"
     merged["inline"] = normalise_inline_options(merged.get("inline"), default_options.get("inline"))
     return merged
-
-
-def extract_emoji_mode(mapping: Mapping[str, Any] | None) -> str | None:
-    if not isinstance(mapping, Mapping):
-        return None
-    direct = coerce_emoji_mode(mapping.get("emoji"))
-    if direct:
-        return direct
-    fonts_section = mapping.get("fonts")
-    if isinstance(fonts_section, Mapping):
-        direct_fonts = coerce_emoji_mode(fonts_section.get("emoji"))
-        if direct_fonts:
-            return direct_fonts
-    press = mapping.get("press")
-    if isinstance(press, Mapping):
-        press_direct = coerce_emoji_mode(press.get("emoji"))
-        if press_direct:
-            return press_direct
-        press_fonts = press.get("fonts")
-        if isinstance(press_fonts, Mapping):
-            return coerce_emoji_mode(press_fonts.get("emoji"))
-    return None

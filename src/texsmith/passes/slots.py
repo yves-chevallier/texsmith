@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any
 from tmark.ir import model
 from tmark.ir.walk import plain_text, walk
 
-from texsmith.core.conversion.inputs import DOCUMENT_SELECTOR_SENTINEL, SlotOptions
+from texsmith.core.options import DOCUMENT_SELECTOR_SENTINEL, SlotOptions
 from texsmith.diagnostics import NO_SPAN
 from texsmith.passes import PassContext, spec
 

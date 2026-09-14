@@ -34,8 +34,8 @@ import emoji as _emoji
 from tmark.ir import model
 from tmark.ir.walk import map_inlines
 
-from texsmith.core.conversion.settings import extract_emoji_mode
 from texsmith.core.exceptions import exception_hint
+from texsmith.core.options import extract_emoji_mode
 from texsmith.passes import PassContext, spec
 from texsmith.passes.assets import asset_registry
 

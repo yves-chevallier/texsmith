@@ -478,6 +478,126 @@ manifest, and the other four (`paper_option`, `orientation`, `callout_style`,
 `docs/guide/templates/index.md`. None is dead. Restructuring 2 951 lines for
 size alone is churn; give the next pass a demonstrated defect first.
 
+## Step 10 · Four debts, and the wheel/schema check — done
+
+Branch based on `refactor/07-request-contract`, 5 commits. 1 335 tests
+(1 333 through the four debts, +2 for the wheel-schema check), ruff clean at
+every commit. `src/texsmith` 33 075 → 33 065: this step pays layering and
+naming debt, not size — three of the five commits are near washes (code
+moved, not deleted) and only the first nets a real deletion.
+
+**`DocumentState` dead fields — done.** `counters`/`next_counter`/
+`peek_counter`/`reset_counter`, `footnotes`, `headings`, `snippets`,
+`glossary` and `remember_acronym` had no reader or writer outside
+`core/context.py` (grep over `src/`, `packages/`, `tests/`): debris from the
+deleted Python writer. `glossary` and the now-deleted `index_entries` had a
+defensive `getattr(state, name, default)` reader two files over
+(`adapters/latex/engines/__init__.py`, `core/conversion/renderer.py`) that a
+plain grep for `.name` misses — the traps list's lesson about escape hatches
+applies to `getattr` on a state object too, not only to logging. Neither
+field had a writer anywhere, so the `or getattr(...)` clause they fed was
+always false; simplified to what it always evaluated to.
+**`_citation_index`, the one field the same report flagged, is not dead**:
+it is `record_citation`'s dedup set, and `record_citation` is called from
+`core/fragments/activation.py`. A private field read only within its own
+class is not the same defect as a field read nowhere — kept, documented.
+Tests-only fallout: `test_document_state.py` (only the counters) removed;
+two `test_assets.py` cases move to `remember_abbreviation`, the method
+`remember_acronym` only aliased; two `ts-index` fragment tests move from
+the dead `index_entries` flag to the real activation path
+(`contract_path` + `has_index_entries`) production actually uses. 1335 → 1333
+tests.
+
+**`AssetOptions` replaces the `RenderContextLike` duck — done.**
+`passes/assets.py` built a `_LegacyContext`/`_LegacyConfig` pair shaped like
+`core.context.RenderContextLike` purely so `writers/latex/assets.py`'s
+helpers (`store_local_image_asset`, `_convert_local_asset`, `_persist_asset`,
+…) could keep reading a string-keyed `runtime` dict (`"diagrams_backend"`,
+`"mermaid_config"`, `"drawio_crop"`, `"hash_assets"`, …) no static check
+covers. The helpers now take an explicit `AssetOptions` dataclass, built
+once per document by `_AssetPass.__init__`; `_LegacyConfig`/`_LegacyContext`
+are gone, and `RenderContextLike` with them — nothing else used it.
+`_LegacyConfig` carried two fields (`mermaid_config`, `legacy_latex_accents`)
+`_AssetPass` never set and the helpers never read from `config` in the first
+place; dead duplication the typed dataclass also drops. The private
+cross-module imports the same helpers needed are exported properly instead:
+`_cairo_dependency_hint`/`_option_flag` (`adapters/transformers/strategies.py`)
+and `_MISSING` (`passes/var.py`) lose their underscore — neither module
+restricted its exports with `__all__`, so the leading underscore was the
+only thing marking them private across a boundary they already crossed.
+
+**The `passes` ↔ `core.conversion` import cycle — broken for the two named
+sites.** `passes/emoji.py` and `passes/slots.py` imported
+`core.conversion.settings`/`core.conversion.inputs` at module level for two
+small values (`extract_emoji_mode`; `SlotOptions`/`DOCUMENT_SELECTOR_SENTINEL`)
+while `core.conversion.pipeline`/`.typst` import `texsmith.passes` at module
+level — a lower layer reaching back into the layer that orchestrates it. Not
+a live `ImportError` today, because `passes/__init__.py` does not eagerly
+import `emoji`/`slots`, but a real edge in the graph: verified by temporarily
+hoisting `build_pipeline`'s lazy `import texsmith.passes.builtins` to module
+level, which fails immediately (`cannot import name 'build_pipeline' from
+partially initialized module 'texsmith.passes'`) through a *different*,
+larger cycle — `passes.snippet` → `adapters.plugins.snippet` →
+`core.templates.session` → `core.conversion.core` → `core.conversion.pipeline`
+→ `texsmith.passes`. That cycle runs through modules this debt does not name
+and is a separate, bigger piece of work; `build_pipeline`'s import stays
+lazy, now documented as guarding against it specifically. The two named
+values move to a new `core/options.py`, a leaf module under `core` with no
+import of `core.conversion`; `core/conversion/settings.py` and `.../inputs.py`
+re-export both for their other callers (`ui/cli/utils.py`,
+`core/documents.py`, tests), so only the two cycle-causing import lines
+change. Verified: `import texsmith.passes` and `import texsmith.core.conversion`
+each succeed fresh, and a script importing all 161 modules under
+`src/texsmith` individually reports no `ImportError`.
+
+**Dependencies — `unicodeblocks` dropped, three kept and documented.**
+`unicodeblocks` has no import anywhere in `src/`, and none at the `v0.6.0`
+tag either (`git grep unicodeblocks v0.6.0 -- src` is empty): removed,
+`uv lock` re-resolved. `pyxindy` stays — loaded dynamically via `importlib`
+by `adapters/latex/pyxindy.py`, invisible to a plain import grep, which is
+exactly the trap the debts list warned against for string-keyed registries
+and applies here to dynamic imports too. `beautifulsoup4` stays:
+`adapters/plugins/snippet.py`'s screenshot-preview rewriter parses HTML and
+walks it with a real tree API (`Tag.find`/`.get`/`.get_text`/`.new_tag`,
+used across `_detect_language` and `_extract_snippet_block` too, not only
+the one `BeautifulSoup(...)` call site) — more than `html.parser`'s
+SAX-style parser would take to reach parity. `pylatexenc` stays: the one
+call to `unicode_to_latex` backs `--legacy-latex-accents`
+(`ConversionRequest.legacy_latex_accents`, a tested, real option), leaning
+on its full Unicode → LaTeX accent-macro table. Both justifications are now
+one-line comments in `pyproject.toml`.
+
+**`wheel_schema_mismatch` — called where TeXSmith first hands text to the
+wheel.** `tmark.ir.codec.wheel_schema_mismatch()` existed, shipped by the
+wheel, called only from a test. `readers/tmark.py`'s `parse_payload` (the
+seam before `tmark.parse`) now checks once per process — a module-level
+flag, since the check is cheap but pointless to repeat for every document of
+a multi-document build — and raises `RuntimeError` with the message, which
+already names both the generated-against and the installed schema hash. A
+stale wheel would otherwise surface later as a confusing `decode_document`
+failure (an unexpected or missing field) far from its cause. Two tests
+monkeypatch `codec.wheel_schema_mismatch` and reset the module's cache flag:
+one asserts the message's two hashes reach the exception, the other that a
+matching schema is checked exactly once across two `read()` calls.
+
+**Measured, not this step's to fix: a transient three-entry parity diff
+traced to `vendor/tmark` itself, not to any of the above.** Partway through
+this step, `parity.py baseline --check` started reporting `paper`,
+`paper@typst` and `docs/guide/plumbing/tex@typst` as differing —
+`\textcite{Prentice1993}` (baseline) rendering as `\cite{Prentice1993}`
+(actual), for citations `examples/paper/cheese.md` writes as bare `@key`
+(narrative form). Reproduced identically after reverting every uncommitted
+change of this step (`git stash`) to the prior commit, so it is not caused
+by anything in this list. `vendor/tmark` is a symlink to a live,
+concurrently-developed checkout (setup instructions require it); its `HEAD`
+carries `"Merge branch 'fix/citations'"` and `"py: expose citations.narrative
+in the write options"` — a newer tmark wheel that added a
+`citations.narrative` write option TeXSmith does not yet pass, so a bare
+`@key` now defaults to the parenthetical form. An upstream behaviour change
+needing a corresponding TeXSmith-side change, not a regression from this
+step's commits and not one of the four debts — left for whoever wires the
+new option through.
+
 ## Debts posed, deliberately not paid
 
 - **Numbering sources.** LaTeX resolves the mode from

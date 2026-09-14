@@ -30,6 +30,10 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
+    # adapters/plugins/snippet.py rewrites a rendered HTML preview into a
+    # captured-screenshot fallback with a real tree API (Tag.find/.get/
+    # .get_text/.new_tag across several functions): more than the handful of
+    # lines html.parser's SAX-style parser would take to reach parity.
     "beautifulsoup4>=4.14.2",
     "cairosvg>=2.8.2",
     "emoji>=2.12.1",
@@ -40,6 +44,10 @@ dependencies = [
     "pydantic>=2.7.0",
     "pypdf>=6.1.1",
     "pygments>=2.18.0",
+    # writers/latex/escaper.py's --legacy-latex-accents mode (ConversionRequest
+    # .legacy_latex_accents, tested) leans on unicode_to_latex's full
+    # Unicode -> LaTeX accent-macro table; reimplementing that table is not a
+    # small function.
     "pylatexenc>=2.10",
     "pymupdf>=1.24.3",
     "python-slugify>=8.0.4",
@@ -47,8 +55,9 @@ dependencies = [
     "rich>=13.9.0",
     "typer>=0.12.5",
     "tomli>=2.0.1; python_version < \"3.11\"",
-    "unicodeblocks>=0.3",
     "playwright>=1.56.0",
+    # Loaded dynamically by adapters/latex/pyxindy.py via importlib, not
+    # imported directly: keep even though grep finds no `import pyxindy`.
     "pyxindy>=0.0.7",
     "requests>=2.32.5",
     # The TMark core (parser, IR, printer, registries, writers). During the

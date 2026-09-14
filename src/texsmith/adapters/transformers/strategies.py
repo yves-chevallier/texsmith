@@ -95,14 +95,14 @@ def _playwright_dependency_hint() -> str:
     )
 
 
-def _cairo_dependency_hint() -> str:
+def cairo_dependency_hint() -> str:
     return (
         "CairoSVG requires the system cairo library (package: libcairo2). "
         "Install it via your package manager to enable SVG conversion."
     )
 
 
-def _option_flag(value: Any, *, default: bool = False) -> bool:
+def option_flag(value: Any, *, default: bool = False) -> bool:
     """Read a boolean option that may reach us as a string from a document attribute."""
     resolved = coerce_bool(value)
     return default if resolved is None else resolved
@@ -278,7 +278,7 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         except Exception as exc:  # pragma: no cover - optional dependency
             if backend in {"auto", "playwright"}:
                 return self._run_playwright(svg_text, target=target, emitter=emitter)
-            hint = _cairo_dependency_hint()
+            hint = cairo_dependency_hint()
             msg = f"cairosvg is required to convert SVG assets. {hint}"
             raise TransformerExecutionError(msg) from exc
 
@@ -286,7 +286,7 @@ class SvgToPdfStrategy(CachedConversionStrategy):
         try:
             cairosvg.svg2pdf(bytestring=svg_text.encode("utf-8"), write_to=str(target))
         except OSError as exc:
-            hint = _cairo_dependency_hint()
+            hint = cairo_dependency_hint()
             _emit_dependency_warning(emitter, hint)
             if backend in {"auto", "playwright"}:
                 return self._run_playwright(svg_text, target=target, emitter=emitter)
@@ -579,7 +579,7 @@ class FetchImageStrategy(CachedConversionStrategy):
             try:
                 cairosvg.svg2pdf(bytestring=response.content, write_to=str(target))
             except OSError as exc:
-                hint = _cairo_dependency_hint()
+                hint = cairo_dependency_hint()
                 _emit_dependency_warning(emitter, hint)
                 raise TransformerExecutionError(
                     f"Failed to convert remote SVG '{url}': {exc}. {hint}"
@@ -1184,7 +1184,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
         format_opt = str(options.get("format", "pdf") or "pdf").lower()
         theme = str(options.get("theme", "auto") or "auto")
-        crop = _option_flag(options.get("crop"), default=True)
+        crop = option_flag(options.get("crop"), default=True)
 
         source_path = Path(source)
         if not source_path.exists():
@@ -1332,7 +1332,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
             output_name,
         ]
 
-        if _option_flag(options.get("crop"), default=True):
+        if option_flag(options.get("crop"), default=True):
             command.append("--crop")
 
         dpi = options.get("dpi")

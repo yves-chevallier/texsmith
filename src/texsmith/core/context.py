@@ -6,7 +6,7 @@ from collections.abc import Iterable, MutableMapping
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any
 
 from slugify import slugify
 
@@ -28,17 +28,13 @@ class DocumentState:
     acronyms: dict[str, tuple[str, str]] = field(default_factory=dict)
     acronym_entry_groups: dict[str, str] = field(default_factory=dict)
     acronym_groups: list[tuple[str, str]] = field(default_factory=list)
-    glossary: dict[str, dict[str, Any]] = field(default_factory=dict)
-    snippets: dict[str, dict[str, Any]] = field(default_factory=dict)
-    headings: list[dict[str, Any]] = field(default_factory=list)
     has_index_entries: bool = False
     requires_shell_escape: bool = False
-    counters: dict[str, int] = field(default_factory=dict)
     bibliography: dict[str, dict[str, Any]] = field(default_factory=dict)
     citations: list[str] = field(default_factory=list)
+    #: Dedup set for :meth:`record_citation`; no reader outside this class,
+    #: but it is what keeps ``citations`` insertion-ordered and unique.
     _citation_index: set[str] = field(default_factory=set, init=False, repr=False)
-    footnotes: dict[str, str] = field(default_factory=dict)
-    index_entries: list[tuple[str, ...]] = field(default_factory=list)
     pygments_styles: dict[str, str] = field(default_factory=dict)
     script_usage: list[dict[str, Any]] = field(default_factory=list)
     fallback_summary: list[dict[str, Any]] = field(default_factory=list)
@@ -57,12 +53,6 @@ class DocumentState:
     #: writers, so the fragments activate from ``Requires`` (the contract
     #: path) instead of sniffing the rendered LaTeX.
     contract_path: bool = False
-
-    def remember_acronym(
-        self, term: str, description: str, *, emitter: DiagnosticEmitter | None = None
-    ) -> str:
-        """Register an acronym definition keyed by a normalised identifier."""
-        return self.remember_abbreviation(term=term, description=description, emitter=emitter)
 
     def remember_abbreviation(
         self, term: str, description: str, *, emitter: DiagnosticEmitter | None = None
@@ -101,20 +91,6 @@ class DocumentState:
             candidate = f"{slug}{suffix}"
             suffix += 1
         return candidate
-
-    def next_counter(self, key: str = "default") -> int:
-        """Increment and return the named counter."""
-        value = self.counters.get(key, 0) + 1
-        self.counters[key] = value
-        return value
-
-    def peek_counter(self, key: str = "default") -> int:
-        """Return the current value of the named counter without modifying it."""
-        return self.counters.get(key, 0)
-
-    def reset_counter(self, key: str) -> None:
-        """Clear the named counter if it has been tracked."""
-        self.counters.pop(key, None)
 
     def record_citation(self, key: str) -> None:
         """Track citation keys used throughout the document."""
@@ -172,28 +148,6 @@ class AssetRegistry:
                 reference = candidate
 
         return reference.as_posix()
-
-
-class RenderContextLike(Protocol):
-    """Structural surface shared by ``RenderContext`` and the writer state.
-
-    The LaTeX writer threads its own ``WriterState`` through helpers that were
-    historically typed against :class:`RenderContext` (font-script rendering,
-    image/asset storage, DOI resolution). Both expose the same attributes, so
-    those helpers depend on this protocol rather than a concrete class.
-    """
-
-    @property
-    def config(self) -> BookConfig: ...
-
-    @property
-    def assets(self) -> AssetRegistry: ...
-
-    @property
-    def state(self) -> DocumentState: ...
-
-    @property
-    def runtime(self) -> dict[str, Any]: ...
 
 
 @dataclass

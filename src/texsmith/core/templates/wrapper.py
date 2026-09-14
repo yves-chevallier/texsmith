@@ -128,12 +128,14 @@ def wrap_template_document(
         resolved_slots[slot_name] = processed_content
         template_context[slot_name] = processed_content
 
+    # ``has_index``/``index_terms``/``index_registry`` keep ``BaseTemplate``'s
+    # defaults (``False``/``[]``/``[]``): the per-term list they used to read
+    # (``DocumentState.index_entries``) had no writer since the Python index
+    # pass was deleted, so those three were always the default in practice.
+    # ``ts-index`` activates from the contract path below (``contract_active``)
+    # or an explicit ``fragments`` override; ``index_entries`` only decides
+    # whether an *active* fragment also emits ``\printindex``.
     template_context["index_entries"] = document_state.has_index_entries
-    index_terms = list(dict.fromkeys(getattr(document_state, "index_entries", [])))
-    template_context["has_index"] = bool(index_terms)
-    template_context["index_terms"] = [tuple(term) for term in index_terms]
-
-    template_context["index_registry"] = [tuple(term) for term in index_terms]
     _merge_front_matter_glossary(document_state, overrides_payload, template_context)
     template_context["acronyms"] = document_state.acronyms.copy()
     template_context["acronym_groups"] = list(document_state.acronym_groups)

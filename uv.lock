@@ -1920,7 +1920,6 @@ dependencies = [
     { name = "tmark" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typer" },
-    { name = "unicodeblocks" },
 ]
 
 [package.optional-dependencies]
@@ -1971,7 +1970,6 @@ requires-dist = [
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
     { name = "typst", marker = "extra == 'typst'", specifier = ">=0.15" },
-    { name = "unicodeblocks", specifier = ">=0.3" },
 ]
 provides-extras = ["typst"]
 
@@ -2128,12 +2126,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/07/3f/6d526ddd93e6a7dd26c2b180245df8d1957d2723860030a10bcc0f93650c/typst-0.15.0-cp38-abi3-pyemscripten_2026_0_wasm32.whl", hash = "sha256:019b4282daa892e0a540687efdd2909808a07453700332c7f61a2c1455950ec9", size = 25710679, upload-time = "2026-06-16T13:02:26.169Z" },
     { url = "https://files.pythonhosted.org/packages/f2/5f/7f19bc9f7a2917a52aa39981aff19f86972f4055b432f77f31642ab57625/typst-0.15.0-cp38-abi3-win_amd64.whl", hash = "sha256:7c12706685dbaf5bb7e43f0fa32e57f2a42549b9ec3de539ad0d32bd8d1ca92e", size = 29372618, upload-time = "2026-06-16T13:02:29.651Z" },
 ]
-
-[[package]]
-name = "unicodeblocks"
-version = "0.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/92/f3/34dbe5fe4a50821528bc0b90260a3d56d2ab8da3ecc8a7de1b213d18bc72/unicodeblocks-0.3.tar.gz", hash = "sha256:7df9aa934a364068ab302bb2c55c3f46db1910bcc6b1f4b32bfb7c0eb3df44e2", size = 6896, upload-time = "2014-06-17T16:12:24.099Z" }
 
 [[package]]
 name = "urllib3"

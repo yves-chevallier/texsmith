@@ -2,30 +2,23 @@
 
 The inline bibliography this module used to validate — 300 of its 469 lines —
 lives in :mod:`texsmith.core.bibliography.inline`, which is where a reader
-looks for it.
+looks for it. ``DOCUMENT_SELECTOR_SENTINEL``/``SlotOptions`` moved to
+:mod:`texsmith.core.options` (a leaf module ``passes/slots.py`` can import
+without reaching into this package, which imports ``texsmith.passes`` at
+module level); re-exported here for existing callers.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
 from typing import Any
 
 from texsmith.core.coerce import coerce_bool
-
-
-DOCUMENT_SELECTOR_SENTINEL = "@document"
+from texsmith.core.options import DOCUMENT_SELECTOR_SENTINEL, SlotOptions
 
 
 class UnsupportedInputError(Exception):
     """Raised when a CLI input argument cannot be processed."""
-
-
-@dataclass(slots=True, frozen=True)
-class SlotOptions:
-    """Per-slot rendering flags parsed from front matter."""
-
-    flatten: bool = False
 
 
 def _coerce_bool_option(value: Any) -> bool:
