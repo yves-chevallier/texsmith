@@ -37,9 +37,10 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       (`design/reviews/07-spec-conformance-migration.md`) : 0 bloquant, 11 majeurs, 14 mineurs. Correction en cours sur `fix/spec-text` et `fix/spec-code`.
 - [x] Revue de cohérence interne de `spec/tmark.md` comme spécification de
       langage (`design/reviews/08-spec-consistency.md`, 8e8dbce) : 5 bloquants, 15 majeurs, 19 mineurs.
-- [ ] Chaque finding classé : corrigé, reporté avec numéro de challenge, ou
+- [x] Chaque finding classé : corrigé, reporté avec numéro de challenge, ou
       rejeté avec raison. Texte de la spec : fait (c3bf402, B1–B5, M1–M15, F3–F5, C52–C60).
-      Code (F1, F2, F7, F8, F10, C27, C60) : branche `fix/spec-code` en cours.
+      Code (F1, F2, F7, F8, F10, C27, C60, `strict-x-construct` supprimé) : fusionné (d8041cf).
+      Régression de F2 sur le corpus (guillemet fermant devant `---`) : branche `fix/quote-boundaries` en cours.
 
 ## 3. Correctifs texsmith
 
@@ -47,20 +48,20 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       supprimés avec raison ; `--strict` et `--diagnostics-json` les voient.
       Fait (d6b2e0a) : 12 routés (`font-fallback`, `fragment-manifest`, `metadata-invalid`), 11 sur logger de module
       faute d'émetteur atteignable, 1 `UserWarning` gardé pour les auteurs de templates. 1345 tests.
-- [ ] Baseline de parité ré-enregistrée après le fix des citations, diff lu
-      ligne par ligne (`scripts/parity.py baseline --check`).
-- [ ] `docs/syntax/references.md`, `docs/guide/migration.md` et
-      `CHANGELOG.md` décrivent la sémantique des citations et l'option.
-- [ ] `DocumentState` purgé de ses 7 champs et 4 méthodes morts.
-- [ ] `_LegacyContext` / `runtime[...]` de `passes/assets.py` remplacés par
-      une signature typée depuis `PassContext`.
-- [ ] Cycle `passes` ↔ `core.conversion` cassé ; les imports locaux qui
-      l'absorbaient remontés au niveau module.
-- [ ] `unicodeblocks` retiré de `pyproject.toml` (déjà inutilisé en 0.6.0) ;
+- [x] Baseline de parité ré-enregistrée après le fix des citations, diff lu
+      ligne par ligne (`scripts/parity.py baseline --check`). Fait (d3dbfb9) : 5 entrées, causes lues.
+- [x] `docs/syntax/references.md`, `docs/guide/migration.md` et
+      `CHANGELOG.md` décrivent la sémantique des citations et l'option. Fait (20efef0, 8bf7d89 : 2 tests prouvent `\cite` par défaut, `\textcite` sous la feature).
+- [x] `DocumentState` purgé de ses champs et méthodes morts (f82be92 ; `_citation_index` était vivant, gardé).
+- [x] `_LegacyContext` / `runtime[...]` de `passes/assets.py` remplacés par
+      une signature typée depuis `PassContext`. Fait (3835aae, `AssetOptions`).
+- [x] Cycle `passes` ↔ `core.conversion` cassé ; les imports locaux qui
+      l'absorbaient remontés au niveau module. Fait (7d59acc, `core/options.py`) ; un cycle plus large via `snippet.py` reste documenté.
+- [x] `unicodeblocks` retiré de `pyproject.toml` (déjà inutilisé en 0.6.0) ;
       `pyxindy` conservé (index via `adapters/latex/pyxindy.py`) ;
-      `beautifulsoup4` et `pylatexenc` évalués.
-- [ ] `wheel_schema_mismatch()` appelé au démarrage (tmark importé par le
-      reader) et testé.
+      `beautifulsoup4` et `pylatexenc` évalués. Fait (cff2ccc) : les deux gardés avec justification.
+- [x] `wheel_schema_mismatch()` appelé au démarrage (tmark importé par le
+      reader) et testé. Fait (953d46a).
 
 ## 4. Fonctionnalités à garantir
 
@@ -86,10 +87,10 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 
 - [ ] Nom PyPI décidé (`tmark` est pris par un autre projet) ; `pyproject.toml`,
       `module-name` et les imports texsmith alignés. **Décision utilisateur.**
-- [ ] Version 0.1.0, `version =` sur chaque dépendance de chemin ou
-      `publish = false` explicite ; premier tag `v0.1.0`.
-- [ ] Job CI MSRV 1.80.
-- [ ] Tests de `tmark-lint` étoffés (3 aujourd'hui pour 12 règles).
+- [x] Version 0.1.0, `version =` sur chaque dépendance de chemin ou
+      `publish = false` explicite (4bd0d0b, ebeff13) ; `Cargo.lock` repointé pour la MSRV (4f22f38). **Tag `v0.1.0` : pas encore posé.**
+- [x] Job CI MSRV 1.80 (dad4f56) ; `cargo +1.80 check --workspace` passe localement.
+- [x] Tests de `tmark-lint` étoffés (2 → 8 tests, une par règle, 5cf6551).
 - [ ] `texsmith-migration` fusionnée dans `main`, CI verte sur GitHub.
 
 ## 7. Release texsmith
