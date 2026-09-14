@@ -109,10 +109,6 @@ followed.
   `render --out DIR` dumps raw outputs; `pdf --baseline [--check]` compares built
   PDFs against `tests/parity/pdf-baseline.json`; `list` says which entries can
   run here. **Changing a page under `docs/` changes its baseline: re-record it.**
-- `scripts/migrate_examples.py OUT_DIR [ID ...]` builds the example corpus into
-  `OUT_DIR` (copy each entry, `tmark lint --fix` its sources, build it through
-  the CLI) — the measurement behind `specs/migration/status.md`. `OUT_DIR` must
-  be inside the repository.
 - `scripts/refresh_cli_help.sh` regenerates `docs/assets/cli-help`, the
   gitignored snippet `docs/cli/index.md` includes. Run it after touching a CLI
   option, before building the site.

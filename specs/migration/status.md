@@ -1,6 +1,6 @@
 # Migration status (2026-09-12)
 
-Measured with `scripts/migrate_examples.py build-migr`: copy each entry of
+Measured (2026-09-12, with a script since deleted) by copying each entry of
 the parity corpus (`tests/parity/corpus.yml`), rewrite its sources with
 `tmark lint --fix`, build it with the CLI. The sources under `examples/`
 are already in canonical TMark, so the fixer is a no-op on them and the

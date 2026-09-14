@@ -1,6 +1,9 @@
 # TeXSmith specifications
 
-Design documents for the migration of TeXSmith onto the **TMark** core.
+Design documents of the migration of TeXSmith onto the **TMark** core. The
+migration is done (September 2026); these notes are its record and the
+reference the source code points at. `merge-tasklist.md` is the live list of
+what remains before the merge and the release.
 
 The TMark language specification itself is **not** kept here any more: it
 lives in the `tmark` repository (`spec/tmark.md`, with its conformance
@@ -26,8 +29,7 @@ dialect is headed.
 
 The spec is the source of truth. A syntax change starts as a spec change
 and a conformance fixture in the tmark repository, then reaches the parser,
-the printer, the writers, the bindings and finally TeXSmith. The Python-
-Markdown extensions of TeXSmith are frozen: no new syntax is added to them.
+the printer, the writers, the bindings and finally TeXSmith.
 
 ## After the migration
 
