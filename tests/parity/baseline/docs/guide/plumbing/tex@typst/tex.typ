@@ -43,7 +43,7 @@ Knuth reportedly joked that after his death, when no more bug-fixes remain, the 
 
 = Pronunciation
 
-The name "#ts-logo("TeX")" comes from the Greek root #ts-script("greek")[τεχ]- (ték#ts-script("diacritics")[ʰ]nē) meaning "art, craft, technique"—fitting for a typesetting system deeply rooted in the art of typesetting. Because the "X" in #ts-logo("TeX") is really the Greek letter chi (#ts-script("greek")[Χ]), the "proper" pronunciation is something like "tekh" (with a voiceless velar fricative—like the "ch" in German or Scottish "loch").
+The name "#ts-logo("TeX")" comes from the Greek root #ts-script("greek")[τεχ]\- (ték#ts-script("diacritics")[ʰ]nē) meaning "art, craft, technique"—fitting for a typesetting system deeply rooted in the art of typesetting. Because the "X" in #ts-logo("TeX") is really the Greek letter chi (#ts-script("greek")[Χ]), the "proper" pronunciation is something like "tekh" (with a voiceless velar fricative—like the "ch" in German or Scottish "loch").
 
 Over time, many users found plain #ts-logo("TeX") a bit "low-level" and hard to use directly. This led to the rise of higher-level macro systems like #ts-logo("LaTeX") (and later others), which made it easier to write large documents, papers, theses—without wrestling directly with spacing, boxes, etc.
 

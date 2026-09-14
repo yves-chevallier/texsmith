@@ -83,8 +83,8 @@ or Pandoc renders it natively.
 \toprule
 \textbf{Legacy} & \textbf{Canonical} & \textbf{Horizon} \\
 \midrule
-\tscodeinline{[\^{}key]} citation & \tscodeinline{@key} & fmt; \tscodeinline{[\^{}1]} stays a \emph{footnote} \\
-\tscodeinline{\^{}[k1,k2]} citation & \tscodeinline{@[k1; k2]} & fmt; \tscodeinline{\^{}[…]} then becomes an inline footnote \\
+\tscodeinline{[\^{}key]} citation & \tscodeinline{@key} & fmt; \tscodeinline{[\^{}1]} stays a \emph{footnote}; meaning-preserving --- both are the short, parenthetical citation, and \tscodeinline{-\allowbreak{}-\allowbreak{}fix} inserts a space when the \tscodeinline{[\^{}key]} hugs the word before it \\
+\tscodeinline{\^{}[k1,k2]} citation & \tscodeinline{@[k1; k2]} & fmt; \tscodeinline{\^{}[…]} then becomes an inline footnote; same meaning-preserving rewrite, with the same hugging-space fix \\
 \tscodeinline{[@key, p. 3]} (Pandoc) & \tscodeinline{@[key, p. 3]} & indefinite (Pandoc import) \\
 \tscodeinline{@https://doi.org/10.…} & \tscodeinline{@doi:10.…} & indefinite (sugar) \\
 \tscodeinline{[](gls:term)} & \tscodeinline{@gls:term} & fmt \\

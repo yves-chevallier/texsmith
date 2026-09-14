@@ -48,12 +48,12 @@ Cheese, though traditionally perceived as a food product, can also be regarded
 as a *soft viscoelastic solid*, whose rheological response depends on both time
 and temperature. The interplay between its *elastic stiffness* — resistance
 to deformation — and *malleability* — the capacity to deform without
-fracture — defines its sensory and functional attributes #cite(<Prentice1993>, form: "prose").
+fracture — defines its sensory and functional attributes #cite(<Prentice1993>).
 
 The mechanical performance of hard cheeses arises from their intricate
 *protein–fat–moisture matrix*. Protein cross-linking, crystalline calcium
 phosphate domains, and residual fat globules act as reinforcing or plasticizing
-agents depending on aging and composition #cite(<Jaoac2019>, form: "prose"). Understanding these
+agents depending on aging and composition #cite(<Jaoac2019>). Understanding these
 parameters is crucial not only for consumer perception (texture, crumble,
 brittleness) but also for industrial operations such as slicing, shredding,
 and packaging.
@@ -100,7 +100,7 @@ on composition and aging.
 Thermal analysis using *Differential Scanning Calorimetry (DSC)* allows the
 determination of onset and peak melting temperatures. In contrast, high-moisture
 cheeses such as Mozzarella #footnote[A high-moisture cheese known for its stretchability when melted.] exhibit lower melting points and greater
-stretchability due to reduced protein cross-link density #cite(<WADHWANI20111713>, form: "prose").
+stretchability due to reduced protein cross-link density #cite(<WADHWANI20111713>).
 #ref(<melting-behavior>, supplement: [Figure]) illustrates the melting behavior of Mozzarella
 cheese, highlighting its unique rheological response upon heating.
 

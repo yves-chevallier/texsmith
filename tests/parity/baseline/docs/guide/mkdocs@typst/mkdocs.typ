@@ -107,7 +107,12 @@ table.header([Option], [Description], [Default]),
 = Books
 
 A book is one PDF built from a section of the navigation. Several may be
-declared; `root: "__texsmith_full_navigation__"` takes the whole site.
+declared; `root: "__texsmith_full_navigation__"` takes the whole site. Without
+an explicit `books:` entry, the plugin creates one book automatically, using
+only the first item of the site's navigation as its root section — every other
+page is left out of that default book. Declare `books:` explicitly, with
+`root: "__texsmith_full_navigation__"` on the one entry, to get the whole site
+as a single book instead.
 
 ```yaml
 plugins:

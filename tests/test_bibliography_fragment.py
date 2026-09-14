@@ -80,3 +80,62 @@ def test_bibliography_show_urls_opt_in_keeps_raw_urls(tmp_path: Path) -> None:
     # Opt-in mode: do NOT inject the URL-suppressing field formats.
     assert "\\DeclareFieldFormat{url}{}" not in content
     assert "\\href{\\thefield{url}}" not in content
+
+
+def test_bare_citation_is_the_short_form_by_default(tmp_path: Path) -> None:
+    """tmark C51: a bare ``@key`` renders ``\\cite``, not the narrative ``\\textcite``."""
+    doc_path = _bibliography_doc(tmp_path)
+
+    session = get_template("article")
+    session.add_document(Document.from_markdown(doc_path))
+    session.add_bibliography(FIXTURE_BIB)
+
+    build_dir = tmp_path / "build"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = session.render(build_dir)
+
+    content = result.main_tex_path.read_text(encoding="utf-8")
+    assert "\\cite{LAWRENCE19841632}" in content
+    assert "\\textcite{LAWRENCE19841632}" not in content
+
+
+def test_citations_narrative_feature_switches_bare_citations_to_textcite(tmp_path: Path) -> None:
+    """``press.features: {citations.narrative: true}`` reaches ``tmark.write`` untouched.
+
+    TeXSmith does not translate this feature into a writer option: tmark reads
+    it straight off the document's own front matter (the ``Document`` IR
+    carries it through ``codec.encode_document``), the same way it already
+    reads ``press.features.strict``. This is the regression guard for that.
+    """
+    doc_path = tmp_path / "cheese.md"
+    doc_path.write_text(
+        textwrap.dedent(
+            """
+            ---
+            press:
+              features:
+                citations.narrative: true
+            ---
+
+            # Cheese
+
+            Some text with a citation @LAWRENCE19841632.
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    session = get_template("article")
+    session.add_document(Document.from_markdown(doc_path))
+    session.add_bibliography(FIXTURE_BIB)
+
+    build_dir = tmp_path / "build"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = session.render(build_dir)
+
+    content = result.main_tex_path.read_text(encoding="utf-8")
+    assert "\\textcite{LAWRENCE19841632}" in content
+    assert "\\cite{LAWRENCE19841632}" not in content

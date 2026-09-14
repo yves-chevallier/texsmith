@@ -120,7 +120,12 @@ Counters for the numbering rules.
 \end{center}
 \section{Books}
 A book is one PDF built from a section of the navigation. Several may be
-declared; \tscodeinline{root: "\_\_texsmith\_full\_navigation\_\_"} takes the whole site.
+declared; \tscodeinline{root: "\_\_texsmith\_full\_navigation\_\_"} takes the whole site. Without
+an explicit \tscodeinline{books:} entry, the plugin creates one book automatically, using
+only the first item of the site's navigation as its root section --- every other
+page is left out of that default book. Declare \tscodeinline{books:} explicitly, with
+\tscodeinline{root: "\_\_texsmith\_full\_navigation\_\_"} on the one entry, to get the whole site
+as a single book instead.
 \begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{plugins}\PY{p}{:}
