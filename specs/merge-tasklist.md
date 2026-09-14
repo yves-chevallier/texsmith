@@ -15,9 +15,9 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 
 ## 1. Correctifs tmark (bloquants)
 
-- [ ] **Échappement Typst** : `//` et `/*` cassés, `= + - /` en début de ligne
+- [x] **Échappement Typst** : `//` et `/*` cassés, `= + - /` en début de ligne
       et `~` échappés (`crates/tmark-writers/src/typst/escape.rs`), fixture de
-      conformance, snapshots relus. Branche `fix/typst-escape`.
+      conformance, snapshots relus. Fusionné dans `texsmith-migration` (0424387), vérifié au compilateur typst 0.15.1.
 - [ ] **Sémantique des citations** : un `@key` nu rend la citation courte
       (`\cite` / `#cite(key)`) par défaut ; une clé de front matter bascule en
       narratif (`\textcite` / `form: "prose"`) ; `@[key]` reste parenthétique ;
@@ -26,12 +26,17 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 - [ ] Les deux branches fusionnées dans `texsmith-migration`, `cargo test`,
       `clippy -D warnings`, `fmt --check`, artefacts générés à jour.
 
+## 1b. Défauts trouvés en vérifiant
+
+- [ ] Le fix `[^key]` → `@key` colle la citation au mot précédent (`sortie@key` reste littéral, 21/29 citations perdues sur bien-air/review). Branche `fix/citations`.
+- [ ] Le sucre `++…++` avale « C++03 … C++ » en prose ; reconnaissance resserrée. Branche `fix/keystroke`.
+
 ## 2. Revue de la spec
 
 - [ ] Revue de conformité indépendante spec ↔ code sur C27–C50
       (`design/reviews/07-spec-conformance-migration.md`), findings triés.
-- [ ] Revue de cohérence interne de `spec/tmark.md` comme spécification de
-      langage (`design/reviews/08-spec-consistency.md`), findings triés.
+- [x] Revue de cohérence interne de `spec/tmark.md` comme spécification de
+      langage (`design/reviews/08-spec-consistency.md`, 8e8dbce) : 5 bloquants, 15 majeurs, 19 mineurs.
 - [ ] Chaque finding classé : corrigé, reporté avec numéro de challenge, ou
       rejeté avec raison.
 
@@ -56,11 +61,11 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 
 ## 4. Fonctionnalités à garantir
 
-- [ ] Compteurs personnalisés : `~/bien-air/review` (`counters: fw`,
+- [x] Compteurs personnalisés : `~/bien-air/review` (`counters: fw`,
       `#{fw:key}`, `@fw:key`) passe `tmark lint --fix` et se construit en PDF
-      avec les mêmes numéros ; documenté dans `docs/syntax/counters.md`.
-- [ ] Substitution de fontes XeLaTeX / passe `scripts` : un document CJK +
-      grec + arabe se construit avec les mêmes `\tsscript` qu'en 0.6.0.
+      avec les mêmes numéros ; documenté dans `docs/syntax/counters.md` (80cbcb0). Vérifié : 47 marqueurs et 140 renvois identiques avant/après fixer.
+- [x] Substitution de fontes XeLaTeX / passe `scripts` : un document CJK +
+      grec + arabe se construit avec les mêmes `\tsscript` qu'en 0.6.0. Vérifié : déclarations `\newfontfamily` identiques, texte PDF identique.
 - [ ] Numérotation site-wide et index dans le plugin MkDocs unique, vérifiés
       sur `examples/mkdocs`.
 
