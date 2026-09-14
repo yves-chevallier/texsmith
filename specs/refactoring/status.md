@@ -211,6 +211,16 @@ generic partition. The other 234 are the selector grammar (`#id`, bare text,
 the claiming order, `strip_heading` from the manifest and `flatten` from the
 front matter: template machinery, which the frontier assigns here.
 
+**Correction (2026-09-14).** The withdrawal stands, but this paragraph measures
+the wrong quantity, as the first-principles analysis in `07-synthesis.md`
+points out. What an outline query removes is not `_section_end`'s ten lines: it
+is TeXSmith's *tree walk* for five scalars per heading, and with it the `id()`
+reconciliation at `passes/highlight.py:176` — `document.bodies` and
+`document.ir` kept in step by Python object identity, because `slots`
+partitioned objects instead of selecting indices — and the per-body re-encode
+of the whole document at `core/conversion/bodies.py:194`. The primitive is
+worth more than ten lines and now has three users. See the synthesis, move 2.
+
 So the whole step reduces to sharing a ten-line partition across a repository
 boundary, in two languages, and `~/tmark/AGENTS.md` answers that directly:
 "**DRY across languages, not within reason.** Duplicating three lines is
@@ -254,11 +264,35 @@ N blocks, and `Loader` exists for it). The eleventh is `slots`, which never
 needs the tree either: it needs an index of the top-level headers to match a
 selector against, and a write of a named block range. Hence `sections`.
 
-**So: design for all eleven, migrate one at a time, delete `ir/` when the
-last lands.** `slots` decides the shape and is the one to design first. The
-prize is not the line count — `ir/model.py` is generated and CI-checked, so
-TeXSmith does not maintain it. The prize is that a node field added in tmark
-stops being a two-repository change.
+**Superseded by `07-synthesis.md` (2026-09-14).** Five independent analyses —
+one briefed to defend the contract — all found that it does not drop `ir/`
+either: a patch *is* IR, so TeXSmith keeps the node types, the field names, the
+id space and the span rules in order to construct one. ~500-600 generated lines
+survive and the two-repository coupling with them. Three passes cannot fit the
+shape at all (`RefItem` has no id; `assets` inserts a sibling block; `scripts`
+needs a whole-document text query).
+
+The sceptic's measurement reframes it: the mirror is **three days old**, the
+schema has changed **7 times ever**, and the total hand-written cost is **~37
+lines in `walk.py`, once**. One schema change made TeXSmith smaller.
+
+**The direction, three small moves instead of the bet:**
+
+1. **Ship `tmark.ir` from the wheel** (~1 day). `crates/tmark-py/pyproject.toml`
+   already sets `python-source = "python"` and `gen_stubs.py` already generates
+   Python from Rust. TeXSmith deletes 2 195 lines *and* the generator. This is
+   the whole of the contract's stated benefit, without the contract.
+2. **`tmark.outline(doc)` as its own small ADR** (~2 days). Three users
+   (`slots`, `title`, `headings`); removes the `id()` reconciliation at
+   `highlight.py:176` and the per-body re-encode at `bodies.py:194`.
+3. **Id and span custody** (~1 day) — the one argument that survived the
+   sceptic, and a correctness one: a span copied onto synthesised text is a
+   location that exists and is wrong.
+
+Then stop and measure. `tmark.edit`/`edit_many` already exist in the shipped
+binding; if requests are ever revisited, `select` + `edit_many` lands pass by
+pass, under the rule the analysis produced: **a response carries an answer — a
+path, a key, a font name, a token stream, a typed failure — never a tree.**
 
 **08 · Templates and fragments** — *two of four items done*, branch
 `refactor/08-fragments`.

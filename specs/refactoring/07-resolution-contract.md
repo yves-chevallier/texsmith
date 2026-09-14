@@ -1,5 +1,11 @@
 # Step 07 · The resolution contract, assessed
 
+> **Superseded on 2026-09-14 by `07-synthesis.md`.** Five independent analyses
+> found that the contract proposed below does not drop `ir/` either: its
+> patches are IR, so the host keeps the node types in order to construct them.
+> This document's *measurements* stand; its conclusion does not. Read the
+> synthesis for the direction.
+
 What the request/patch contract would cost and buy, measured against the code
 rather than estimated. Read `status.md` first; this is the detail behind its
 step 07 entry, and it revises that entry's scope.
