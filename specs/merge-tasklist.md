@@ -38,7 +38,8 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 - [x] Revue de cohérence interne de `spec/tmark.md` comme spécification de
       langage (`design/reviews/08-spec-consistency.md`, 8e8dbce) : 5 bloquants, 15 majeurs, 19 mineurs.
 - [ ] Chaque finding classé : corrigé, reporté avec numéro de challenge, ou
-      rejeté avec raison.
+      rejeté avec raison. Texte de la spec : fait (c3bf402, B1–B5, M1–M15, F3–F5, C52–C60).
+      Code (F1, F2, F7, F8, F10, C27, C60) : branche `fix/spec-code` en cours.
 
 ## 3. Correctifs texsmith
 
@@ -77,8 +78,8 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       une fois vérifiés fusionnés (tous fusionnés et propres, supprimés le 2026-09-14).
 - [x] texsmith : 24 worktrees `.claude/worktrees/agent-*` et leurs branches
       `worktree-agent-*` supprimés une fois vérifiés fusionnés (idem, 27 branches).
-- [ ] texsmith : `build-migr/`, `scripts/migrate_examples.py` et les notes
-      `specs/migration/*` archivées ou supprimées ; `specs/README.md` mis à jour.
+- [x] texsmith : `build-migr/` et `scripts/migrate_examples.py` supprimés (4d5910b) ; les notes
+      `specs/migration/*` restent comme archive référencée par le code ; `specs/README.md` mis à jour.
 - [ ] tmark : `design/13-handoff.md` réécrit pour l'état post-merge.
 
 ## 6. Release tmark
