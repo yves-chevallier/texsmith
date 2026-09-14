@@ -178,9 +178,18 @@ Two accidental semantics it exposed, both **pinned by a test and left alone**:
   guard. Unifying it changes what `--format typst -o out.pdf` renders, so it
   needs its own change and its own test.
 
-## What remains
+## The five steps, resolved
 
-**07**, the bet — and the rest of 08. **06 is withdrawn**: see below.
+Three were done, one was withdrawn on the evidence, and one was re-scoped
+until it dissolved into three small moves that are also done. Each step is its
+own branch, stacked in order:
+
+    refactor/00-drop-html-input   →  03-diagnostics  →  05-cli
+                                  →  08-fragments    →  07-request-contract
+
+`src/texsmith` **39 967 → 33 082**. 1 335 tests, `parity.py baseline --check`
+196 identical / 54 skipped / **0 differing**, ruff clean — at every commit of
+every branch.
 
 **06 · The pure passes into tmark** — **the premise does not survive the
 spec; do not start it as written.**
@@ -294,8 +303,7 @@ binding; if requests are ever revisited, `select` + `edit_many` lands pass by
 pass, under the rule the analysis produced: **a response carries an answer — a
 path, a key, a font name, a token stream, a typed failure — never a tree.**
 
-**08 · Templates and fragments** — *two of four items done*, branch
-`refactor/08-fragments`.
+**08 · Templates and fragments** — **done**, branch `refactor/08-fragments`.
 
 **Done: the opposite conventions on `implied_packages`.** `apply_requires`
 subtracted every package an active contract loads itself; `inject_requires`,
@@ -457,7 +465,13 @@ One step, one branch, one readable baseline diff. Changing a page under
 
 ## Before merging
 
-Unchanged from `specs/migration/merge-readiness.md`: tmark
-`texsmith-migration` → `main` first, then this branch → `master`; the five
-`ref:` lines in `.github/workflows/ci.yml`; `vendor/tmark` is still a
-gitignored symlink rather than the pinned wheel D8 describes.
+`specs/migration/merge-readiness.md` carries the detail, re-measured against
+this stack. The order is tmark `texsmith-migration` → `main` first, then the
+stack → `master`, and it is **stricter than it was**: TeXSmith no longer
+generates its own IR mirror, it imports `tmark.ir` from the wheel at 31 sites,
+so a TeXSmith built against a tmark without `python/tmark/ir/` does not start.
+
+Then the **six** (not five) `ref: texsmith-migration` lines in
+`.github/workflows/ci.yml` become `main`, in their own commit; and
+`vendor/tmark` is still a gitignored symlink rather than the pinned wheel D8
+describes — and the wheel it pins must be one that ships the IR.

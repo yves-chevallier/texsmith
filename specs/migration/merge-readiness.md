@@ -1,85 +1,125 @@
-# Merge readiness (2026-09-13)
+# Merge readiness (2026-09-14)
 
-What a reviewer needs before merging `tmark-migration` into `master` here and
-`texsmith-migration` into `main` in the tmark repository. Measured on
-TeXSmith `d884169` and tmark `b866eb4`.
+What a reviewer needs before merging `texsmith-migration` into `main` in the
+tmark repository and the refactoring stack into `master` here. Measured on
+TeXSmith `refactor/07-request-contract` and tmark `353311f`.
+
+## The order is not negotiable, and it is stricter than it was
+
+**tmark merges first.** It always had to, for the six `ref: texsmith-migration`
+lines in `.github/workflows/ci.yml`. It is now a hard runtime dependency as
+well: TeXSmith no longer generates its own mirror of the IR — it imports
+`tmark.ir`, which the wheel ships (31 import sites). A TeXSmith built against a
+tmark without `python/tmark/ir/` does not start.
+
+    1. tmark   texsmith-migration → main
+    2. texsmith  the refactoring stack → master
+    3. the six `ref:` lines become `main`, in their own commit
 
 ## Size, against `master`
 
-| | master | branch |
-| - | -----: | -----: |
-| `src/texsmith`, Python lines | 43 018 | 39 917 |
-| tests (`tests/` + `packages/`) | 18 422 | 19 871 |
-| tests collected | 1 017 | 1 359 |
+| | master | this stack |
+| - | -----: | ---------: |
+| `src/texsmith`, Python lines | 43 018 | **33 075** |
+| tests (`tests/` + `packages/`) | 19 961 | 18 651 |
+| tests collected | 1 017 | **1 335** |
 | runtime dependencies | 24 | 22 |
-| largest module | `snippet.py`, 1 768 | `snippet.py`, 1 723 |
+| largest module | `snippet.py`, 1 768 | `strategies.py`, 1 492 |
 
-The diff is 990 files, +93 325 / −24 925. The insertions are mostly the
-committed regression baseline (3.1 MB of `.tex`/`.typ` under
-`tests/parity/baseline/`, 248 entries), the design notes under `specs/`, and
-the generated `src/texsmith/ir/model.py`. The production package is
-**3 101 lines smaller** than on `master` while doing more, because the
-Python-Markdown pipeline (17 extensions, two writers, the hand-written IR,
-the legacy HTML reader, 45 Jinja partials) went and the TMark core took its
-place: 37 309 lines of Rust in `tmark`, 321 tests, 102 conformance fixtures.
+The production package is **9 943 lines smaller than `master`** — 23 % — while
+doing more. The diff is 1 170 files, +317 232 / −31 824; the insertions are
+almost entirely the committed regression baseline (3.3 MB of `.tex`/`.typ`
+under `tests/parity/baseline/`, 196 recorded entries), the design notes under
+`specs/`, and the corpus fixtures.
 
-`markdown`, `pymdown-extensions` and `python-markdown-math` are gone;
-`tmark` is the one addition.
+`markdown`, `pymdown-extensions` and `python-markdown-math` are gone; `tmark`
+is the one addition.
 
 ## State
 
-- TeXSmith: 1 359 tests pass, `ruff check` and `ruff format --check` clean.
-- tmark: 321 tests, `clippy -D warnings` clean, `cargo fmt --check` clean,
-  generated artifacts (schemas, registry tables) reproduce with no diff.
-- Every example builds: 58/58 corpus entries, and the engine sweep is
-  24/24 under Tectonic, LuaLaTeX and XeLaTeX plus 26/26 under Typst.
-- The documentation site builds with its PDF export: 303 pages, 3.2 MB. The
-  six `[?…]` markers left in it are the pages that *document* what an
-  unresolved reference looks like.
-- `scripts/parity.py baseline --check` (the CI gate): 196 identical,
-  54 skipped, 0 differing.
+- TeXSmith: **1 335 tests** pass, `ruff check` and `ruff format --check` clean.
+- tmark: **321 tests**, `clippy -D warnings` clean, `cargo fmt --check` clean,
+  plus **48 Python tests** under `crates/tmark-py/tests` (the IR model
+  generator moved there with the generator it checks).
+- `scripts/parity.py baseline --check` (the CI gate): **196 identical, 54
+  skipped, 0 differing**, and it now also fails on an `orphaned-baseline` — a
+  recorded entry the corpus no longer renders.
+- Every example builds; the documentation site builds with its PDF export.
 
 ## What a reviewer should look at
 
-1. **The spec and the code were written together.** Challenges C27–C50 were
+1. **The stack is five branches, one per step, each with its own readable
+   baseline diff.** `specs/refactoring/status.md` is the index: what each step
+   decided, what it measured, and what it deliberately did not do. Read it
+   before the code.
+
+       refactor/00-drop-html-input  →  03-diagnostics  →  05-cli
+                                    →  08-fragments    →  07-request-contract
+
+2. **Two steps were withdrawn or re-scoped on evidence, not abandoned.** 06
+   (moving passes into the core) contradicts `spec/tmark.md` §Header, which
+   assigns heading offsets and title promotion to TeXSmith by name. 07 (the
+   request/patch contract) was rejected as drafted — five independent analyses
+   found its central claim false — and replaced by three small moves that are
+   done. `specs/refactoring/07-synthesis.md` carries the reasoning;
+   `design/decisions/0008-resolution-requests.md` in tmark is marked rejected
+   with what survives it.
+
+3. **The IR mirror moved repositories.** `src/texsmith/ir/` (2 195 lines) and
+   `scripts/gen_ir_models.py` (822) are deleted; tmark generates and ships
+   `tmark.ir.{model,codec,walk}`. `Span` moved with it and is now defined once,
+   from the schema, rather than declared in TeXSmith's diagnostics and imported
+   back by the generated models. This is the change most worth reviewing on
+   the tmark side.
+
+4. **The spec and the code were written together.** Challenges C27–C50 were
    decided and implemented in the same commits, by the same agents. An
-   independent conformance pass over the spec sections they touched is the
-   one review this work has not had.
-2. **The writers were never diffed against the 0.6 output.** The parity
-   harness compared readers while both existed; it now gates one rendering
-   against a recorded baseline. `specs/migration/parity-triage.md` lists
-   what the comparison found while it could still be made, and what stayed
-   open.
-3. **Two copies of `texsmith.typ`** — the shipping one under
+   independent conformance pass over the spec sections they touched is the one
+   review this work has not had.
+
+5. **The writers were never diffed against the 0.6 output.** The parity harness
+   compared readers while both existed; it now gates one rendering against a
+   recorded baseline. `specs/migration/parity-triage.md` lists what the
+   comparison found while it could still be made.
+
+6. **Two copies of `texsmith.typ`** — the shipping one under
    `src/texsmith/templates/common/` and the crate's reference under
    `crates/tmark-writers/assets/` — must define the same functions with the
    same signatures. Nothing generates one from the other.
-4. **The `FRAGMENTS` contract spans both repositories.** A macro added on
-   the tmark side fails `test_every_provides_entry_is_defined` here until
-   the fragment defines it. That failure is the intended alarm, but it
-   means a tmark release and a TeXSmith release are coupled.
 
-## Refactoring the migration did not do
+7. **The `FRAGMENTS` contract spans both repositories.** A macro added on the
+   tmark side fails `test_every_provides_entry_is_defined` here until the
+   fragment defines it. That failure is the intended alarm, but it couples the
+   two releases.
 
-- `adapters/plugins/snippet.py` (1 723 lines) is the largest module and now
-  mixes fence parsing, a nested conversion, a cache and an image grid. The
-  pass calls into it; splitting it would let the pass own the IR half.
-- `ui/cli/commands/render.py` (1 143 lines) grew three options and never
-  lost any.
-- `extensions/` survives for two files the HTML reader needs
-  (`tables/schema.py`, `texlogos/specs.py`). The package name no longer
-  says what it holds.
-- `core/` is 13 041 lines across conversion, templates, fragments,
-  bibliography and metadata; the pass framework took the rendering half out
-  of it, and the rest would benefit from the same treatment.
+## Breaking changes a consumer sees
 
-## Before merging
+Nothing is published, so these are recorded rather than deprecated. The
+`CHANGELOG.md` entries carry the detail.
 
-- The five `ref: texsmith-migration` lines in `.github/workflows/ci.yml`
-  point at the tmark branch. They become `main` when tmark merges — the two
-  merges are ordered: tmark first, then this.
+- `texsmith.core.diagnostics` → `texsmith.diagnostics`;
+  `DiagnosticEmitter.warning`/`error` removed in favour of `emit_diagnostic`;
+  a custom emitter subclasses `SinkEmitter` and implements `render`.
+- `texsmith.ir` → `tmark.ir`.
+- `render_typst_document(document, request, …)` takes the request positionally.
+- `ConversionRequest.embed_fragments` → `embed_documents`, and the MkDocs
+  plugin option with it; `LaTeXFragment` → `RenderedDocument`;
+  `ConversionBundle.fragments` → `.documents`.
+- `FragmentPiece.slot` → `FragmentPiece.variable` (and the `fragment.toml` key).
+- `--strict` is discriminating: findings that carried the free-form `texsmith`
+  code now carry real ones, so a run that passed may now fail.
+
+## Still open before a release
+
+- The six `ref: texsmith-migration` lines in `.github/workflows/ci.yml` become
+  `main` once tmark merges.
 - `vendor/tmark` is a gitignored symlink locally and a checkout in CI. A
-  release replaces it with the published wheel (`tmark>=0.X,<0.X+1`), which
-  is what `specs/tmark-migration.md` D8 describes and nobody has done yet.
-- The version is still `[Unreleased]` in `CHANGELOG.md`; releases here are
-  cut in their own commit and tag.
+  release replaces it with the published wheel (`tmark>=0.X,<0.X+1`), which is
+  what `specs/tmark-migration.md` D8 describes and nobody has done yet. The
+  wheel must be one that ships `python/tmark/ir/`.
+- The version is still `[Unreleased]` in `CHANGELOG.md`; releases here are cut
+  in their own commit and tag.
+- Four API pages (`docs/api/cli`, `bibliography`, `transformers`) render as
+  empty documents in the PDF export: a body made only of `::: module`
+  mkdocstrings directives is a run of empty TMark containers. Cosmetic, and
+  recorded in `specs/refactoring/status.md` §Debts.
