@@ -25,6 +25,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 from texsmith.core.context import DocumentState
+from texsmith.diagnostics import DiagnosticEmitter
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -73,6 +74,7 @@ def apply_requires(
     *,
     abbreviations: Iterable[model.AbbrDef] = (),
     template_shell_escape: bool = False,
+    emitter: DiagnosticEmitter | None = None,
 ) -> DocumentState:
     """Record the union of the bodies' ``Requires`` on ``state`` (in place, returned).
 
@@ -103,7 +105,7 @@ def apply_requires(
     # A key an earlier document of the batch already wrote stays in the glossary.
     known = set(state.acronyms)
     for definition in abbreviations:
-        key = state.remember_abbreviation(definition.key, definition.expansion)
+        key = state.remember_abbreviation(definition.key, definition.expansion, emitter=emitter)
         if key and key not in wanted and key not in known:
             # Defined but never written: keep the definition out of the
             # glossary, ``ts-glossary`` declares only the keys that appear.
