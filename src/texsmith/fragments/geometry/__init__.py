@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.base import _build_environment
+from texsmith.diagnostics import DiagnosticEmitter
 
 from .paper import (
     GeometryResolution,
@@ -120,9 +121,14 @@ class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
         self.template_path = Path(__file__).with_name("ts_geometry.tex.jinja")
 
     def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
+        self,
+        context: Mapping[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> GeometryFragmentConfig:
         _ = overrides
+        _ = emitter
         payload: dict[str, Any] = {}
         for key in ("paper", "geometry", "duplex", "margin", "orientation", "binding", "watermark"):
             if key in context:
@@ -137,7 +143,10 @@ class GeometryFragment(BaseFragment[GeometryFragmentConfig]):
         config: GeometryFragmentConfig,
         context: dict[str, Any],
         overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> None:
+        _ = emitter
         # Ensure raw config fields are present before resolution.
         context.update(config.to_context())
         inject_geometry_context(context, overrides)

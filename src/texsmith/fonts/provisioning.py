@@ -14,12 +14,12 @@ from pathlib import Path
 import shutil
 import tempfile
 from typing import Any
-import warnings
 import zipfile
 
 from texsmith.core.http import open_url
 from texsmith.core.templates.manifest import TemplateError
 from texsmith.core.user_dir import get_user_dir
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic
 from texsmith.fonts.cache import FontCache
 from texsmith.fonts.constants import style_suffix
 from texsmith.fonts.downloader import NotoFontDownloader
@@ -125,14 +125,18 @@ def _resolve_emoji_mode(context: Mapping[str, Any]) -> str:
     return "black"
 
 
-def _normalise_family(raw_value: Any) -> str:
+def _normalise_family(raw_value: Any, *, emitter: DiagnosticEmitter | None = None) -> str:
     if isinstance(raw_value, str):
         candidate = raw_value.strip().lower()
         if candidate:
             mapped = _FAMILY_CHOICES.get(candidate)
             if mapped:
                 return mapped
-            warnings.warn(f"Unknown font family '{raw_value}', falling back to 'lm'.", stacklevel=3)
+            emit_diagnostic(
+                emitter,
+                "font-missing",
+                f"Unknown font family '{raw_value}'; falling back to 'lm'",
+            )
     return "lm"
 
 
@@ -179,7 +183,9 @@ def _write_stub_package(package_name: str, family: str, target: Path) -> Path:
     return target
 
 
-def _ensure_noto_color_emoji(cache: FontCache) -> Path | None:
+def _ensure_noto_color_emoji(
+    cache: FontCache, *, emitter: DiagnosticEmitter | None = None
+) -> Path | None:
     """Download the Noto Color Emoji font (TTF) into the cache."""
     dest = cache.path("NotoColorEmoji.ttf")
     if dest.exists():
@@ -187,12 +193,19 @@ def _ensure_noto_color_emoji(cache: FontCache) -> Path | None:
     try:
         _download_archive(_NOTO_COLOR_EMOJI_URL, dest)
     except Exception as exc:  # pragma: no cover - network edge
-        warnings.warn(f"Unable to download Noto Color Emoji font: {exc}", stacklevel=2)
+        emit_diagnostic(
+            emitter,
+            "font-fallback",
+            f"Unable to download Noto Color Emoji font: {exc}",
+            exc=exc,
+        )
         return None
     return dest if dest.exists() else None
 
 
-def _ensure_openmoji_black(cache: FontCache) -> Path | None:
+def _ensure_openmoji_black(
+    cache: FontCache, *, emitter: DiagnosticEmitter | None = None
+) -> Path | None:
     """Download and extract the OpenMoji black glyph font into the cache."""
     dest = cache.path("OpenMoji-black-glyf.ttf")
     if dest.exists():
@@ -219,7 +232,9 @@ def _ensure_openmoji_black(cache: FontCache) -> Path | None:
                 shutil.copy2(extracted_path, dest)
                 return dest
         except Exception as exc:  # pragma: no cover - network edge
-            warnings.warn(f"Unable to download OpenMoji font: {exc}", stacklevel=2)
+            emit_diagnostic(
+                emitter, "font-fallback", f"Unable to download OpenMoji font: {exc}", exc=exc
+            )
             return None
     return dest if dest.exists() else None
 
@@ -268,7 +283,7 @@ def _write_otf_package(
     return target
 
 
-def _ensure_plex_fonts(output_dir: Path) -> None:
+def _ensure_plex_fonts(output_dir: Path, *, emitter: DiagnosticEmitter | None = None) -> None:
     fonts_root = output_dir / "fonts" / "plex-otf"
     temp_dir = Path(tempfile.mkdtemp(prefix="texsmith-plex-"))
     archive_path = temp_dir / "TrueType.zip"
@@ -278,7 +293,7 @@ def _ensure_plex_fonts(output_dir: Path) -> None:
         with zipfile.ZipFile(archive_path) as zf:
             zf.extractall(temp_dir)
     except Exception as exc:  # pragma: no cover - network edge
-        warnings.warn(f"Unable to fetch IBM Plex fonts: {exc}", stacklevel=2)
+        emit_diagnostic(emitter, "font-fallback", f"Unable to fetch IBM Plex fonts: {exc}", exc=exc)
         shutil.rmtree(temp_dir, ignore_errors=True)
         return
 
@@ -322,7 +337,9 @@ def _ensure_plex_fonts(output_dir: Path) -> None:
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def _ensure_ctan_sty(family: str, output_dir: Path) -> Path | None:
+def _ensure_ctan_sty(
+    family: str, output_dir: Path, *, emitter: DiagnosticEmitter | None = None
+) -> Path | None:
     dependency = _CTAN_DEPENDENCIES.get(family)
     if not dependency:
         return None
@@ -366,7 +383,7 @@ def _ensure_ctan_sty(family: str, output_dir: Path) -> Path | None:
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(file, destination)
         if family == "plex":
-            _ensure_plex_fonts(output_dir)
+            _ensure_plex_fonts(output_dir, emitter=emitter)
         shutil.rmtree(temp_dir, ignore_errors=True)
         return target_path
 
@@ -395,12 +412,14 @@ def _ensure_ctan_sty(family: str, output_dir: Path) -> Path | None:
 
     stub_path = _write_stub_package(package_name, family, target_path)
     if download_error is not None:  # pragma: no cover - logging path
-        warnings.warn(
+        emit_diagnostic(
+            emitter,
+            "font-fallback",
             f"Unable to prepare CTAN package for font '{family}': {download_error}",
-            stacklevel=2,
+            exc=download_error,
         )
     if family == "plex":
-        _ensure_plex_fonts(output_dir)
+        _ensure_plex_fonts(output_dir, emitter=emitter)
     return stub_path
 
 
@@ -446,7 +465,12 @@ def _find_font_file(name: str, style: str, ext: str, roots: list[Path]) -> Path 
     return None
 
 
-def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -> dict[str, Any]:
+def _prepare_fallback_context(
+    context: Mapping[str, Any],
+    *,
+    output_dir: Path,
+    emitter: DiagnosticEmitter | None = None,
+) -> dict[str, Any]:
     """Build fallback metadata for the ts-fonts fragment."""
     fonts_section = context.get("fonts") if isinstance(context.get("fonts"), Mapping) else {}
     fallback_summary = (
@@ -534,16 +558,17 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
             # Prefer OpenMoji (monochrome) for broader engine compatibility,
             # even when color is requested. Fall back to NotoColorEmoji only
             # when OpenMoji is unavailable.
-            emoji_path = _ensure_openmoji_black(emoji_cache)
+            emoji_path = _ensure_openmoji_black(emoji_cache, emitter=emitter)
             font_name = "OpenMojiBlack" if emoji_path is not None else font_name
             if emoji_path is None and preferred_color:
-                emoji_path = _ensure_noto_color_emoji(emoji_cache)
+                emoji_path = _ensure_noto_color_emoji(emoji_cache, emitter=emitter)
                 if emoji_path is not None:
                     font_name = "NotoColorEmoji"
             if emoji_path is None or not emoji_path.exists():
-                warnings.warn(
-                    "Emoji font unavailable; using raw characters for emoji glyphs.",
-                    stacklevel=2,
+                emit_diagnostic(
+                    emitter,
+                    "font-fallback",
+                    "Emoji font unavailable; using raw characters for emoji glyphs",
                 )
                 missing_commands.add("texsmithEmoji")
                 continue
@@ -645,9 +670,10 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
                             bold_file = candidate
                     style_count = len(styles) if styles else 1
         if upright_file is None:
-            warnings.warn(
-                f"Fallback font '{font_name}' not found on disk; skipping script '{group}'.",
-                stacklevel=2,
+            emit_diagnostic(
+                emitter,
+                "font-fallback",
+                f"Fallback font '{font_name}' not found on disk; skipping script '{group}'",
             )
             missing_commands.add(text_command)
             continue
@@ -761,7 +787,11 @@ def _prepare_fallback_context(context: Mapping[str, Any], *, output_dir: Path) -
 
 
 def _prepare_mono_font(
-    context: Mapping[str, Any], *, output_dir: Path, family: str
+    context: Mapping[str, Any],
+    *,
+    output_dir: Path,
+    family: str,
+    emitter: DiagnosticEmitter | None = None,
 ) -> dict[str, Any] | None:
     """Ensure a usable monospaced font is available in the build output."""
     fonts_section = context.get("fonts") if isinstance(context.get("fonts"), Mapping) else {}
@@ -786,7 +816,7 @@ def _prepare_mono_font(
 
     styles = ["regular", "bold", "italic", "bolditalic"]
     if source == "plex":
-        _ensure_plex_fonts(output_dir)
+        _ensure_plex_fonts(output_dir, emitter=emitter)
         extension = ".ttf"
         destination_root = (output_dir / "fonts" / "plex-otf").resolve()
         path = "fonts/plex-otf"
@@ -823,9 +853,10 @@ def _prepare_mono_font(
 
     upright_file = resolved.get("regular")
     if upright_file is None:
-        warnings.warn(
-            f"Mono font '{font_name}' not found on disk; falling back to default monospaced font.",
-            stacklevel=2,
+        emit_diagnostic(
+            emitter,
+            "font-fallback",
+            f"Mono font '{font_name}' not found on disk; falling back to the default monospaced font",
         )
         return None
 

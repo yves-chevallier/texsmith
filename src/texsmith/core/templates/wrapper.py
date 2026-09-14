@@ -271,6 +271,7 @@ def wrap_template_document(
             declared_slots=declared_slot_names,
             declared_variables=declared_vars,
             template_name=template.info.name,
+            emitter=emitter_obj,
         )
         variable_injections = fragment_result.variable_injections
         fragment_providers = fragment_result.providers

@@ -3,6 +3,7 @@ from pathlib import Path
 from texsmith.core.documents import Document
 from texsmith.core.templates import load_template_runtime
 from texsmith.core.templates.session import TemplateSession
+from texsmith.diagnostics import LoggingEmitter
 
 
 def test_fragments_default_injection(tmp_path: Path) -> None:
@@ -29,6 +30,33 @@ def test_fragments_default_injection(tmp_path: Path) -> None:
     assert not (tmp_path / "build" / "ts-index.sty").exists()
     assert not (tmp_path / "build" / "ts-todolist.sty").exists()
     assert (tmp_path / "build" / "ts-fonts.sty").exists()
+
+
+def test_ctan_package_failure_reaches_the_sink_end_to_end(tmp_path: Path, monkeypatch) -> None:
+    """The emitter threaded into ``render_fragments``/``FontsConfig`` actually fires.
+
+    ``ts-fonts`` builds its config through ``wrap_template_document``'s
+    ``render_fragments`` call, not a pass — a real front-matter value
+    (``fonts.family: pagella``, a valid choice) drives it there, then a
+    failing CTAN download proves the wiring reaches that far, not just the
+    unit-level ``_ensure_ctan_sty`` call.
+    """
+
+    def _boom(url: str) -> None:
+        raise OSError("network disabled in tests")
+
+    monkeypatch.setattr("texsmith.fonts.provisioning.open_url", _boom)
+
+    md = tmp_path / "doc.md"
+    md.write_text("---\nfonts:\n  family: pagella\n---\nBody\n", encoding="utf-8")
+
+    emitter = LoggingEmitter()
+    session = TemplateSession(load_template_runtime("article"), emitter=emitter)
+    session.add_document(Document.from_markdown(md))
+    session.render(tmp_path / "build")
+
+    codes = [d.code for d in emitter.sink]
+    assert "font-fallback" in codes
 
 
 def test_custom_fragment_rendering(tmp_path: Path) -> None:
