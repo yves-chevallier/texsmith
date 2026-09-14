@@ -200,16 +200,49 @@ So move 2 as scoped is closed, and `tmark.outline` is not proposed. The
 remaining argument for it — that TeXSmith should not hold a tree at all — is
 now weaker, because the tree it holds is the one tmark ships.
 
-**Move 3 · id and span custody — the gap is smaller and different than
-stated.** Three passes cite a numbered rule in their docstrings —
-`highlight.py:15` "the ``Div`` keeps the block's id and span (span rule 1)",
-`emoji.py:25` and `var.py:6` "the source span and a fresh id (span rule 2)".
-**Those rules are written down nowhere**, in either repository. The invariant
-is folklore cited by number. Before proposing a binding that enforces it, the
-rules have to exist and be tested.
+**Move 3 · id and span custody — done, and it did not need the core.** Three
+passes cite a numbered rule in their docstrings — `highlight.py:15` "the
+``Div`` keeps the block's id and span (span rule 1)", `emoji.py:25` and
+`var.py:6` "the source span and a fresh id (span rule 2)". **Those rules were
+written down nowhere**, in either repository: grep finds only the citations.
+
+Measured before proposing anything: 73 documents through the full conversion
+and 22 through the passes alone give **zero duplicate node ids and zero spans
+naming an unregistered file**. The rules are obeyed. What was missing was the
+statement and the check, not a mechanism — so the framework's docstring now
+states all three, and 46 parametrised cases run every committed pass fixture
+through its pass and assert the two that can be checked mechanically.
+
+The synthesis had proposed a binding so the core would mint ids and spans for
+synthesised subtrees, on the grounds that nothing enforced the rules. Nothing
+did; something does now, for a docstring and 46 test cases.
+
+## The shape of the result
+
+All three moves are done and **none of them needed the contract, a new
+binding, or a change to the frontier.**
+
+| | proposed | what it actually took |
+| - | -------- | --------------------- |
+| 1 | ship the mirror from the wheel | that, plus generating `Span` where the schema defines it |
+| 2 | a `tmark.outline` query | `SlotBody` holding indices; the re-encode measured negligible and left |
+| 3 | a binding for id/span custody | a docstring and a test — the rules were already obeyed |
+
+`src/texsmith` 35 141 → 33 061. 1 311 tests, parity 196/54/0.
+
+The pattern is worth keeping: each move shrank on contact with a measurement.
+ADR 0008 priced a coupling at nine request kinds and twenty fixtures; the
+coupling had cost 37 lines in three days. The outline query was priced at a
+cross-repository ADR; the defect under it was a local one about object
+identity. The custody binding was priced at a fourth abstraction seam; the
+invariant it would enforce already held. **Measure the pain before designing
+the cure.**
 
 ## Status
 
-ADR 0008 is marked rejected-as-drafted in tmark, with what survives it. Moves
-1 and 2 are done; move 3 is reduced to writing the rules down and testing them,
-which is TeXSmith's alone.
+ADR 0008 is marked rejected-as-drafted in tmark, with what survives it — the
+rule that a response carries an answer and never a tree, for whoever revisits
+requests on evidence. `tmark.edit`/`edit_many` already ship, so that day can
+start from `select` and land pass by pass.
+
+Moves 1, 2 and 3 are done.
