@@ -27,7 +27,9 @@ def test_missing_asset_raises() -> None:
 
 def test_acronym_tracking() -> None:
     state = DocumentState()
-    key = state.remember_acronym("LASER", "Light Amplification by Stimulated Emission of Radiation")
+    key = state.remember_abbreviation(
+        "LASER", "Light Amplification by Stimulated Emission of Radiation"
+    )
     assert key
     assert "LASER" in state.acronym_keys
     assert state.acronym_keys["LASER"] == key
@@ -39,8 +41,8 @@ def test_acronym_tracking() -> None:
 
 def test_acronym_conflict_emits_warning() -> None:
     state = DocumentState()
-    key = state.remember_acronym("HTTP", "Hypertext Transfer Protocol")
+    key = state.remember_abbreviation("HTTP", "Hypertext Transfer Protocol")
     with pytest.warns(UserWarning, match="Inconsistent acronym definition"):
-        duplicate_key = state.remember_acronym("HTTP", "Different")
+        duplicate_key = state.remember_abbreviation("HTTP", "Different")
     assert duplicate_key == key
     assert state.acronyms[key] == ("HTTP", "Hypertext Transfer Protocol")

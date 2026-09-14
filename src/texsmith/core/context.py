@@ -27,17 +27,13 @@ class DocumentState:
     acronyms: dict[str, tuple[str, str]] = field(default_factory=dict)
     acronym_entry_groups: dict[str, str] = field(default_factory=dict)
     acronym_groups: list[tuple[str, str]] = field(default_factory=list)
-    glossary: dict[str, dict[str, Any]] = field(default_factory=dict)
-    snippets: dict[str, dict[str, Any]] = field(default_factory=dict)
-    headings: list[dict[str, Any]] = field(default_factory=list)
     has_index_entries: bool = False
     requires_shell_escape: bool = False
-    counters: dict[str, int] = field(default_factory=dict)
     bibliography: dict[str, dict[str, Any]] = field(default_factory=dict)
     citations: list[str] = field(default_factory=list)
+    #: Dedup set for :meth:`record_citation`; no reader outside this class,
+    #: but it is what keeps ``citations`` insertion-ordered and unique.
     _citation_index: set[str] = field(default_factory=set, init=False, repr=False)
-    footnotes: dict[str, str] = field(default_factory=dict)
-    index_entries: list[tuple[str, ...]] = field(default_factory=list)
     pygments_styles: dict[str, str] = field(default_factory=dict)
     script_usage: list[dict[str, Any]] = field(default_factory=list)
     fallback_summary: list[dict[str, Any]] = field(default_factory=list)
@@ -56,10 +52,6 @@ class DocumentState:
     #: writers, so the fragments activate from ``Requires`` (the contract
     #: path) instead of sniffing the rendered LaTeX.
     contract_path: bool = False
-
-    def remember_acronym(self, term: str, description: str) -> str:
-        """Register an acronym definition keyed by a normalised identifier."""
-        return self.remember_abbreviation(term=term, description=description)
 
     def remember_abbreviation(self, term: str, description: str) -> str:
         """Track abbreviation definitions while ensuring consistency."""
@@ -97,20 +89,6 @@ class DocumentState:
             candidate = f"{slug}{suffix}"
             suffix += 1
         return candidate
-
-    def next_counter(self, key: str = "default") -> int:
-        """Increment and return the named counter."""
-        value = self.counters.get(key, 0) + 1
-        self.counters[key] = value
-        return value
-
-    def peek_counter(self, key: str = "default") -> int:
-        """Return the current value of the named counter without modifying it."""
-        return self.counters.get(key, 0)
-
-    def reset_counter(self, key: str) -> None:
-        """Clear the named counter if it has been tracked."""
-        self.counters.pop(key, None)
 
     def record_citation(self, key: str) -> None:
         """Track citation keys used throughout the document."""

@@ -67,9 +67,12 @@ def test_manifest_defaults_are_applied(book_template: WrappableTemplate) -> None
 def test_wrap_template_document_includes_index_when_flag_true(
     book_template: WrappableTemplate, tmp_path: Path
 ) -> None:
+    # ``ts-index`` activates through the contract path (``requires.index``
+    # non-empty), not through a flag alone: a document state with only
+    # ``has_index_entries`` set and no contract has nothing to activate it.
     state = DocumentState()
     state.has_index_entries = True
-    state.index_entries.append(("Alpha",))
+    state.contract_path = True
     result = wrap_template_document(
         template=book_template,
         default_slot="mainmatter",
@@ -82,27 +85,6 @@ def test_wrap_template_document_includes_index_when_flag_true(
     assert "\\usepackage{ts-index}" in result.latex_output
     assert "\\printindex" in result.latex_output
     assert "\\printindex" in result.template_context.get("fragment_backmatter", "")
-
-
-def test_wrap_template_document_exposes_index_terms(
-    article_template: WrappableTemplate, tmp_path: Path
-) -> None:
-    state = DocumentState()
-    state.has_index_entries = True
-    state.index_entries.append(("Alpha", "Beta"))
-    result = wrap_template_document(
-        template=article_template,
-        default_slot="mainmatter",
-        slot_outputs={"mainmatter": ""},
-        document_state=state,
-        template_overrides=None,
-        output_dir=tmp_path,
-        copy_assets=False,
-    )
-
-    context = result.template_context
-    assert context["has_index"] is True
-    assert ("Alpha", "Beta") in context["index_terms"]
 
 
 def test_wrap_document_includes_acronyms_when_present(
@@ -333,7 +315,7 @@ def test_ts_index_fragment_uses_texindy(
 ) -> None:
     state = DocumentState()
     state.has_index_entries = True
-    state.index_entries.append(("Alpha",))
+    state.contract_path = True
     result = wrap_template_document(
         template=article_template,
         default_slot="mainmatter",
@@ -357,7 +339,7 @@ def test_ts_index_fragment_falls_back_to_makeindex(
 ) -> None:
     state = DocumentState()
     state.has_index_entries = True
-    state.index_entries.append(("Beta",))
+    state.contract_path = True
     result = wrap_template_document(
         template=article_template,
         default_slot="mainmatter",

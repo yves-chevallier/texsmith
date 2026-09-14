@@ -184,13 +184,8 @@ class TemplateRenderer:
                 if candidate:
                     index_engine = candidate
 
-        has_index = bool(
-            getattr(document_state, "has_index_entries", False)
-            or getattr(document_state, "index_entries", [])
-        )
-        has_glossary = bool(
-            getattr(document_state, "acronyms", {}) or getattr(document_state, "glossary", {})
-        )
+        has_index = bool(getattr(document_state, "has_index_entries", False))
+        has_glossary = bool(getattr(document_state, "acronyms", {}))
 
         content = build_latexmkrc_content(
             root_filename=main_tex_path.stem,
