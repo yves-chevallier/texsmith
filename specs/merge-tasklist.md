@@ -42,8 +42,10 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 
 ## 3. Correctifs texsmith
 
-- [ ] Les 24 `warnings.warn` routés par `emit_diagnostic` avec un code, ou
+- [x] Les 24 `warnings.warn` routés par `emit_diagnostic` avec un code, ou
       supprimés avec raison ; `--strict` et `--diagnostics-json` les voient.
+      Fait (d6b2e0a) : 12 routés (`font-fallback`, `fragment-manifest`, `metadata-invalid`), 11 sur logger de module
+      faute d'émetteur atteignable, 1 `UserWarning` gardé pour les auteurs de templates. 1345 tests.
 - [ ] Baseline de parité ré-enregistrée après le fix des citations, diff lu
       ligne par ligne (`scripts/parity.py baseline --check`).
 - [ ] `docs/syntax/references.md`, `docs/guide/migration.md` et
