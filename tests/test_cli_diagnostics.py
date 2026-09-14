@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 
 from typer.testing import CliRunner
 
@@ -117,9 +118,14 @@ First #{n:joy}.
 """
 
 
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
 def _tmark(source: Path, *extra: str) -> tuple[int, str]:
+    # Typer colours its usage box when the terminal claims colour (CI sets
+    # FORCE_COLOR); the assertions read the plain text.
     result = CliRunner().invoke(app, [str(source), *extra])
-    return result.exit_code, result.output
+    return result.exit_code, _ANSI.sub("", result.output)
 
 
 def test_deprecated_records_fail_strict_by_default(tmp_path: Path) -> None:

@@ -828,4 +828,5 @@ def test_numbering_option_is_validated() -> None:
         ["--numbering", "latex", str(EXAMPLES / "counters" / "counters.md")],
     )
     assert result.exit_code != 0
-    assert "--numbering must be 'backend' or 'tmark'" in result.output
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)  # CI colours the usage box
+    assert "--numbering must be 'backend' or 'tmark'" in plain
