@@ -5,13 +5,15 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, Sequence
 import copy
 from datetime import date, datetime
+import logging
 from typing import Any
-import warnings
 
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 
 __all__ = ["PressMetadataError", "normalise_press_metadata"]
+
+logger = logging.getLogger(__name__)
 
 
 class PressMetadataError(ValueError):
@@ -145,9 +147,15 @@ def _coerce_common_strings(
             merged[field] = source
         elif existing is not None:
             if source is not None and source != existing:
-                warnings.warn(
-                    f"Overriding press.{field} with root front matter value '{existing}'.",
-                    stacklevel=2,
+                # No single emitter reaches this normaliser: it runs from
+                # eleven call sites (CLI front-matter merge, policy, typst,
+                # documents, the template manifest, the snippet plugin),
+                # several before any Document/emitter exists. The module
+                # logger keeps the finding visible without the diagnostics
+                # sink; ``frontmatter-root-overrides-press`` is the code this
+                # would carry if a caller ever threads an emitter through.
+                logger.warning(
+                    "Overriding press.%s with root front matter value '%s'.", field, existing
                 )
             merged[field] = existing
 

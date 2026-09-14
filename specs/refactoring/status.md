@@ -178,6 +178,115 @@ Two accidental semantics it exposed, both **pinned by a test and left alone**:
   guard. Unifying it changes what `--format typst -o out.pdf` renders, so it
   needs its own change and its own test.
 
+## Step 09 · Warnings into the sink — **done**
+
+Branch `refactor/09-warnings-to-sink`, stacked on `refactor/07-request-contract`.
+1 345 tests, ruff clean at every commit. Three new codes: `font-fallback`,
+`fragment-manifest`, `metadata-invalid`.
+
+Step 03 found two `warnings.warn` calls in the font pipeline and fixed those;
+the rest — 24 call sites across nine files — stayed outside the diagnostics
+system, invisible to `--strict` and `--diagnostics-json` the same way. This
+step decided each one: route it through `emit_diagnostic` where a run's
+emitter can be threaded to the call site, or say plainly why it can't and
+fall back to the module's own logger, which at least survives
+`PYTHONWARNINGS=error` and standard `logging` configuration. Nothing found
+here was dead.
+
+**The grep the task started from over-counted by one, in one direction and
+under by one in the other.** `fonts/provisioning.py` has eight `warnings.warn`
+calls, not nine; the ninth is `fragments/fonts/__init__.py:61`, the CTAN
+try/except that wraps `_ensure_ctan_sty` from the fragment's `inject_into` —
+conceptually the same "font could not be prepared" family, in the adjacent
+file. `grep -rn 'warnings.warn' src packages` turns up a 24th site the task's
+file list did not name, `ui/cli/commands/render.py:111`; the total of 24
+holds, the per-file split does not.
+
+**Threading the emitter meant widening two contracts, not adding a shim.**
+`render_fragments` (`core/fragments/__init__.py`) already runs inside
+`wrap_template_document`, which has held an `emitter` parameter since step 03
+— it just never passed it to `render_fragments`, and `BaseFragment.build_config`/
+`.inject` had no parameter to carry it to a fragment's own `from_context`/
+`inject_into`. Both gained a keyword-only `emitter: DiagnosticEmitter | None
+= None`, default-ignored by the nine fragments that don't need it (`geometry`
+and `frame` override the two methods and now discard the parameter the same
+way they already discard `overrides`; the other seven use `BaseFragment`'s
+default, which does the same). Only `FontsFragment` forwards it, down through
+`FontsConfig.from_context`/`.inject_into` into `fonts/provisioning.py`'s
+`_normalise_family`, `_ensure_noto_color_emoji`, `_ensure_openmoji_black`,
+`_ensure_plex_fonts`, `_ensure_ctan_sty`, `_prepare_fallback_context` and
+`_prepare_mono_font` — the whole call graph the eight (plus one) font warnings
+live in. `tests/test_fragments.py::test_ctan_package_failure_reaches_the_sink_end_to_end`
+drives a real document through `TemplateSession` with a failing download to
+prove the wiring reaches that far, not just the unit-level functions.
+
+The acronym-conflict warning in `core/context.py` threaded the same way, on a
+much shorter path: `DocumentState.remember_abbreviation`/`.remember_acronym`
+gained the keyword, `core/fragments/activation.py`'s `apply_requires` forwards
+it, and its one caller with a real emitter — `render_ir_document` in
+`core/conversion/pipeline.py` — already had one in scope. The Typst path's
+second call to `apply_requires` (`conversion/typst.py::_render_acronyms`, a
+redundant reformat of a document already processed once) keeps the default
+`None`: whatever it would have warned about already fired on the first pass.
+
+**Where no single emitter reaches the call site, it stays off the sink.**
+Eleven of the 24 are module-level utilities — `core/metadata.py`'s
+`normalise_press_metadata` (11 call sites, several before any `Document` or
+emitter exists), `core/document_date.py`'s `format_date` (behind the four
+templates' `prepare_context`, which carries no emitter), `core/git_version.py`
+(five sites, consumed by both of the above) and `ui/cli/commands/render.py`'s
+crossref-inventory delivery, which now matches the sibling crossref failures
+already on the module logger in `conversion/service.py` and
+`adapters/latex/build.py`. Threading an emitter through all of `metadata.py`'s
+callers alone would touch the CLI's front-matter merge, `conversion/policy.py`,
+`conversion/typst.py`, `core/documents.py` (four sites), the template manifest
+and the snippet plugin — a redesign of front-matter resolution, not a warnings
+cleanup. Each of these eight call sites got `logger = logging.getLogger(__name__)`
+and a `logger.warning(...)` in place of `warnings.warn`; three more in
+`core/fragments/__init__.py`'s `_discover_entry_points` (a broken
+`texsmith.fragments` entry point) got the same treatment, for the same
+reason — that code runs once, building the module-level `FRAGMENT_REGISTRY`
+singleton, before any run's emitter exists.
+
+**One call site is not a document finding at all and was left alone.**
+`core/templates/manifest.py:197`'s `register_attribute_normaliser` warns a
+*template package author* who re-registers a normaliser name without
+`override=True` — a Python import-time collision notice for a library
+extension point, the same category as the stdlib's own warnings about
+shadowed registrations. It is not `DeprecationWarning` (nothing about it is
+deprecated) and it is not a per-document finding, so it keeps `warnings.warn`
+as a plain `UserWarning`.
+
+| # | Site | Decision | Code / mechanism |
+| - | ---- | -------- | ----------------- |
+| 1 | `fonts/provisioning.py:135` (`_normalise_family`) | routed | `font-missing` |
+| 2 | `fonts/provisioning.py:190` (`_ensure_noto_color_emoji`) | routed | `font-fallback` |
+| 3 | `fonts/provisioning.py:222` (`_ensure_openmoji_black`) | routed | `font-fallback` |
+| 4 | `fonts/provisioning.py:281` (`_ensure_plex_fonts`) | routed | `font-fallback` |
+| 5 | `fonts/provisioning.py:398` (`_ensure_ctan_sty`, download failed) | routed | `font-fallback` |
+| 6 | `fonts/provisioning.py:544` (`_prepare_fallback_context`, emoji unavailable) | routed | `font-fallback` |
+| 7 | `fonts/provisioning.py:648` (`_prepare_fallback_context`, font not on disk) | routed | `font-fallback` |
+| 8 | `fonts/provisioning.py:826` (`_prepare_mono_font`) | routed | `font-fallback` |
+| 9 | `fragments/fonts/__init__.py:61` (`FontsConfig.inject_into`) | routed | `font-fallback` |
+| 10 | `core/fragments/__init__.py:275` (entry point failed to load) | kept — module logger | no emitter at registry-construction/import time |
+| 11 | `core/fragments/__init__.py:294` (entry point dir has no `fragment.toml`) | kept — module logger | same as above |
+| 12 | `core/fragments/__init__.py:304` (entry point resolves to neither) | kept — module logger | same as above |
+| 13 | `core/fragments/__init__.py:518` (`should_render` raised, `FragmentDefinition`) | routed | `fragment-manifest` |
+| 14 | `core/fragments/__init__.py:548` (`should_render` raised, `BaseFragment`) | routed | `fragment-manifest` |
+| 15 | `core/context.py:74` (`remember_abbreviation`, conflicting definition) | routed | `metadata-invalid` |
+| 16 | `core/templates/manifest.py:197` (`register_attribute_normaliser`) | kept — unchanged | library extension-point `UserWarning`, not a document finding |
+| 17 | `core/metadata.py:148` (`normalise_press_metadata`) | kept — module logger | 11 call sites, several pre-`Document`; would carry `frontmatter-root-overrides-press` if an emitter ever reaches it |
+| 18 | `core/document_date.py:163` (`_resolve_locale`) | kept — module logger | behind four templates' `prepare_context`, none carry an emitter |
+| 19 | `core/git_version.py:44` (`git_describe`, no repo) | kept — module logger | consumed by `document_date`/`document_version`, same reach problem |
+| 20 | `core/git_version.py:63` (`git_describe`, no metadata) | kept — module logger | same |
+| 21 | `core/git_version.py:81` (`git_commit_date`, no repo) | kept — module logger | same |
+| 22 | `core/git_version.py:93` (`git_commit_date`, no metadata) | kept — module logger | same |
+| 23 | `core/git_version.py:102` (`git_commit_date`, unparseable output) | kept — module logger | same |
+| 24 | `ui/cli/commands/render.py:111` (`_deliver_reference_inventory`) | kept — module logger | matches sibling crossref-inventory logging in `conversion/service.py`, `adapters/latex/build.py` |
+
+12 routed to `emit_diagnostic`, 11 kept on a module logger, 1 kept as an
+unchanged library `UserWarning`, 0 dead.
+
 ## The five steps, resolved
 
 Three were done, one was withdrawn on the evidence, and one was re-scoped

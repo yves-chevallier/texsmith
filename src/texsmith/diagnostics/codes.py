@@ -98,6 +98,11 @@ _TABLE: tuple[CodeInfo, ...] = (
         "The Noto coverage lookup failed; the default font set is used",
     ),
     CodeInfo(
+        "font-fallback",
+        Severity.WARNING,
+        "A font substitute, package, or file could not be prepared; a stub or different font is used",
+    ),
+    CodeInfo(
         "transformer-dependency-missing",
         Severity.WARNING,
         "A diagram or image converter is missing a dependency",
@@ -168,6 +173,16 @@ _TABLE: tuple[CodeInfo, ...] = (
         "ref-unresolved", Severity.WARNING, "A reference key found in no registry", tmark=True
     ),
     CodeInfo("label-duplicate", Severity.WARNING, "The same label defined twice", tmark=True),
+    CodeInfo(
+        "fragment-manifest",
+        Severity.WARNING,
+        "A fragment misbehaved while rendering; it renders anyway",
+    ),
+    CodeInfo(
+        "metadata-invalid",
+        Severity.WARNING,
+        "A metadata value conflicts with an earlier declaration of the same key",
+    ),
 )
 
 CODES: dict[str, CodeInfo] = {info.code: info for info in _TABLE}

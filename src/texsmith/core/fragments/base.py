@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Generic, Literal, TypeVar
 
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
+from texsmith.diagnostics import DiagnosticEmitter
 
 
 FragmentKind = Literal["package", "input", "inline"]
@@ -98,26 +99,40 @@ class BaseFragment(ABC, Generic[C]):
     source: ClassVar[Path | None] = None
 
     def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
+        self,
+        context: Mapping[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> C:
         """Return a normalized config instance from the provided context.
 
         The default follows the common convention where the config class exposes
         a ``from_context`` classmethod; fragments with bespoke parsing (e.g.
-        pydantic validation) override this.
+        pydantic validation) override this. ``emitter`` is unused by the
+        default path — only a fragment whose ``from_context`` accepts it
+        (``FontsFragment``) overrides this method to forward it.
         """
         _ = overrides
+        _ = emitter
         return self.config_cls.from_context(context)  # type: ignore[attr-defined]
 
     def inject(
-        self, config: C, context: dict[str, Any], overrides: Mapping[str, Any] | None = None
+        self,
+        config: C,
+        context: dict[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> None:
         """Inject Jinja/templating context variables derived from the config.
 
         The default delegates to ``config.inject_into(context)``; fragments that
-        compute context keys directly override this.
+        compute context keys directly override this. ``emitter`` is unused by
+        the default path, for the same reason as :meth:`build_config`.
         """
         _ = overrides
+        _ = emitter
         config.inject_into(context)  # type: ignore[attr-defined]
 
     @abstractmethod
@@ -126,11 +141,15 @@ class BaseFragment(ABC, Generic[C]):
         raise NotImplementedError
 
     def render_context(
-        self, context: dict[str, Any], overrides: Mapping[str, Any] | None = None
+        self,
+        context: dict[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> C:
         """Build config and inject into a mutable context; return the config."""
-        config = self.build_config(context, overrides=overrides)
-        self.inject(config, context, overrides=overrides)
+        config = self.build_config(context, overrides=overrides, emitter=emitter)
+        self.inject(config, context, overrides=overrides, emitter=emitter)
         return config
 
 

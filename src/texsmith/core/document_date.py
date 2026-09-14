@@ -19,12 +19,14 @@ template so other templates can opt in by importing :func:`format_date`.
 from __future__ import annotations
 
 from datetime import date, datetime
+import logging
 from pathlib import Path
 from typing import Any
-import warnings
 
 
 __all__ = ["format_date"]
+
+logger = logging.getLogger(__name__)
 
 
 _FRENCH_MONTHS = (
@@ -160,10 +162,11 @@ def _resolve_locale(language: Any) -> str:
     if language is None:
         return "en"
     if not isinstance(language, str):
-        warnings.warn(
-            f"date renderer ignoring non-string language={language!r}; using English.",
-            stacklevel=3,
-        )
+        # No emitter reaches this resolver: the four templates that call
+        # ``format_date`` (article, letter, book, snippet) build their
+        # context in ``prepare_context``, which does not carry one. The
+        # module logger keeps the malformed-type finding visible.
+        logger.warning("date renderer ignoring non-string language=%r; using English.", language)
         return "en"
     key = language.strip().lower()
     return _LANGUAGE_TO_LOCALE.get(key, "en")

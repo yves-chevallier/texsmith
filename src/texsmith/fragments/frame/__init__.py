@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from texsmith.core.coerce import coerce_bool
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec, TemplateError
+from texsmith.diagnostics import DiagnosticEmitter
 
 
 _DEFAULT_MARGIN = "0pt"
@@ -140,9 +141,14 @@ class FrameFragment(BaseFragment[FrameConfig]):
     }
 
     def build_config(
-        self, context: Mapping[str, Any], overrides: Mapping[str, Any] | None = None
+        self,
+        context: Mapping[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> FrameConfig:
         _ = overrides
+        _ = emitter
         raw_value = context.get("frame_spec") or context.get("frame")
         try:
             return self.config_cls.model_validate(raw_value)
@@ -154,8 +160,11 @@ class FrameFragment(BaseFragment[FrameConfig]):
         config: FrameConfig,
         context: dict[str, Any],
         overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
     ) -> None:
         _ = overrides
+        _ = emitter
         context["ts_frame_enabled"] = config.enabled
         context["ts_frame_dogear"] = bool(config.enabled and config.dogear)
         context["ts_frame_margin"] = config.effective_margin()

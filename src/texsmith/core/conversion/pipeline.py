@@ -409,6 +409,7 @@ def render_ir_document(
         requires,
         abbreviations=processed.ir.abbreviations,
         template_shell_escape=bool(binding.requires_shell_escape) if binding else False,
+        emitter=emitter,
     )
     _declare_glossary(state, processed.resolved)
     apply_pass_values(ctx, state, context.template_overrides)

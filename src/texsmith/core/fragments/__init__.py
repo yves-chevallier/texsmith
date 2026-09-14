@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
 from typing import Any
-import warnings
 
 
 try:  # Python >=3.11
@@ -22,6 +22,10 @@ from texsmith.core.templates.manifest import (
     TemplateError,
     _import_object,
 )
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -272,9 +276,10 @@ class FragmentRegistry:
             try:
                 target = entry.load()
             except Exception as exc:  # pragma: no cover - defensive
-                warnings.warn(
-                    f"Failed to load texsmith fragment entry point '{entry.name}': {exc}",
-                    stacklevel=2,
+                # No document/emitter exists yet: this fires once, from the
+                # module-level ``FRAGMENT_REGISTRY`` singleton, at import time.
+                logger.warning(
+                    "Failed to load texsmith fragment entry point '%s': %s", entry.name, exc
                 )
                 continue
 
@@ -291,21 +296,22 @@ class FragmentRegistry:
             if candidate.is_dir():
                 manifest_path = candidate / "fragment.toml"
                 if not manifest_path.is_file():
-                    warnings.warn(
-                        f"texsmith fragment entry point '{entry.name}' points to "
-                        f"'{candidate}' but it has no fragment.toml.",
-                        stacklevel=2,
+                    logger.warning(
+                        "texsmith fragment entry point '%s' points to '%s' but it has no "
+                        "fragment.toml.",
+                        entry.name,
+                        candidate,
                     )
                     continue
                 definition = FragmentDefinition.from_manifest(manifest_path)
             elif candidate.is_file() and candidate.name == "fragment.toml":
                 definition = FragmentDefinition.from_manifest(candidate)
             else:
-                warnings.warn(
-                    f"texsmith fragment entry point '{entry.name}' resolved to "
-                    f"'{candidate}', which is neither a fragment directory nor a "
-                    "fragment.toml file.",
-                    stacklevel=2,
+                logger.warning(
+                    "texsmith fragment entry point '%s' resolved to '%s', which is neither a "
+                    "fragment directory nor a fragment.toml file.",
+                    entry.name,
+                    candidate,
                 )
                 continue
 
@@ -452,6 +458,7 @@ def render_fragments(
     declared_variables: set[str] | None = None,
     template_name: str | None = None,
     declared_attribute_owners: Mapping[str, str] | None = None,
+    emitter: DiagnosticEmitter | None = None,
 ) -> FragmentRenderResult:
     """
     Render the selected fragments into ``output_dir`` and return the injected variables.
@@ -511,14 +518,16 @@ def render_fragments(
                         continue
                 except Exception as exc:
                     # ``should_render`` is a user-authored predicate; a bug in
-                    # it must not kill the whole render. Surface a warning so
+                    # it must not kill the whole render. Surface a diagnostic so
                     # the failure isn't silent and fall through (fail-open) —
-                    # the user sees the fragment render alongside the warning
+                    # the user sees the fragment render alongside the finding
                     # rather than losing output with no explanation.
-                    warnings.warn(
-                        f"Fragment '{fragment.name}' should_render() raised {exc!r};"
-                        " rendering the fragment anyway.",
-                        stacklevel=2,
+                    emit_diagnostic(
+                        emitter,
+                        "fragment-manifest",
+                        f"Fragment '{fragment.name}' should_render() raised {exc!r}; "
+                        "rendering the fragment anyway",
+                        exc=exc,
                     )
         else:
             attributes = FRAGMENT_REGISTRY.attributes_for(fragment.name)
@@ -537,18 +546,20 @@ def render_fragments(
             for key, value in getattr(fragment, "context_defaults", {}).items():
                 context.setdefault(key, value)
 
-            config = fragment.build_config(context, overrides=overrides)
-            fragment.inject(config, context, overrides=overrides)
+            config = fragment.build_config(context, overrides=overrides, emitter=emitter)
+            fragment.inject(config, context, overrides=overrides, emitter=emitter)
             try:
                 if not fragment.should_render(config):
                     continue
             except Exception as exc:
-                # Mirror the FragmentDefinition branch: warn and fall through
+                # Mirror the FragmentDefinition branch: emit and fall through
                 # rather than losing the fragment to a buggy predicate.
-                warnings.warn(
-                    f"Fragment '{fragment.name}' should_render() raised {exc!r};"
-                    " rendering the fragment anyway.",
-                    stacklevel=2,
+                emit_diagnostic(
+                    emitter,
+                    "fragment-manifest",
+                    f"Fragment '{fragment.name}' should_render() raised {exc!r}; "
+                    "rendering the fragment anyway",
+                    exc=exc,
                 )
 
         for piece in fragment.pieces:

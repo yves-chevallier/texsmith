@@ -5,6 +5,7 @@ import pytest
 
 from texsmith.core.context import AssetRegistry, DocumentState
 from texsmith.core.exceptions import AssetMissingError
+from texsmith.diagnostics import LoggingEmitter
 
 
 def test_register_and_retrieve_asset() -> None:
@@ -37,10 +38,21 @@ def test_acronym_tracking() -> None:
     assert expanded.startswith("Light")
 
 
-def test_acronym_conflict_emits_warning() -> None:
+def test_acronym_conflict_emits_diagnostic() -> None:
     state = DocumentState()
-    key = state.remember_acronym("HTTP", "Hypertext Transfer Protocol")
-    with pytest.warns(UserWarning, match="Inconsistent acronym definition"):
-        duplicate_key = state.remember_acronym("HTTP", "Different")
+    emitter = LoggingEmitter()
+    key = state.remember_acronym("HTTP", "Hypertext Transfer Protocol", emitter=emitter)
+    duplicate_key = state.remember_acronym("HTTP", "Different", emitter=emitter)
     assert duplicate_key == key
     assert state.acronyms[key] == ("HTTP", "Hypertext Transfer Protocol")
+    (recorded,) = emitter.sink
+    assert recorded.code == "metadata-invalid"
+    assert "Inconsistent acronym definition" in recorded.message
+
+
+def test_acronym_conflict_stays_quiet_without_an_emitter() -> None:
+    """No emitter reachable (the default): silent, not a crash."""
+    state = DocumentState()
+    key = state.remember_acronym("HTTP", "Hypertext Transfer Protocol")
+    duplicate_key = state.remember_acronym("HTTP", "Different")
+    assert duplicate_key == key

@@ -5,13 +5,13 @@ from __future__ import annotations
 import atexit
 from collections.abc import Iterable, Mapping
 import contextlib
+import logging
 import os
 from pathlib import Path
 import shutil
 import sys
 import tempfile
 from typing import Annotated, Any
-import warnings
 
 import click
 from click.core import ParameterSource
@@ -96,6 +96,7 @@ from ..utils import determine_output_target, organise_slot_overrides, write_outp
 
 _SERVICE = ConversionService()
 _REQUEST_DEFAULTS = ConversionRequest()
+logger = logging.getLogger(__name__)
 
 
 def _deliver_reference_inventory(main_tex_path: Path, destination: Path) -> None:
@@ -108,7 +109,10 @@ def _deliver_reference_inventory(main_tex_path: Path, destination: Path) -> None
     try:
         relocate_inventory(inventory, destination)
     except OSError as exc:  # pragma: no cover - the PDF itself was delivered
-        warnings.warn(f"Could not deliver the cross-reference inventory: {exc}", stacklevel=2)
+        # Matches the sibling crossref-inventory failures in
+        # conversion/service.py and adapters/latex/build.py: a module logger,
+        # not the diagnostics sink (the PDF already shipped).
+        logger.warning("Could not deliver the cross-reference inventory: %s", exc)
 
 
 def _cleanup_temp_input(path: Path) -> None:

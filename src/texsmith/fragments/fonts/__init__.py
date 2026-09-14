@@ -10,10 +10,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, ClassVar
-import warnings
 
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.templates.manifest import TemplateAttributeSpec
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic
 from texsmith.fonts.provisioning import (
     _FAMILY_CHOICES,
     _ensure_ctan_sty,
@@ -32,19 +32,25 @@ class FontsConfig:
     mono_font: dict[str, Any] | None = None
 
     @classmethod
-    def from_context(cls, context: Mapping[str, Any]) -> FontsConfig:
+    def from_context(
+        cls, context: Mapping[str, Any], *, emitter: DiagnosticEmitter | None = None
+    ) -> FontsConfig:
         fonts_section = context.get("fonts")
         if isinstance(fonts_section, Mapping):
             raw_family = fonts_section.get("family")
         else:
             raw_family = context.get("fonts_family")
-        family = _normalise_family(raw_family)
+        family = _normalise_family(raw_family, emitter=emitter)
         output_dir = _resolve_output_dir(context)
-        fallback = _prepare_fallback_context(context, output_dir=output_dir)
-        mono_font = _prepare_mono_font(context, output_dir=output_dir, family=family)
+        fallback = _prepare_fallback_context(context, output_dir=output_dir, emitter=emitter)
+        mono_font = _prepare_mono_font(
+            context, output_dir=output_dir, family=family, emitter=emitter
+        )
         return cls(family=family, output_dir=output_dir, fallback=fallback, mono_font=mono_font)
 
-    def inject_into(self, context: dict[str, Any]) -> None:
+    def inject_into(
+        self, context: dict[str, Any], *, emitter: DiagnosticEmitter | None = None
+    ) -> None:
         context["fonts_family"] = self.family
         fonts_section = context.get("fonts")
         merged = dict(fonts_section) if isinstance(fonts_section, Mapping) else {}
@@ -56,11 +62,13 @@ class FontsConfig:
         context["fonts"] = merged
 
         try:
-            _ensure_ctan_sty(self.family, self.output_dir)
+            _ensure_ctan_sty(self.family, self.output_dir, emitter=emitter)
         except Exception as exc:  # pragma: no cover - network/path edge cases
-            warnings.warn(
-                f"Unable to prepare CTAN package for font '{self.family}': {exc}",
-                stacklevel=2,
+            emit_diagnostic(
+                emitter,
+                "font-fallback",
+                f"CTAN package for font '{self.family}' could not be prepared: {exc}",
+                exc=exc,
             )
 
 
@@ -90,6 +98,27 @@ class FontsFragment(BaseFragment[FontsConfig]):
     config_cls: ClassVar[type[FontsConfig]] = FontsConfig
     source: ClassVar[Path] = Path(__file__).with_name("ts-fonts.jinja.sty")
     context_defaults: ClassVar[dict[str, Any]] = {"extra_packages": ""}
+
+    def build_config(
+        self,
+        context: Mapping[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
+    ) -> FontsConfig:
+        _ = overrides
+        return FontsConfig.from_context(context, emitter=emitter)
+
+    def inject(
+        self,
+        config: FontsConfig,
+        context: dict[str, Any],
+        overrides: Mapping[str, Any] | None = None,
+        *,
+        emitter: DiagnosticEmitter | None = None,
+    ) -> None:
+        _ = overrides
+        config.inject_into(context, emitter=emitter)
 
     def should_render(self, config: FontsConfig) -> bool:
         _ = config

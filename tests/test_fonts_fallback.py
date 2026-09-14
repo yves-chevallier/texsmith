@@ -1,6 +1,7 @@
+from texsmith.diagnostics import LoggingEmitter
 from texsmith.fonts.coverage import NotoCoverage
 from texsmith.fonts.fallback import FallbackBuilder
-from texsmith.fonts.provisioning import _prepare_fallback_context
+from texsmith.fonts.provisioning import _normalise_family, _prepare_fallback_context
 from texsmith.fonts.ucharclasses import UCharClass
 
 
@@ -234,6 +235,54 @@ def test_devanagari_prefers_script_specific_font() -> None:
 
     assert result is not None
     assert result["name"] == "NotoSansDevanagari"
+
+
+def test_unknown_font_family_emits_font_missing() -> None:
+    emitter = LoggingEmitter()
+    family = _normalise_family("not-a-real-family", emitter=emitter)
+    assert family == "lm"
+    (recorded,) = emitter.sink
+    assert recorded.code == "font-missing"
+    assert "not-a-real-family" in recorded.message
+
+
+def test_known_font_family_emits_nothing() -> None:
+    emitter = LoggingEmitter()
+    assert _normalise_family("plex", emitter=emitter) == "plex"
+    assert list(emitter.sink) == []
+
+
+def test_missing_fallback_font_on_disk_emits_font_fallback(tmp_path, monkeypatch) -> None:
+    # No font files written to the cache/output dirs, so the lookup fails.
+    monkeypatch.setattr(
+        "texsmith.fonts.provisioning.NotoFontDownloader.ensure",
+        lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
+    )
+
+    context = {
+        "fonts": {
+            "fallback_summary": [
+                {
+                    "group": "Chinese",
+                    "class": "CJKUnifiedIdeographs",
+                    "font": {
+                        "name": "NotoSansSC",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                    },
+                    "count": 2,
+                }
+            ],
+        }
+    }
+    emitter = LoggingEmitter()
+
+    result = _prepare_fallback_context(context, output_dir=tmp_path, emitter=emitter)
+
+    assert result["entries"] == []
+    codes = [d.code for d in emitter.sink]
+    assert codes == ["font-fallback"]
+    assert "NotoSansSC" in emitter.sink.sorted()[0].message
 
 
 def _render_fonts_fragment(**context) -> str:

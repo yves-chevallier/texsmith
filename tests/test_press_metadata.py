@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import pytest
 
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
@@ -15,7 +17,7 @@ def test_normalise_press_metadata_copies_common_fields() -> None:
     assert press["date"] == "2024-07-01"
 
 
-def test_normalise_press_metadata_prefers_press_values() -> None:
+def test_normalise_press_metadata_prefers_press_values(caplog: pytest.LogCaptureFixture) -> None:
     metadata = {
         "title": "Root Title",
         "press": {
@@ -25,8 +27,12 @@ def test_normalise_press_metadata_prefers_press_values() -> None:
         },
     }
 
-    with pytest.warns(UserWarning, match=r"Overriding press\.title"):
+    # No single emitter reaches this normaliser (eleven call sites, some
+    # before any Document/emitter exists); it logs instead of routing
+    # through the diagnostics sink — see specs/refactoring/status.md step 09.
+    with caplog.at_level(logging.WARNING, logger="texsmith.core.metadata"):
         press = normalise_press_metadata(metadata)
+    assert any("Overriding press.title" in record.message for record in caplog.records)
 
     assert press["title"] == "Root Title"
     assert press["subtitle"] == "Press Subtitle"

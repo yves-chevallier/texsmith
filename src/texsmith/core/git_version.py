@@ -3,17 +3,18 @@
 This module exposes the primitives — ``git_describe``, ``git_commit_date``,
 ``resolve_git_root`` — that ``texsmith.core.document_version`` and
 ``texsmith.core.document_date`` consume to render the front-matter ``version``
-and ``date`` fields. The helpers warn (rather than raise) when git metadata is
+and ``date`` fields. The helpers log (rather than raise) when git metadata is
 unreachable so a missing repository surfaces in the build log without aborting
-the document.
+the document; no single emitter reaches every caller, so the module logger is
+the hook (see ``specs/refactoring/status.md`` step 09).
 """
 
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
+import logging
 from pathlib import Path
 import subprocess
-import warnings
 
 
 try:
@@ -21,6 +22,8 @@ try:
 except ImportError:  # pragma: no cover - py310 compatibility
     UTC = timezone.utc
 
+
+logger = logging.getLogger(__name__)
 
 _GIT_DESCRIBE_CACHE: dict[Path, str] = {}
 _GIT_COMMIT_DATE_CACHE: dict[Path, date | None] = {}
@@ -35,15 +38,14 @@ def reset_cache() -> None:
 def git_describe(*, cwd: Path | None = None) -> str:
     """Return ``git describe --tags --dirty`` (or a short hash) for ``cwd``.
 
-    Returns an empty string and emits a warning when no git repository is
+    Returns an empty string and logs a warning when no git repository is
     found or git fails to execute. Results are cached per resolved repository
     root, so repeated lookups during a single build are cheap.
     """
     repo_root = resolve_git_root(cwd=cwd)
     if repo_root is None:
-        warnings.warn(
-            "version=git requested but no git repository was found; cannot resolve git version.",
-            stacklevel=2,
+        logger.warning(
+            "version=git requested but no git repository was found; cannot resolve git version."
         )
         return ""
 
@@ -60,10 +62,7 @@ def git_describe(*, cwd: Path | None = None) -> str:
                 describe = f"{describe}-dirty"
 
     if not describe:
-        warnings.warn(
-            "version=git requested but git metadata could not be read.",
-            stacklevel=2,
-        )
+        logger.warning("version=git requested but git metadata could not be read.")
 
     _GIT_DESCRIBE_CACHE[repo_root] = describe
     return describe
@@ -73,14 +72,13 @@ def git_commit_date(*, cwd: Path | None = None) -> date | None:
     """Return the committer date of ``HEAD`` for the repository containing ``cwd``.
 
     Uses ``git log -1 --format=%cs`` (committer date in short ISO ``YYYY-MM-DD``
-    form). Returns ``None`` and warns if the repository is missing or git fails.
-    Cached per repository root.
+    form). Returns ``None`` and logs a warning if the repository is missing or
+    git fails. Cached per repository root.
     """
     repo_root = resolve_git_root(cwd=cwd)
     if repo_root is None:
-        warnings.warn(
-            "date=commit requested but no git repository was found; cannot resolve commit date.",
-            stacklevel=2,
+        logger.warning(
+            "date=commit requested but no git repository was found; cannot resolve commit date."
         )
         return None
 
@@ -90,19 +88,13 @@ def git_commit_date(*, cwd: Path | None = None) -> date | None:
     raw = _run_git(repo_root, ["log", "-1", "--format=%cs"])
     parsed: date | None
     if not raw:
-        warnings.warn(
-            "date=commit requested but no commit metadata could be read.",
-            stacklevel=2,
-        )
+        logger.warning("date=commit requested but no commit metadata could be read.")
         parsed = None
     else:
         try:
             parsed = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=UTC).date()
         except ValueError:
-            warnings.warn(
-                f"date=commit returned unparseable git output {raw!r}; ignoring.",
-                stacklevel=2,
-            )
+            logger.warning("date=commit returned unparseable git output %r; ignoring.", raw)
             parsed = None
 
     _GIT_COMMIT_DATE_CACHE[repo_root] = parsed

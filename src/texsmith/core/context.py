@@ -7,9 +7,10 @@ from dataclasses import dataclass, field
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
-import warnings
 
 from slugify import slugify
+
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic
 
 from .exceptions import AssetMissingError
 
@@ -57,11 +58,15 @@ class DocumentState:
     #: path) instead of sniffing the rendered LaTeX.
     contract_path: bool = False
 
-    def remember_acronym(self, term: str, description: str) -> str:
+    def remember_acronym(
+        self, term: str, description: str, *, emitter: DiagnosticEmitter | None = None
+    ) -> str:
         """Register an acronym definition keyed by a normalised identifier."""
-        return self.remember_abbreviation(term=term, description=description)
+        return self.remember_abbreviation(term=term, description=description, emitter=emitter)
 
-    def remember_abbreviation(self, term: str, description: str) -> str:
+    def remember_abbreviation(
+        self, term: str, description: str, *, emitter: DiagnosticEmitter | None = None
+    ) -> str:
         """Track abbreviation definitions while ensuring consistency."""
         normalised_term = term.strip()
         normalised_description = description.strip()
@@ -71,12 +76,11 @@ class DocumentState:
         existing_description = self.abbreviations.get(normalised_term)
         if existing_description is not None:
             if existing_description != normalised_description:
-                warnings.warn(
-                    (
-                        f"Inconsistent acronym definition for '{normalised_term}': "
-                        f"'{existing_description}' vs '{normalised_description}'"
-                    ),
-                    stacklevel=2,
+                emit_diagnostic(
+                    emitter,
+                    "metadata-invalid",
+                    f"Inconsistent acronym definition for '{normalised_term}': "
+                    f"'{existing_description}' vs '{normalised_description}'",
                 )
             return self.acronym_keys.get(normalised_term, "")
 
