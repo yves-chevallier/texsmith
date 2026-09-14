@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 import subprocess
-import warnings
 
 import pytest
 
@@ -77,14 +77,17 @@ def test_format_version_falls_back_to_short_hash(tmp_path: Path) -> None:
     assert len(resolved) >= 7  # short hash, optionally with -dirty suffix
 
 
-def test_format_version_without_repo_warns(tmp_path: Path) -> None:
+def test_format_version_without_repo_warns(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
     not_a_repo = tmp_path / "plain"
     not_a_repo.mkdir()
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter("always")
+    # No single emitter reaches git_version's callers; it logs instead of
+    # routing through the diagnostics sink — see status.md step 09.
+    with caplog.at_level(logging.WARNING, logger="texsmith.core.git_version"):
         result = format_version("git", cwd=not_a_repo)
     assert result == ""
-    assert any("no git repository" in str(w.message) for w in captured)
+    assert any("no git repository" in record.message for record in caplog.records)
 
 
 def test_format_version_keyword_is_case_insensitive(tmp_path: Path) -> None:

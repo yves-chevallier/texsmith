@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+import logging
 from pathlib import Path
 import subprocess
 
@@ -56,6 +57,17 @@ def test_iso_string_uses_first_for_french_first_of_month() -> None:
 
 def test_iso_string_unknown_language_falls_back_to_english() -> None:
     assert format_date("2026-03-05", language="klingon") == "March 5, 2026"
+
+
+def test_non_string_language_logs_and_falls_back_to_english(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # No emitter reaches this resolver (see status.md step 09); it logs
+    # through the module logger instead of the diagnostics sink.
+    with caplog.at_level(logging.WARNING, logger="texsmith.core.document_date"):
+        rendered = format_date("2026-03-05", language=42)
+    assert rendered == "March 5, 2026"
+    assert any("non-string language" in record.message for record in caplog.records)
 
 
 def test_python_date_value_is_rendered() -> None:
@@ -118,11 +130,9 @@ def test_commit_keyword_real_git_repo(tmp_path: Path) -> None:
 def test_commit_without_repo_returns_empty(tmp_path: Path) -> None:
     not_a_repo = tmp_path / "plain"
     not_a_repo.mkdir()
-    import warnings
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        assert format_date("commit", cwd=not_a_repo) == ""
+    # git_version logs (rather than warns) when no repository is found; no
+    # assertion needed here beyond the plain return value.
+    assert format_date("commit", cwd=not_a_repo) == ""
 
 
 # --- Free-form ----------------------------------------------------------------
