@@ -3,7 +3,8 @@
 Objectif : quand chaque case est cochée, le merge est autorisé et une release
 peut être taguée. Une case n'est cochée qu'après vérification objective
 (commande, test ou diff nommé). Mis à jour au fil du travail, dernière mise à
-jour : 2026-09-14.
+jour : 2026-09-14, fin de journée. État mesuré : tmark 340 tests, clippy, fmt, MSRV 1.80, artefacts propres ;
+texsmith 1347 tests, ruff, parité 196 identiques / 0 différence, 49 tests des bindings.
 
 Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 `ref: texsmith-migration` de `.github/workflows/*.yml` deviennent un tag.
@@ -29,7 +30,7 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 ## 1b. Défauts trouvés en vérifiant
 
 - [x] Le fix `[^key]` → `@key` colle la citation au mot précédent (`sortie@key` reste littéral, 21/29 citations perdues sur bien-air/review). Corrigé dans 4593a6b : le fixer insère l'espace.
-- [ ] Le sucre `++…++` avale « C++03 … C++ » en prose ; reconnaissance resserrée. Branche `fix/keystroke`.
+- [x] Le sucre `++…++` avale « C++03 … C++ » en prose ; reconnaissance resserrée dans le tokenizer (01682b1, fixture `inline-keys-prose`, C61).
 
 ## 2. Revue de la spec
 
@@ -40,7 +41,7 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 - [x] Chaque finding classé : corrigé, reporté avec numéro de challenge, ou
       rejeté avec raison. Texte de la spec : fait (c3bf402, B1–B5, M1–M15, F3–F5, C52–C60).
       Code (F1, F2, F7, F8, F10, C27, C60, `strict-x-construct` supprimé) : fusionné (d8041cf).
-      Régression de F2 sur le corpus (guillemet fermant devant `---`) : branche `fix/quote-boundaries` en cours.
+      Régression de F2 sur le corpus (guillemet fermant devant `---`) corrigée (9029359, fixture `inline-quotes-dashes`).
 
 ## 3. Correctifs texsmith
 
