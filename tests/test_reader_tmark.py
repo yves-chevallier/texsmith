@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 
 import pytest
 from tmark.ir import model
 
 from texsmith.core.documents import Document, SlotPlan, TitleStrategy
 from texsmith.diagnostics import DiagnosticSink, FileTable, LoggingEmitter, NullEmitter
-from texsmith.readers import loader as loader_module, tmark as tmark_reader
-from texsmith.readers.loader import MemoryLoader, TexsmithLoader, join, join_dir
+from texsmith.readers import tmark as tmark_reader
+from texsmith.readers.loader import MemoryLoader, TexsmithLoader, join
 
 
 SOURCE = """---
@@ -107,35 +107,19 @@ def test_wheel_schema_match_checks_once_and_does_not_raise(monkeypatch) -> None:
 
 
 def test_join_follows_tmark_rules() -> None:
-    assert join("/docs/book/chapter.md", "figs/a.md") == "/docs/book/figs/a.md"
-    assert join("/docs/book/chapter.md", "../other.md") == "/docs/other.md"
-    assert join("/docs/book", "part.md") == "/docs/book/part.md"  # no extension: a directory
-    assert join("/docs/book/chapter.md", "/abs/file.md") == "/abs/file.md"
-    assert join("/docs/book/chapter.md", "./same.md") == "/docs/book/same.md"
-    assert join("chapter.md", "../../up.md") == "../../up.md"
-
-
-def test_join_returns_posix_text_even_from_a_windows_from_path(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """``join``'s result crosses into tmark and appears in diagnostics and labels.
-
-    On Windows, ``pathlib.Path`` is ``PureWindowsPath``, which renders with
-    backslashes even when built from a forward-slash string — the bug behind
-    the Windows-only failure this guards. Monkeypatching the module's
-    ``PurePath`` to ``PureWindowsPath`` emulates that flavour on any OS.
-    """
-    monkeypatch.setattr(loader_module, "PurePath", PureWindowsPath)
-    assert join("/docs/book/chapter.md", "figs/a.md") == "/docs/book/figs/a.md"
-    assert join("/docs/book/chapter.md", "../other.md") == "/docs/other.md"
-    assert join("/docs/book/chapter.md", "/abs/file.md") == "/abs/file.md"
-    # A genuine Windows absolute path (drive letter, backslashes) as ``from_path``:
-    # the directory is still found and the result still posix-style.
-    windows_from = r"C:\Users\ycr\project\docs\chapter.md"
-    assert join(windows_from, "figs/a.md") == "C:/Users/ycr/project/docs/figs/a.md"
-    assert (
-        join_dir(r"C:\Users\ycr\project\docs", "figs/a.md") == "C:/Users/ycr/project/docs/figs/a.md"
-    )
+    # ``join`` renders OS-native text (a real Loader keys its file table and
+    # cache by this same string to find a file on disk), so an absolute
+    # POSIX-looking literal must be compared through ``Path(...)``, not as a
+    # hardcoded forward-slash string — on Windows ``Path`` renders it with
+    # backslashes, exactly what ``join`` itself returns for the same input.
+    assert join("/docs/book/chapter.md", "figs/a.md") == str(Path("/docs/book/figs/a.md"))
+    assert join("/docs/book/chapter.md", "../other.md") == str(Path("/docs/other.md"))
+    assert join("/docs/book", "part.md") == str(
+        Path("/docs/book/part.md")
+    )  # no extension: a directory
+    assert join("/docs/book/chapter.md", "/abs/file.md") == str(Path("/abs/file.md"))
+    assert join("/docs/book/chapter.md", "./same.md") == str(Path("/docs/book/same.md"))
+    assert join("chapter.md", "../../up.md") == str(Path("../../up.md"))
 
 
 def test_texsmith_loader_registers_files_and_reports_unreadable(tmp_path: Path) -> None:
@@ -159,11 +143,16 @@ def test_texsmith_loader_registers_files_and_reports_unreadable(tmp_path: Path) 
 
 
 def test_memory_loader_joins_like_the_file_system() -> None:
-    loader = MemoryLoader({"/docs/part.md": "# Part\n", "loose.md": "loose\n"})
-    assert loader.load("/docs/main.md", "part.md") == "# Part\n"
-    assert loader.load("/docs/main.md", "loose.md") == "loose\n"
-    assert loader.load("/docs/main.md", "nope.md") is None
-    assert loader.requests[0] == ("/docs/main.md", "part.md")
+    # ``MemoryLoader`` calls the same OS-native ``join``, so its keys must be
+    # built the same way a real Loader's would be (``str(Path(...))``), not a
+    # hardcoded forward-slash literal that only matches on POSIX.
+    part = str(Path("/docs/part.md"))
+    main = str(Path("/docs/main.md"))
+    loader = MemoryLoader({part: "# Part\n", "loose.md": "loose\n"})
+    assert loader.load(main, "part.md") == "# Part\n"
+    assert loader.load(main, "loose.md") == "loose\n"
+    assert loader.load(main, "nope.md") is None
+    assert loader.requests[0] == (main, "part.md")
 
 
 # ---------------------------------------------------------------------------
