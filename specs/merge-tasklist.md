@@ -92,14 +92,15 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       `publish = false` explicite (4bd0d0b, ebeff13) ; `Cargo.lock` repointé pour la MSRV (4f22f38). **Tag `v0.1.0` : pas encore posé.**
 - [x] Job CI MSRV 1.80 (dad4f56) ; `cargo +1.80 check --workspace` passe localement.
 - [x] Tests de `tmark-lint` étoffés (2 → 8 tests, une par règle, 5cf6551).
-- [ ] `texsmith-migration` fusionnée dans `main`, CI verte sur GitHub.
+- [ ] `texsmith-migration` fusionnée dans `main`. CI GitHub déjà verte sur la branche (3 runs le 2026-09-14).
 
 ## 7. Release texsmith
 
 - [ ] `pyproject.toml` : `tmark>=0.1,<0.2` depuis PyPI, plus de
       `[tool.uv.sources]` path ; `vendor/tmark` retiré.
 - [ ] Les six `ref: texsmith-migration` remplacés par le tag.
-- [ ] CI verte sur GitHub (lint, pytest matrice, parity, examples).
+- [x] CI verte sur GitHub (lint, pytest matrice 9 jobs Linux/macOS/Windows, parity) : run 34841328180 sur le contenu
+      de d65ac6f. Deux causes CI-only corrigées : usage box colorée (1dc4000), séparateurs Windows (3894e53, d65ac6f).
 - [ ] `CHANGELOG.md` : section 0.7.0 datée, pertes listées (entrée `.html`,
       API Python, plugins `texsmith.counters` / `texsmith.index` no-op).
 - [ ] Pile `refactor/*` fusionnée dans `master`, tag `v0.7.0`.
