@@ -88,8 +88,8 @@ press:
 Cheese exhibits unique melting properties @WADHWANI20111713.
 ```
 
-`@key` is the in-text (narrative) citation and `@[key, locator]` the
-parenthetical one:
+A bare `@key` is the short, parenthetical citation by default and
+`@[key, locator]` the same short form with a locator attached:
 
 ```md
 As shown by @[WADHWANI20111713, p. 33], and elsewhere
@@ -100,6 +100,13 @@ As shown by @[WADHWANI20111713, p. 33], and elsewhere
 Locators follow Pandoc: a recognised locator word (`p.`, `pp.`, `ch.`, `sec.`,
 `§`…) followed by a range, or free suffix text. Pandoc's own `[@key, locator]`
 is accepted for import and never emitted.
+
+Setting `press.features: {citations.narrative: true}` in the front matter
+switches every bare `@key` of the document to the narrative form instead
+(`\textcite` in LaTeX, `#cite(<key>, form: "prose")` in Typst — "Einstein [3]"
+rather than "[3]"). Either form stays reachable per citation regardless of the
+document's default: `@[+key]` forces the narrative form inside brackets,
+`@[-key]` forces the year alone.
 
 A DOI can be cited in place through the predeclared `doi` prefix, without a
 front-matter entry: `@doi:10.3168/jds.2010-3952`. The same DOI cited twice is

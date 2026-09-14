@@ -124,9 +124,10 @@ You can also check our repository at \url{https://github.com/yves-chevallier/tex
 
 = Bibliographic References
 
-A citation is the same sigil against the bibliography registry. `@key` is the
-in-text (narrative) citation, `@[key, locator]` the parenthetical one, and
-`@[-key]` suppresses the author.
+A citation is the same sigil against the bibliography registry. A bare `@key`
+is the *short, parenthetical* citation by default — `\cite{key}` in #ts-logo("LaTeX"),
+`#cite(<key>)` in Typst — and `@[key, locator]` is the same short form with a
+locator attached.
 
 ```md
 ---
@@ -139,6 +140,33 @@ press:
 Einstein's theory of relativity revolutionized physics @ein05.
 As shown by @[ein05, p. 33], and elsewhere @[see ein05, pp. 33-35].
 ```
+
+Locators follow Pandoc: a recognised locator word (`p.`, `pp.`, `ch.`, `sec.`,
+`§`…) followed by a range, or free suffix text.
+
+== Narrative citations
+
+A document written in a narrative voice ("Einstein \[3\] showed…" rather than
+"…was shown \[3\]") switches its bare citations with the `citations.narrative`
+feature:
+
+```md
+---
+press:
+  features:
+    citations.narrative: true
+---
+
+As @ein05 showed, the effect is real.
+```
+
+turns the bare `@ein05` into `\textcite{ein05}` (#ts-logo("LaTeX")) or
+`#cite(<ein05>, form: "prose")` (Typst). The feature is document-wide, but
+either form is always spellable per citation regardless of the switch: inside
+brackets, a plain item stays short and parenthetical, `@[+key]` forces the
+narrative form, and `@[-key]` forces the year alone (suppressing the author).
+A locator still attaches to any of them, so `@[+ein05, p. 33]` reads "Einstein
+\[3, p. 33\]" even in a document whose bare keys are short.
 
 A DOI can be cited in place through the predeclared `doi` prefix, without a
 front-matter entry: `@doi:10.1002/andp.19053221004`.
