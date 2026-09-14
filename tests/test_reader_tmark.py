@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 from tmark.ir import model
 
 from texsmith.core.documents import Document, SlotPlan, TitleStrategy
 from texsmith.diagnostics import DiagnosticSink, FileTable, LoggingEmitter, NullEmitter
-from texsmith.readers import tmark as tmark_reader
-from texsmith.readers.loader import MemoryLoader, TexsmithLoader, join
+from texsmith.readers import loader as loader_module, tmark as tmark_reader
+from texsmith.readers.loader import MemoryLoader, TexsmithLoader, join, join_dir
 
 
 SOURCE = """---
@@ -113,6 +113,29 @@ def test_join_follows_tmark_rules() -> None:
     assert join("/docs/book/chapter.md", "/abs/file.md") == "/abs/file.md"
     assert join("/docs/book/chapter.md", "./same.md") == "/docs/book/same.md"
     assert join("chapter.md", "../../up.md") == "../../up.md"
+
+
+def test_join_returns_posix_text_even_from_a_windows_from_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``join``'s result crosses into tmark and appears in diagnostics and labels.
+
+    On Windows, ``pathlib.Path`` is ``PureWindowsPath``, which renders with
+    backslashes even when built from a forward-slash string — the bug behind
+    the Windows-only failure this guards. Monkeypatching the module's
+    ``PurePath`` to ``PureWindowsPath`` emulates that flavour on any OS.
+    """
+    monkeypatch.setattr(loader_module, "PurePath", PureWindowsPath)
+    assert join("/docs/book/chapter.md", "figs/a.md") == "/docs/book/figs/a.md"
+    assert join("/docs/book/chapter.md", "../other.md") == "/docs/other.md"
+    assert join("/docs/book/chapter.md", "/abs/file.md") == "/abs/file.md"
+    # A genuine Windows absolute path (drive letter, backslashes) as ``from_path``:
+    # the directory is still found and the result still posix-style.
+    windows_from = r"C:\Users\ycr\project\docs\chapter.md"
+    assert join(windows_from, "figs/a.md") == "C:/Users/ycr/project/docs/figs/a.md"
+    assert (
+        join_dir(r"C:\Users\ycr\project\docs", "figs/a.md") == "C:/Users/ycr/project/docs/figs/a.md"
+    )
 
 
 def test_texsmith_loader_registers_files_and_reports_unreadable(tmp_path: Path) -> None:

@@ -28,7 +28,7 @@ from collections.abc import Iterable, Mapping
 import copy
 from dataclasses import dataclass, field
 import logging
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import posixpath
 from typing import Any
 
@@ -244,8 +244,13 @@ class SiteIndex:
 
         padded = "\n" * record.padding + markdown
         files = self.emitter.sink.files
-        display = self._display_path(record.abs_src_path)
-        file_id = int(files.add(display, padded))
+        # ``src_uri`` is MkDocs's own path, always POSIX (unlike ``src_path``,
+        # which is OS-native): registering it as a ``PurePosixPath`` keeps a
+        # diagnostic's printed name identical on every OS, matching the
+        # display name ``str()`` of a native ``Path`` would otherwise mangle
+        # back to backslashes on Windows.
+        display = record.src_uri
+        file_id = int(files.add(PurePosixPath(display), padded))
         doc = tmark.parse(padded, file=display, file_id=file_id)
         node, front_diagnostics = self._front_matter_node(
             record.meta, file_id=file_id, node_id=max_node_id(doc) + 1

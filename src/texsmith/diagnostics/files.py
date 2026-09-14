@@ -12,7 +12,7 @@ from __future__ import annotations
 from bisect import bisect_right
 from collections.abc import Iterator
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 import re
 from typing import NewType
 
@@ -104,7 +104,11 @@ class LineIndex:
 
 @dataclass(slots=True)
 class SourceFile:
-    path: Path
+    #: A concrete OS path for a real file, or a ``PurePosixPath`` for a caller
+    #: (the mkdocs plugin) that already computed a posix-stable display name
+    #: it wants printed unchanged (``str()`` of a native ``Path`` re-renders
+    #: with the OS separator even when built from a posix-looking string).
+    path: PurePath
     text: str
     _index: LineIndex | None = None
 
@@ -129,14 +133,21 @@ class FileTable:
     def __init__(self) -> None:
         self._files: list[SourceFile] = []
 
-    def add(self, path: Path | str, text: str) -> FileId:
-        """Register a file and return its id (the next free one)."""
-        self._files.append(SourceFile(Path(path), text))
+    def add(self, path: PurePath | str, text: str) -> FileId:
+        """Register a file and return its id (the next free one).
+
+        A ``PurePath`` already given (a ``PurePosixPath`` display name, say)
+        is kept as is; only a plain string is turned into a native ``Path``,
+        as before. This is what lets a caller opt into a posix-stable name
+        without changing what every other caller gets.
+        """
+        stored = path if isinstance(path, PurePath) else Path(path)
+        self._files.append(SourceFile(stored, text))
         return FileId(len(self._files) - 1)
 
-    def find(self, path: Path | str) -> FileId | None:
+    def find(self, path: PurePath | str) -> FileId | None:
         """The id of the first file registered under ``path``, if any."""
-        wanted = Path(path)
+        wanted = path if isinstance(path, PurePath) else Path(path)
         for index, entry in enumerate(self._files):
             if entry.path == wanted:
                 return FileId(index)
@@ -147,7 +158,7 @@ class FileTable:
             return self._files[file_id]
         return None
 
-    def path(self, file_id: int) -> Path:
+    def path(self, file_id: int) -> PurePath:
         return self._entry(file_id).path
 
     def text(self, file_id: int) -> str:

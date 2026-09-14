@@ -14,12 +14,25 @@ diagnostic emitted in an included file prints that file's name;
 from __future__ import annotations
 
 from collections.abc import Mapping
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PurePosixPath
 
 from texsmith.diagnostics import NO_SPAN, DiagnosticSink, FileTable
 
 
 __all__ = ["MemoryLoader", "TexsmithLoader", "join", "join_dir"]
+
+
+def _posix(value: str | PurePath) -> str:
+    """Render an OS path or already-posix logical text as posix text.
+
+    ``PurePath`` is whatever flavour the running OS uses, so this accepts a
+    real filesystem path (native separators) as readily as a logical string
+    already written with ``/`` — both parse the same way, since Windows
+    accepts either separator. Rendering through :class:`PurePosixPath` keeps
+    the *string form* stable across OSes even though the segments it counts
+    (a drive letter, say) still reflect wherever the input came from.
+    """
+    return PurePath(value).as_posix()
 
 
 def join(from_path: str | PurePath, rel: str) -> str:
@@ -30,8 +43,14 @@ def join(from_path: str | PurePath, rel: str) -> str:
     (an ``{include base=…}`` directory) — and normalised textually: ``.``
     segments dropped, ``..`` folded into the previous segment when there is
     one. No symlink resolution, so TeXSmith and tmark print the same name.
+
+    The result is always posix-style text (forward slashes), never OS-native:
+    it crosses into tmark and appears verbatim in diagnostics and labels, so
+    it must read the same on every platform. Reading the file back from disk
+    still goes through :class:`pathlib.Path`, which accepts forward slashes
+    on every OS tmark and TeXSmith support.
     """
-    origin = PurePath(from_path)
+    origin = PurePosixPath(_posix(from_path))
     return join_dir(origin.parent if origin.suffix else origin, rel)
 
 
@@ -43,10 +62,10 @@ def join_dir(directory: str | PurePath, rel: str) -> str:
     (:attr:`~texsmith.passes.PassContext.include_paths`) already holds
     directories, and one whose last segment carries a dot would lose it.
     """
-    target = PurePath(rel)
+    target = PurePosixPath(_posix(rel))
     if target.is_absolute():
         return str(target)
-    base = PurePath(directory)
+    base = PurePosixPath(_posix(directory))
     parts: list[str] = []
     for part in (*base.parts, *target.parts):
         if part == ".":
@@ -60,7 +79,7 @@ def join_dir(directory: str | PurePath, rel: str) -> str:
         parts.append(part)
     if not parts:
         return ""
-    return str(PurePath(*parts))
+    return str(PurePosixPath(*parts))
 
 
 class TexsmithLoader:

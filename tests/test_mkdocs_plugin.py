@@ -57,7 +57,9 @@ def test_every_page_of_a_build_registers_in_one_table(tmp_path: Path) -> None:
 
     assert spans == [0, 1]
     files = site.emitter.sink.files
-    assert [str(files.path(index)) for index in spans] == ["docs/first.md", "docs/second.md"]
+    # ``files.path()`` holds the page's ``src_uri`` as a ``PurePosixPath``:
+    # ``.as_posix()`` is the stable comparison, ``str()`` would be OS-native.
+    assert [files.path(index).as_posix() for index in spans] == ["docs/first.md", "docs/second.md"]
 
 
 def test_plugin_announces_latexmk_command(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

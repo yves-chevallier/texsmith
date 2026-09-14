@@ -231,17 +231,22 @@ def test_entry_command_and_stems(parity):
         "multi", "examples/multi-document", ("a.md", "b.md", "config.yml"), "latex"
     )
     assert multi.stems == ("main",)
+    # ``command`` renders ``out_dir`` with ``str(Path)``, which is OS-native
+    # (backslashes on Windows); the subprocess sees an equally valid path
+    # either way, so compare against the same rendering rather than a POSIX
+    # literal.
+    out = str(Path("/o"))
     assert entry.command(out_dir=Path("/o")) == [
         "cheese.md",
         "cheese.bib",
         "-tarticle",
         "-o",
-        "/o",
+        out,
     ]
     # The CLI has one reader and no ``--reader`` option: no flag is ever passed.
     assert entry.command(out_dir=Path("/o"), build=True)[-3:] == [
         "-o",
-        "/o",
+        out,
         "--build",
     ]
 

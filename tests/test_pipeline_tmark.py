@@ -362,8 +362,13 @@ def test_counter_start_is_chained_across_a_batch(tmp_path: Path) -> None:
 
 
 def test_resolution_chain_advances_from_next_start(tmp_path: Path) -> None:
-    chain = ResolutionChain(bibliography=bibliography_paths(["refs.bib", "refs.bib", "/abs/x.bib"]))
-    assert chain.bibliography == (Path.cwd() / "refs.bib", Path("/abs/x.bib"))
+    # An absolute path is OS-native, so build the expectation with one instead
+    # of a POSIX literal: what counts as "absolute" is itself OS-specific (a
+    # bare ``/abs/x.bib`` has no drive on Windows, so it is not absolute there
+    # and ``bibliography_paths`` rejoins it onto ``cwd``).
+    abs_bib = tmp_path / "abs" / "x.bib"
+    chain = ResolutionChain(bibliography=bibliography_paths(["refs.bib", "refs.bib", str(abs_bib)]))
+    assert chain.bibliography == (Path.cwd() / "refs.bib", abs_bib)
     chain.advance({"next_start": {"fw": 6, "req": 104, "bad": "x"}})
     assert chain.start == {"fw": 6, "req": 104}
     document_path = tmp_path / "doc.md"
@@ -375,7 +380,7 @@ def test_resolution_chain_advances_from_next_start(tmp_path: Path) -> None:
     payload = options.to_json()
     assert payload["path"] == str(document_path.resolve())
     assert payload["start"] == {"fw": 6, "req": 104}
-    assert payload["bibliography"][1] == "/abs/x.bib"
+    assert payload["bibliography"][1] == str(abs_bib)
 
 
 def test_writer_options_map_the_template_context() -> None:
