@@ -3,7 +3,7 @@
 Objectif : quand chaque case est cochée, le merge est autorisé et une release
 peut être taguée. Une case n'est cochée qu'après vérification objective
 (commande, test ou diff nommé). Mis à jour au fil du travail, dernière mise à
-jour : 2026-09-14, fin de journée. État mesuré : tmark 340 tests, clippy, fmt, MSRV 1.80, artefacts propres ;
+jour : 2026-09-15. État mesuré : tmark 340 tests, clippy, fmt, MSRV 1.80, artefacts propres ;
 texsmith 1347 tests, ruff, parité 196 identiques / 0 différence, 49 tests des bindings.
 
 Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
@@ -92,17 +92,22 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
       `publish = false` explicite (4bd0d0b, ebeff13) ; `Cargo.lock` repointé pour la MSRV (4f22f38). **Tag `v0.1.0` : pas encore posé.**
 - [x] Job CI MSRV 1.80 (dad4f56) ; `cargo +1.80 check --workspace` passe localement.
 - [x] Tests de `tmark-lint` étoffés (2 → 8 tests, une par règle, 5cf6551).
-- [ ] `texsmith-migration` fusionnée dans `main`. CI GitHub déjà verte sur la branche (3 runs le 2026-09-14).
+- [x] `texsmith-migration` fusionnée dans `main` (a3e218b, fast-forward, CI verte run 34936062610) ;
+      tag `v0.1.0` posé sur 8e4b4e8. **Publication PyPI en attente** : le trusted publisher du projet
+      `tmark-core` ne correspond pas aux claims (`workflow_ref` = `.github/workflows/wheels.yml`,
+      `environment` = `pypi`) — action utilisateur sur pypi.org. Deux défauts du workflow corrigés en route :
+      le glob `dist/tmark-*.whl` (le fichier est `tmark_core-*.whl`) et `maturin upload`, déprécié, remplacé
+      par `pypa/gh-action-pypi-publish`.
 
 ## 7. Release texsmith
 
-- [ ] `pyproject.toml` : `tmark>=0.1,<0.2` depuis PyPI, plus de
+- [ ] `pyproject.toml` : `tmark-core>=0.1,<0.2` depuis PyPI, plus de
       `[tool.uv.sources]` path ; `vendor/tmark` retiré.
 - [ ] Les six `ref: texsmith-migration` remplacés par le tag.
 - [x] CI verte sur GitHub (lint, pytest matrice 9 jobs Linux/macOS/Windows, parity) : run 34841328180 sur le contenu
       de d65ac6f. Deux causes CI-only corrigées : usage box colorée (1dc4000), séparateurs Windows (3894e53, d65ac6f).
-- [ ] `CHANGELOG.md` : section 0.7.0 datée, pertes listées (entrée `.html`,
-      API Python, plugins `texsmith.counters` / `texsmith.index` no-op).
+- [x] `CHANGELOG.md` : section 0.7.0 datée du 2026-09-15 (fd97856), pertes listées, plus les correctifs
+      du 14 (citations, échappement Typst, keystrokes, guillemets, warnings vers le sink, chemins Windows).
 - [ ] Pile `refactor/*` fusionnée dans `master`, tag `v0.7.0`.
 
 ## Reporté, hors périmètre du merge
