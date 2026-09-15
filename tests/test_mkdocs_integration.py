@@ -10,6 +10,8 @@ import hashlib
 import os
 from pathlib import Path
 import shutil
+import ssl
+import urllib.error
 from urllib.parse import urlparse
 
 import pytest
@@ -157,13 +159,44 @@ def test_book_is_built_from_the_page_sources(tmp_path: Path) -> None:
     assert "in print" in constructs and "on the site" not in constructs
 
 
+#: What a build that reached for the network and failed raises, directly or
+#: as the cause of whatever wrapped it.
+_NETWORK_ERRORS = (
+    urllib.error.URLError,
+    ssl.SSLError,
+    ConnectionError,
+    TimeoutError,
+)
+
+
+def _network_failure(exc: BaseException) -> bool:
+    """True when ``exc`` or anything it was raised from is a network error."""
+    seen: set[int] = set()
+    while exc is not None and id(exc) not in seen:
+        seen.add(id(exc))
+        if isinstance(exc, _NETWORK_ERRORS):
+            return True
+        exc = exc.__cause__ or exc.__context__
+    return False
+
+
 @pytest.mark.usefixtures("_stubbed_converters")
 def test_book_pdf_export(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """``TEXSMITH_BUILD=1`` compiles the book; skipped without tectonic."""
+    """``TEXSMITH_BUILD=1`` compiles the book; skipped without tectonic.
+
+    Provisioning tectonic and its TeX bundle reaches the network, and a CI
+    runner that cannot verify a certificate is not a regression of this
+    repository: such a build is skipped, like a missing tectonic.
+    """
     if _tectonic_binary() is None:
         pytest.skip("tectonic cannot be provisioned")
     monkeypatch.setenv("TEXSMITH_BUILD", "1")
-    _site_dir, press = build_mini_site(tmp_path)
+    try:
+        _site_dir, press = build_mini_site(tmp_path)
+    except Exception as exc:
+        if _network_failure(exc):
+            pytest.skip(f"the build could not reach the network: {exc}")
+        raise
     pdf = press / "mini" / "mini.pdf"
     assert pdf.exists(), "the PDF export did not produce mini.pdf"
     assert pdf.stat().st_size > 1000
