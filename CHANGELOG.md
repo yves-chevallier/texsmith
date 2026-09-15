@@ -26,6 +26,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **`examples/markdown` is `examples/tmark`**: the syntax sheet is organised by TMark construct and no longer describes the Python-Markdown extensions that used to implement it. `examples/typst-hello` and `examples/typst-article` are gone — every example builds on both backends — and `counters`, `glossary` and `tables` are built by `make -C examples`.
 - **Example builds keep one PDF per variant** (`build/<engine>/<style>/admonition-<style>.pdf`, `build/<engine>/<format>/letter-<format>.pdf`) instead of a copy next to the original, and the letter example has one `build/` directory.
 - **The CLI help no longer offers HTML input**, which the reader stopped accepting in 0.7.0.
+- **The MIT licence names Yves Chevallier** as the copyright holder, in the root `LICENSE.md` and in the MkDocs plugin's; the notice still carried the name of the project TeXSmith's Markdown extensions were forked from, before the TMark migration removed them.
 
 ## [0.7.0] - 2026-09-15
 
