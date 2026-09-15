@@ -1,5 +1,8 @@
 # Merge tasklist — autoriser le merge tmark → main et texsmith → master
 
+**Terminé le 2026-09-15** : tmark-core 0.1.0 et TeXSmith 0.7.0 sont publiés.
+Ce fichier reste comme trace de ce qui a été vérifié avant la release.
+
 Objectif : quand chaque case est cochée, le merge est autorisé et une release
 peut être taguée. Une case n'est cochée qu'après vérification objective
 (commande, test ou diff nommé). Mis à jour au fil du travail, dernière mise à
@@ -93,22 +96,23 @@ Ordre imposé : tmark merge d'abord, puis texsmith, puis les six lignes
 - [x] Job CI MSRV 1.80 (dad4f56) ; `cargo +1.80 check --workspace` passe localement.
 - [x] Tests de `tmark-lint` étoffés (2 → 8 tests, une par règle, 5cf6551).
 - [x] `texsmith-migration` fusionnée dans `main` (a3e218b, fast-forward, CI verte run 34936062610) ;
-      tag `v0.1.0` posé sur 8e4b4e8. **Publication PyPI en attente** : le trusted publisher du projet
-      `tmark-core` ne correspond pas aux claims (`workflow_ref` = `.github/workflows/wheels.yml`,
-      `environment` = `pypi`) — action utilisateur sur pypi.org. Deux défauts du workflow corrigés en route :
-      le glob `dist/tmark-*.whl` (le fichier est `tmark_core-*.whl`) et `maturin upload`, déprécié, remplacé
-      par `pypa/gh-action-pypi-publish`.
+      tag `v0.1.0` posé sur 8e4b4e8. **`tmark-core` 0.1.0 publié sur PyPI** le 2026-09-15
+      (4 roues abi3 + sdist), installation vérifiée dans un venv neuf. Trois défauts corrigés en route :
+      le glob `dist/tmark-*.whl` (le fichier est `tmark_core-*.whl`), `maturin upload` déprécié remplacé par
+      `pypa/gh-action-pypi-publish`, et le trusted publisher dont le champ *Workflow name* était vide.
 
 ## 7. Release texsmith
 
-- [ ] `pyproject.toml` : `tmark-core>=0.1,<0.2` depuis PyPI, plus de
-      `[tool.uv.sources]` path ; `vendor/tmark` retiré.
-- [ ] Les six `ref: texsmith-migration` remplacés par le tag.
+- [x] `pyproject.toml` : `tmark-core>=0.1,<0.2` depuis PyPI, plus de
+      `[tool.uv.sources]` path ; `vendor/tmark` retiré (39a733f).
+- [x] Les sept `ref: texsmith-migration` supprimés avec le checkout de tmark et l'installation de Rust :
+      le CI installe la roue depuis PyPI (39a733f). Un test d'intégration qui atteignait le réseau est
+      désormais sauté plutôt qu'en échec (c34cf28).
 - [x] CI verte sur GitHub (lint, pytest matrice 9 jobs Linux/macOS/Windows, parity) : run 34841328180 sur le contenu
       de d65ac6f. Deux causes CI-only corrigées : usage box colorée (1dc4000), séparateurs Windows (3894e53, d65ac6f).
 - [x] `CHANGELOG.md` : section 0.7.0 datée du 2026-09-15 (fd97856), pertes listées, plus les correctifs
       du 14 (citations, échappement Typst, keystrokes, guillemets, warnings vers le sink, chemins Windows).
-- [ ] Pile `refactor/*` fusionnée dans `master`, tag `v0.7.0`.
+- [x] Pile `refactor/*` fusionnée dans `master` (c34cf28, fast-forward), tag `v0.7.0` posé le 2026-09-15.
 
 ## Reporté, hors périmètre du merge
 
