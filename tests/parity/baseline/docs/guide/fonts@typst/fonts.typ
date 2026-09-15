@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Fonts and scripts]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith automatically wraps non‑Latin scripts in moving arguments (headings, captions, index entries, …) with per‑script font macros, using a cached lookup built from the Noto family. This gives fast, consistent multilingual output without manual fontspec boilerplate.
 
 = Inspect detected fallback fonts

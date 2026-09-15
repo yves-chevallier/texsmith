@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[License]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith is licensed under the terms of the MIT License.
 
 Copyright #ts-emoji[©] 2025 Yves Chevallier

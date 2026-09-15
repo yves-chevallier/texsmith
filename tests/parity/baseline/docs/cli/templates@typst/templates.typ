@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Templates]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Templates are predefined #ts-logo("LaTeX") document structures that dictate the overall layout, style, and organization of your final document. TeXSmith includes several built-in templates for common document types, and you can also create and use custom templates.
 
 = Use a template

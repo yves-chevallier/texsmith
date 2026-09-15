@@ -1,0 +1,596 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-typesetting}
+\usepackage{ts-fonts}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
+\usepackage{ts-keystrokes}
+\usepackage{ts-callouts}
+\usepackage{ts-code}
+\usepackage{ts-glossary}
+\usepackage{ts-todolist}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{TMark Syntax}
+\author{Yves Chevallier}\date{}
+\begin{document}
+\maketitle
+\begin{abstract}
+TMark is the Markdown dialect TeXSmith reads: CommonMark, the extensions authors already know from GitHub and MkDocs, and a small closed set of constructs for print --- roles such as \tscodeinline{\{index\}[term]}, containers such as \tscodeinline{::: note}, data fences such as \tscodeinline{yaml table}. This document walks through the syntax construct by construct, each one shown as source and as the typeset result. It doubles as a test sheet for templates.
+\end{abstract}
+\tableofcontents
+\section{Structure}
+\subsection{Headings}
+Six heading levels, \tscodeinline{\#} to \tscodeinline{\#\#\#\#\#\#}. \LaTeX{} has fewer sectioning commands (\tscodeinline{\textbackslash{}section}, \tscodeinline{\textbackslash{}subsection}, \tscodeinline{\textbackslash{}subsubsection}, \tscodeinline{\textbackslash{}paragraph}, \tscodeinline{\textbackslash{}subparagraph}), so the deepest levels become run-in bold headings.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gh}{\PYZsh{} Heading 1}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{} Heading 2}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{} Heading 3}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{}\PYZsh{} Heading 4}
+
+Lorem ipsum dolor sit amet.
+
+\PY{g+gu}{\PYZsh{}\PYZsh{}\PYZsh{}\PYZsh{}\PYZsh{} Heading 5}
+
+Lorem ipsum dolor sit amet.
+\end{Verbatim}
+\end{tscode}
+\subsection{Bold}
+Strong emphasis with \tscodeinline{**}, typeset as \tscodeinline{\textbackslash{}textbf\{…\}}.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gs}{**text**} or \PY{g+gs}{**t**}ex**t**
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\textbf{text} or \textbf{t}ex\textbf{t}
+\end{displayquote}
+\subsection{Italic}
+Emphasis with \tscodeinline{*} or \tscodeinline{\_}, for terminology or voice.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This \PY{g+ge}{\PYZus{}text\PYZus{}} or \PY{g+ge}{*text*} is italic.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+This \emph{text} or \emph{text} is italic.
+\end{displayquote}
+\subsection{Nested emphasis}
+Bold and italic combine in either spelling.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gs}{**\PYZus{}bold and italic\PYZus{}**}
+
+***bold and italic***
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\tslead{\emph{bold and italic}}
+
+\emph{\textbf{bold and italic}}
+\end{displayquote}
+\subsection{Small capitals}
+In CommonMark \tscodeinline{**} and \tscodeinline{\_\_} both mean bold. TMark keeps \tscodeinline{**} for bold and reads \tscodeinline{\_\_} as small capitals.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This is \PY{g+gs}{\PYZus{}\PYZus{}small capitals\PYZus{}\PYZus{}}.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+This is \textsc{small capitals}.
+\end{displayquote}
+\subsection{Strikethrough}
+Marks text as deleted or obsolete.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+We \PY{g+gd}{\PYZti{}\PYZti{}do not\PYZti{}\PYZti{}} want this.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+We \sout{do not} want this.
+\end{displayquote}
+\subsection{Underline}
+The \tscodeinline{\{underline\}} role underlines text. PyMdownX's \tscodeinline{\^{}\^{}text\^{}\^{}} spells the same
+node, but only with the \tscodeinline{inline.insert} feature enabled; without it the carets
+are literal.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZob{}underline\PYZcb{}[text]
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\uline{text}
+\end{displayquote}
+\subsection{Highlight}
+\tscodeinline{==text==} highlights a run of text, as a marker would.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+==Cellular respiration is a set of metabolic reactions== that take place
+in the cells of organisms. Its ==primary== function is to convert
+biochemical energy from nutrients into ==adenosine triphosphate (ATP)==,
+and then release waste products.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\tsmark{Cellular respiration is a set of metabolic reactions} that take place in the
+cells of organisms. Its \tsmark{primary} function is to convert biochemical energy
+from nutrients into \tsmark{adenosine triphosphate (ATP)}, and then release waste
+products.
+\end{displayquote}
+\subsection{Subscript and superscript}
+\tscodeinline{\textasciitilde{}…\textasciitilde{}} lowers, \tscodeinline{\^{}…\^{}} raises. Unicode subscripts and superscripts pass through.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+H\PYZti{}2\PYZti{}O, E = mc\PYZca{}2\PYZca{}
+
+H₂O, E = mc²
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+H\textsubscript{2}O, E = mc\textsuperscript{2}
+
+H\textsubscript{2}O, E = mc\textsuperscript{2}
+\end{displayquote}
+\subsection{Smart punctuation}
+Straight quotes become typographic quotes, three dots an ellipsis, \tscodeinline{-\allowbreak{}-\allowbreak{}} an en dash and \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} an em dash. A \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} alone on its line is a thematic break, not a dash.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZdq{}Smart quotes\PYZdq{}, ellipses..., en\PYZhy{}dash \PYZhy{}\PYZhy{}, em\PYZhy{}dash \PYZhy{}\PYZhy{}\PYZhy{}
+
+Achilles \PYZhy{}\PYZhy{} the swiftest runner \PYZhy{}\PYZhy{} was fast, but not as fast as the tortoise.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\enquote{Smart quotes}, ellipses..., en-dash --, em-dash ---
+
+Achilles -- the swiftest runner -- was fast, but not as fast as the tortoise.
+\end{displayquote}
+\subsection{Inline code and code blocks}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+This entry is \PY{l+s+sb}{`inline code`}, or can be in a fenced code block:
+
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}
+\PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Hello}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+This entry is \tscodeinline{inline code}, or can be in a fenced code block:
+\begin{tscode}[lang=python, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Hello}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
+\end{Verbatim}
+\end{tscode}
+\end{displayquote}
+\subsection{Links}
+External links become clickable links in the PDF. A bare URL is linked as it stands.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The German\PYZhy{}born physicist [\PY{n+nt}{Albert Einstein}](\PY{n+na}{https://en.wikipedia.org/wiki/Albert\PYZus{}Einstein}) is famous for
+his Nobel prize and the theory of relativity: https://en.wikipedia.org/wiki/Theory\PYZus{}of\PYZus{}relativity
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+The German-born physicist \href{https://en.wikipedia.org/wiki/Albert\_Einstein}{Albert Einstein} is famous for
+his Nobel prize and the theory of relativity: \url{https://en.wikipedia.org/wiki/Theory\_of\_relativity}
+\end{displayquote}
+\subsection{Images}
+Local or remote images; a remote one is fetched at build time.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+![\PY{n+nt}{Random Picture}](\PY{n+na}{https://picsum.photos/500/200})
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{200.jpg}
+\caption{Random Picture}
+\end{figure}
+\end{displayquote}
+\subsection{Bulleted lists}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZhy{}}\PY{+w}{ }First
+\PY{k}{\PYZhy{}}\PY{+w}{ }Second
+\PY{+w}{    }\PY{k}{\PYZhy{}}\PY{+w}{ }Subitem
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{itemize}
+\item First
+\item Second
+\begin{itemize}
+\item Subitem
+\end{itemize}
+\end{itemize}
+\end{displayquote}
+\subsection{Numbered lists}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{1.} Numbered first
+\PY{k}{2.} Numbered second
+\PY{+w}{    }\PY{k}{1.} Sub\PYZhy{}numbered
+        a. Sub\PYZhy{}sub\PYZhy{}numbered
+        b. Sub\PYZhy{}sub\PYZhy{}numbered
+\PY{+w}{    }\PY{k}{2.} Sub\PYZhy{}numbered
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{enumerate}
+\item Numbered first
+\item Numbered second
+\begin{enumerate}
+\item Sub-numbered
+a. Sub-sub-numbered
+b. Sub-sub-numbered
+\item Sub-numbered
+\end{enumerate}
+\end{enumerate}
+\end{displayquote}
+\subsection{Task lists}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZhy{} }\PY{k}{[x]} Done
+\PY{k}{\PYZhy{} }\PY{k}{[ ]} To do
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{tstasklist}
+\item[\tsdone] Done
+\item[\tstodo] To do
+\end{tstasklist}
+\end{displayquote}
+\subsection{Definition lists}
+A term, then its definition on a \tscodeinline{:} line.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Term
+: Definition of the term
+
+Another term
+:   Another definition with a longer description that spans
+    multiple lines and
+    is indented properly.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{description}
+\item[{Term}] Definition of the term
+\item[{Another term}] Another definition with a longer description that spans
+multiple lines and
+is indented properly.
+\end{description}
+\end{displayquote}
+\subsection{Block quotes}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{\PYZgt{} }\PY{g+ge}{Quote}
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+Quote
+\end{displayquote}
+\subsection{Thematic breaks}
+A \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} on its own line. At the top level of a paged document it turns the page; inside a container it draws a rule.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\tsrule
+\end{displayquote}
+\section{Blocks}
+\subsection{Tables}
+Pipe tables for plain 2-D data; a \tscodeinline{yaml table} fence for spans, grouped headers and footers (see the \tscodeinline{tables} example).
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+| Column 1 | Column 2 |
+| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+| Value 1  | Value 2  |
+| Value 3  | Value 4  |
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Column 1} & \textbf{Column 2} \\
+\midrule
+Value 1 & Value 2 \\
+Value 3 & Value 4 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\end{displayquote}
+\subsection{Footnotes}
+A footnote is a note placed at the bottom of the page.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Text with note[\PYZca{}1].
+
+[\PY{n+nl}{\PYZca{}1}]: \PY{n+na}{Here is the note.}
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+Text with note\footnote{Here is the note.}.
+\end{displayquote}
+\subsection{Abbreviations}
+An abbreviation definition expands its first occurrence and lists the acronym in the backmatter.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The HTML standard.
+
+*[HTML]: HyperText Markup Language
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+The \tsacr{HTML} standard.
+\end{displayquote}
+\subsection{Callouts}
+A \tscodeinline{::: kind} container is a callout: note, tip, warning, danger, and the other kinds of the callout palette. Attributes follow the kind. PyMdownX's \tscodeinline{!!! note} and \tscodeinline{??? warning} spell the same containers.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: note
+This is a note.
+:::
+
+::: warning \PYZob{}collapsed=true\PYZcb{}
+This is a warning.
+:::
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{collapsed=true} creates a collapsible block in \tsacr{HTML} output only.
+\begin{tscallout}[kind=note]
+This is a note.
+\end{tscallout}
+\begin{tscallout}[kind=warning, collapsed]
+This is a warning.
+\end{tscallout}
+A title of its own:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: note \PYZob{}title=Title collapsed=false\PYZcb{}
+Collapsible content.
+:::
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{tscallout}[kind=note, title={Title}]
+Collapsible content.
+\end{tscallout}
+\end{displayquote}
+\subsection{Tabs}
+A \tscodeinline{tabs} container holds one \tscodeinline{tab} container per pane. Paged output lays the panes one after the other, each under its title.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+:::: tabs
+::: tab \PYZob{}title=Windows\PYZcb{}
+Windows is a Microsoft operating system.
+:::
+::: tab \PYZob{}title=Linux\PYZcb{}
+Linux is an open\PYZhy{}source operating system.
+:::
+::::
+\end{Verbatim}
+\end{tscode}
+\begin{tsdiv}{tab}[title=Windows]
+Windows is a Microsoft operating system.
+\end{tsdiv}
+\begin{tsdiv}{tab}[title=Linux]
+Linux is an open-source operating system.
+\end{tsdiv}
+\subsection{Diagrams}
+A \tscodeinline{mermaid} fence is rendered to a vector image at build time; \tscodeinline{image} on the fence makes it a figure, with the attributes an image takes.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{mermaid}\PY{+w}{ }image width=\PYZdq{}20\PYZpc{}\PYZdq{}
+\PY{l+s}{graph TD;}
+\PY{l+s}{  A\PYZhy{}\PYZhy{}\PYZgt{}B;}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.2\linewidth]{<HASH>.pdf}
+\end{figure}
+\end{displayquote}
+\subsection{Math}
+Inline math between \tscodeinline{\$…\$}, display math between \tscodeinline{\$\$…\$\$}, in \LaTeX{} syntax on both backends.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+The differential form of Maxwell\PYZsq{}s equations:
+
+\PYZdl{}\PYZdl{}
+\PYZbs{}begin\PYZob{}aligned\PYZcb{}
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}mathbf\PYZob{}E\PYZcb{} \PYZam{}= \PYZbs{}frac\PYZob{}\PYZbs{}rho\PYZcb{}\PYZob{}\PYZbs{}varepsilon\PYZus{}0\PYZcb{} \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}cdot \PYZbs{}mathbf\PYZob{}B\PYZcb{} \PYZam{}= 0 \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}times \PYZbs{}mathbf\PYZob{}E\PYZcb{} \PYZam{}= \PYZhy{}\PYZbs{}frac\PYZob{}\PYZbs{}partial \PYZbs{}mathbf\PYZob{}B\PYZcb{}\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{} \PYZbs{}\PYZbs{}
+\PYZbs{}nabla \PYZbs{}times \PYZbs{}mathbf\PYZob{}B\PYZcb{} \PYZam{}= \PYZbs{}mu\PY{g+ge}{\PYZus{}0 \PYZbs{}mathbf\PYZob{}J\PYZcb{} + \PYZbs{}mu\PYZus{}}0 \PYZbs{}varepsilon\PYZus{}0
+\PYZbs{}frac\PYZob{}\PYZbs{}partial \PYZbs{}mathbf\PYZob{}E\PYZcb{}\PYZcb{}\PYZob{}\PYZbs{}partial t\PYZcb{}
+\PYZbs{}end\PYZob{}aligned\PYZcb{}
+\PYZdl{}\PYZdl{}
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+The differential form of Maxwell's equations:
+
+$$
+\begin{aligned}
+\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+\nabla \cdot \mathbf{B} &= 0 \\
+\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
+\nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0
+\frac{\partial \mathbf{E}}{\partial t}
+\end{aligned}
+$$
+\end{displayquote}
+\subsection{Raw passthrough}
+A \tscodeinline{latex raw} fence is written to the \LaTeX{} output verbatim; the \tscodeinline{\{raw latex\}(…)} role does the same inside a paragraph. Neither reaches the other backends.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{latex}\PY{+w}{ }raw
+\PY{k}{\PYZbs{}clearpage}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
+\clearpage
+Inline variant:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+Insert... \PYZob{}raw latex\PYZcb{}(\PYZbs{}clearpage) anywhere in the paragraph.
+\end{Verbatim}
+\end{tscode}
+Insert... \clearpage anywhere in the paragraph.
+\subsection{Including a file}
+A fence with \tscodeinline{include} takes its content from a file, here a Python program listed with its highlighting.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{l+s+sb}{```}\PY{l+s+sb}{python}\PY{+w}{ }include=\PYZdq{}hanoi.py\PYZdq{}
+\PY{l+s+sb}{```}
+\end{Verbatim}
+\end{tscode}
+\begin{tscode}[lang=python, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{\PYZus{}\PYZus{}future\PYZus{}\PYZus{}}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{annotations}
+
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{collections}\PY{n+nn}{.}\PY{n+nn}{abc}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Iterable}
+
+\PY{n}{Move} \PY{o}{=} \PY{n+nb}{tuple}\PY{p}{[}\PY{n+nb}{int}\PY{p}{,} \PY{n+nb}{str}\PY{p}{,} \PY{n+nb}{str}\PY{p}{]}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{tower\PYZus{}of\PYZus{}hanoi}\PY{p}{(}\PY{n}{n}\PY{p}{:} \PY{n+nb}{int}\PY{p}{,} \PY{n}{source}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{destination}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{auxiliary}\PY{p}{:} \PY{n+nb}{str}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{list}\PY{p}{[}\PY{n}{Move}\PY{p}{]}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Compute the move sequence for the Tower of Hanoi puzzle.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{n}{moves}\PY{p}{:} \PY{n+nb}{list}\PY{p}{[}\PY{n}{Move}\PY{p}{]} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+
+    \PY{k}{def}\PY{+w}{ }\PY{n+nf}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks}\PY{p}{:} \PY{n+nb}{int}\PY{p}{,} \PY{n}{start}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{end}\PY{p}{:} \PY{n+nb}{str}\PY{p}{,} \PY{n}{spare}\PY{p}{:} \PY{n+nb}{str}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{k+kc}{None}\PY{p}{:}
+        \PY{k}{if} \PY{n}{disks} \PY{o}{==} \PY{l+m+mi}{0}\PY{p}{:}
+            \PY{k}{return}
+        \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{spare}\PY{p}{,} \PY{n}{end}\PY{p}{)}
+        \PY{n}{moves}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{p}{(}\PY{n}{disks}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{end}\PY{p}{)}\PY{p}{)}
+        \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{disks} \PY{o}{\PYZhy{}} \PY{l+m+mi}{1}\PY{p}{,} \PY{n}{spare}\PY{p}{,} \PY{n}{end}\PY{p}{,} \PY{n}{start}\PY{p}{)}
+
+    \PY{n}{\PYZus{}solve}\PY{p}{(}\PY{n}{n}\PY{p}{,} \PY{n}{source}\PY{p}{,} \PY{n}{destination}\PY{p}{,} \PY{n}{auxiliary}\PY{p}{)}
+    \PY{k}{return} \PY{n}{moves}
+
+\PY{k}{def}\PY{+w}{ }\PY{n+nf}{render\PYZus{}solution}\PY{p}{(}\PY{n}{moves}\PY{p}{:} \PY{n}{Iterable}\PY{p}{[}\PY{n}{Move}\PY{p}{]}\PY{p}{)} \PY{o}{\PYZhy{}}\PY{o}{\PYZgt{}} \PY{n+nb}{str}\PY{p}{:}
+\PY{+w}{    }\PY{l+s+sd}{\PYZdq{}\PYZdq{}\PYZdq{}Return a human\PYZhy{}readable description of the move sequence.\PYZdq{}\PYZdq{}\PYZdq{}}
+    \PY{k}{return} \PY{l+s+s2}{\PYZdq{}}\PY{l+s+se}{\PYZbs{}n}\PY{l+s+s2}{\PYZdq{}}\PY{o}{.}\PY{n}{join}\PY{p}{(}
+        \PY{l+s+sa}{f}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Move disk }\PY{l+s+si}{\PYZob{}}\PY{n}{disk}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ from source }\PY{l+s+si}{\PYZob{}}\PY{n}{start}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{ to destination }\PY{l+s+si}{\PYZob{}}\PY{n}{end}\PY{l+s+si}{\PYZcb{}}\PY{l+s+s2}{\PYZdq{}} \PY{k}{for} \PY{n}{disk}\PY{p}{,} \PY{n}{start}\PY{p}{,} \PY{n}{end} \PY{o+ow}{in} \PY{n}{moves}
+    \PY{p}{)}
+\end{Verbatim}
+\end{tscode}
+\section{Inline}
+\subsection{Emoji}
+Shortcodes and Unicode emoji are typeset with the emoji font of the \tscodeinline{fonts.emoji} setting --- OpenMoji black unless told otherwise.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+:smile:
+:heart:
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\tsemoji{😄}
+\tsemoji{❤️}
+\end{displayquote}
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+😊 🚀 🍕 🎉 🐍 🌍 💻
+📚 🎨 👽 👋 🤖 🦄 🧠
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\tsemoji{😊} \tsemoji{🚀} \tsemoji{🍕} \tsemoji{🎉} \tsemoji{🐍} \tsemoji{🌍} \tsemoji{💻}
+\tsemoji{📚} \tsemoji{🎨} \tsemoji{👽} \tsemoji{👋} \tsemoji{🤖} \tsemoji{🦄} \tsemoji{🧠}
+\end{displayquote}
+\subsection{Keys}
+\tscodeinline{++key+key++} sets keyboard shortcuts as key caps.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+++Ctrl+C++
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+\tskeys{Ctrl,C}
+\end{displayquote}
+\subsection{Progress bars}
+\begin{tscode}[lang=markdown, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+[=25\PYZpc{} \PYZdq{}Research\PYZdq{}]
+[=50\PYZpc{} \PYZdq{}Implementation\PYZdq{}]
+[=75\PYZpc{} \PYZdq{}Review\PYZdq{}]
+[=100\PYZpc{} \PYZdq{}Launch\PYZdq{}]\PYZob{}.thin\PYZcb{}
+\end{Verbatim}
+\end{tscode}
+\tsprogress{0.25}{Research}
+\tsprogress{0.5}{Implementation}
+\tsprogress{0.75}{Review}
+\tsprogress[thin]{1}{Launch}
+\subsection{Escaping}
+A backslash makes any punctuation literal, so a \tscodeinline{*}, a \tscodeinline{\_} or a \tscodeinline{\{} can be written as it is.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZbs{}*not emphasis\PYZbs{}*, a literal \PYZbs{}\PYZob{}brace\PYZbs{}\PYZcb{} and a \PYZbs{}\PYZsh{} that is no heading.
+\end{Verbatim}
+\end{tscode}
+\begin{displayquote}
+*not emphasis*, a literal \{brace\} and a \# that is no heading.
+\end{displayquote}
+\section{Front matter}
+A YAML block at the top of the document carries the metadata and the \tscodeinline{press} settings: the template, its attributes, the slots, the fonts.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PYZhy{}\PYZhy{}\PYZhy{}
+title: My document
+author: Alice
+press:
+  template: article
+\PY{g+gu}{  toc: true}
+\PY{g+gu}{\PYZhy{}\PYZhy{}\PYZhy{}}
+
+\PY{g+gh}{\PYZsh{} Title}
+\end{Verbatim}
+\end{tscode}
+\printglossary[type=\acronymtype]
+\end{document}

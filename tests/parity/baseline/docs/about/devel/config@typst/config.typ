@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Global user configuration]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 We want TeXSmith to support a global user configuration file located at `.texsmith/config.yml`. This file allows users to set their preferred defaults for templates, Mermaid styles, compilation options, and paper formats. The configuration file is optional and can be placed in the current working directory or any parent directory.
 
 This only affects CLI usage of TeXSmith. The API remains robust and does not depend on any global configuration, except for the cache directory.

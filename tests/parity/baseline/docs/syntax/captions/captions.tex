@@ -8,14 +8,15 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
+\usepackage{booktabs}
 \usepackage{csquotes}
 \usepackage{float}
 \usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{xcolor}
-\usepackage{fvextra}
+\usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{seqsplit}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -210,4 +211,25 @@ Figure: Watchdog traces before and after the fix. \PYZob{}\PYZsh{}fig:traces\PYZ
 \end{Verbatim}
 \end{tscode}
 This renders ``Figure 1'' with ``(a)'', ``(b)''; \tscodeinline{@fig:crash} yields ``figure 1b''.
+\begin{tscallout}[kind=warning, title={A sub-figure takes no number of its own}]
+The \textbf{container} advances the \tscodeinline{fig} counter once, and each image resolves
+to that number suffixed with a letter in document order, lower case (\tscodeinline{1a},
+\tscodeinline{1b}, ..., wrapping after \tscodeinline{z}). A page with a plain figure and a
+\tscodeinline{::: figure} of two labelled images therefore numbers 1, then 2 with 2a and
+2b --- not 1, 2, 3, 4 --- so a figure count over a whole book or site advances
+once per container rather than once per image.
+\end{tscallout}
+The rest follows from the same rule:
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{The container holds} & \textbf{What happens} \\
+\midrule
+only paragraphs of images & the images are sub-figures, lettered \\
+a single image & that image \textbf{is} the figure: one number, no letter \\
+a table, prose or a listing & a plain float; an image in it numbers like any other \\
+no anchor and no caption & nothing is numbered, sub-figures included \\
+\bottomrule
+\end{tabularx}
+\end{center}
 \end{document}

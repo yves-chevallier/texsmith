@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Managing Slots]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Slots are placeholders in the #ts-logo("LaTeX") template where specific document sections can be injected. Use the `–slot` (or `-s`) option to map input documents to these slots. For example, to inject `abstract.md` into the `abstract` slot and `dedication.md` into the `dedication` slot of a book template, run:
 
 ```bash

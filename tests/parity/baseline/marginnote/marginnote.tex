@@ -44,8 +44,9 @@ unified \tscodeinline{\{keyword\}[content]} family already used by \tscodeinline
 \end{Verbatim}
 \end{tscode}
 where \tscodeinline{side} is an optional placement --- \tscodeinline{left}, \tscodeinline{right}, \tscodeinline{outer} or \tscodeinline{inner} ---
-selecting a margin explicitly. It compiles down to \tscodeinline{\textbackslash{}marginnote\{…\}} from the
-\tscodeinline{marginnote} \LaTeX{} package (auto-loaded on first use).
+selecting a margin explicitly. It compiles down to \tscodeinline{\textbackslash{}tsaside}: a \tscodeinline{\textbackslash{}marginpar}
+that \tscodeinline{marginfix} moves past the previous note on the document's own side, a
+\tscodeinline{\textbackslash{}marginnote} fixed at its line on the other side or inside a box.
 \subsection{Default placement}
 No suffix means the document's default side. In a \tscodeinline{oneside} layout that's
 the right margin; in a \tscodeinline{twoside} layout, the outer margin (so the note

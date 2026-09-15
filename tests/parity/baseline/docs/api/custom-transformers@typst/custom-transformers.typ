@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Custom Transformers]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Transformers convert non-PDF assets (Mermaid, Draw.io, bitmap images) into files
 #ts-logo("LaTeX") can include. They are driven by the #link("handlers.md#ir-passes")[`assets` pass],
 which rewrites each image node to point at the converted file before

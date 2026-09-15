@@ -133,7 +133,6 @@ type = "string"
 description = "The bibliography style to use. See BibLaTeX documentation for available styles."
 
 # Slots definition:
-# -----------------
 # Each slot represents a section of the document that can be filled with content.
 # The 'depth' parameter indicates the LaTeX sectioning command to use.
 [latex.template.slots.mainmatter]
@@ -154,10 +153,8 @@ description = "Appendix content inserted before backmatter."
 depth = "section"
 strip_heading = true
 
-# --------------------------------------------------------------------------- #
 # Typst backend (parallel to [latex.template]). Attributes are backend-agnostic
 # but use raw values (no LaTeX escaping); the Typst scaffolding escapes inline.
-# --------------------------------------------------------------------------- #
 [typst.template]
 name = "article"
 version = "0.1.0"
@@ -174,7 +171,6 @@ description = "The title of the document."
 [typst.template.attributes.subtitle]
 default = ""
 type = "string"
-format = "raw"
 allow_empty = true
 sources = ["subtitle"]
 description = "The subtitle of the document."

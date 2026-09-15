@@ -31,6 +31,8 @@ languages and scripts supported by TeXSmith, showcasing its versatility in
 handling diverse linguistic content.]
 #v(1em)
 
+#ts-callout-style.update("fancy")
+
 = Japanese (#ts-script("chinese")[日本語])
 
 Japanese is the national language of Japan and is spoken by over 125 million people, primarily within the country.

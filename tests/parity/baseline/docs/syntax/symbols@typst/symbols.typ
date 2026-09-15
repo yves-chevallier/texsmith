@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Smart symbols and quotes]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Two substitutions run while TMark scans a run of text: the smart symbols of
 `pymdownx.smartsymbols`, and TeXSmith's own double-quote pattern. Both produce
 ordinary text in the document model — there is nothing to reference and nothing

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[References]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TMark has *one sigil for referring*: `@`. Whatever the target — a section, a
 figure, a table, an equation, a custom counter, a glossary term, a bibliography
 entry, another document — you write `@key`, and the registry the key belongs to

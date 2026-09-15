@@ -20,12 +20,14 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Languages]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith speaks more than Markdown—it speaks your language. Noto fonts ship in, so #ts-logo("LaTeX") stops tripping over glyphs while browsers casually fall back. Most scripts just work out of the box; typographic nuances for highly specialized scripts (Arabic, Japanese, etc.) can be layered in if or when you need them.
 
 Below, we render a dialect sampler through the `article` template and lay two PDF pages side-by-side (`layout: 2x1`). Click to fetch the PDF.
 
 #figure(
-image("snippet-<HASH>.png", width: 80%),
+image("snippet-<HASH>.pdf", width: 80%),
 caption: [Download PDF],
 )
 

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Examples]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Great documentation shines brightest with real examples — so here are a few to get you started. These showcase TeXSmith’s range across various document types and creative workflows:
 
 - Letters

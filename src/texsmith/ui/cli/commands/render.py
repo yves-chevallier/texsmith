@@ -34,7 +34,7 @@ from texsmith.core.conversion.policy import (
 )
 from texsmith.core.conversion.resolution import NUMBERING_MODES, NUMBERING_OVERRIDE_KEY
 from texsmith.core.conversion.service import ConversionService
-from texsmith.core.conversion.typst import build_typst_pdf, render_typst_document
+from texsmith.core.conversion.typst import build_typst_pdf, render_typst_documents
 from texsmith.core.exceptions import ConversionError
 from texsmith.core.front_matter import split_front_matter
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
@@ -490,7 +490,7 @@ def render(
         ),
     ] = False,
 ) -> None:
-    """Convert MkDocs documents into LaTeX artefacts and optionally build PDFs."""
+    """Convert Markdown documents into LaTeX or Typst sources and optionally build PDFs."""
 
     ctx = click.get_current_context(silent=True)
     typer_ctx = ctx if isinstance(ctx, typer.Context) else None
@@ -568,7 +568,7 @@ def render(
                 scaffold_template(identifier, template_scaffold)
             raise typer.Exit()
         raise typer.BadParameter(
-            "Provide a Markdown (.md) or HTML (.html) source document or pipe content via stdin."
+            "Provide a Markdown (.md) source document or pipe content via stdin."
         )
 
     copy_assets = not no_copy_assets
@@ -802,61 +802,48 @@ def render(
         elif output_mode == "file" and resolved_output_target is not None:
             typst_output_dir = resolved_output_target.parent
 
-        def _emit_typst(doc: Any) -> str:
-            try:
-                return render_typst_document(
-                    doc,
-                    request,
-                    output_dir=typst_output_dir,
-                    emitter=emitter,
-                )
-            except (ConversionError, TemplateError) as exc:
-                # ``raise_conversion_error`` already put the record in the sink
-                # and marked the exception as logged, so the message reaches the
-                # console only if this exit flushes like every other one.
-                _flush_diagnostics()
-                emit_error(str(exc), exception=exc)
-                raise typer.Exit(code=1) from exc
+        try:
+            payload = render_typst_documents(
+                prepared.documents, request, output_dir=typst_output_dir, emitter=emitter
+            )
+        except (ConversionError, TemplateError) as exc:
+            # ``raise_conversion_error`` already put the record in the sink
+            # and marked the exception as logged, so the message reaches the
+            # console only if this exit flushes like every other one.
+            _flush_diagnostics()
+            emit_error(str(exc), exception=exc)
+            raise typer.Exit(code=1) from exc
 
-        typst_docs = [(doc.source_path, _emit_typst(doc)) for doc in prepared.documents]
         if output_mode == "stdout":
-            typer.echo("\n\n".join(payload for _, payload in typst_docs))
+            typer.echo(payload)
             _flush_diagnostics()
             return
 
-        written_paths: list[Path] = []
         if output_mode == "file":
             if resolved_output_target is None:
                 raise typer.BadParameter("Output path is required when writing Typst to a file.")
-            try:
-                write_output_file(resolved_output_target, typst_docs[0][1])
-            except OSError as exc:
-                emit_error(str(exc), exception=exc)
-                raise typer.Exit(code=1) from exc
-            written_paths.append(resolved_output_target)
+            target = resolved_output_target
         elif output_mode in {"directory", "template"}:
             if resolved_output_target is None:
                 raise typer.BadParameter("Output directory is required when writing Typst files.")
-            resolved_output_target.mkdir(parents=True, exist_ok=True)
-            for source_path, payload in typst_docs:
-                target = resolved_output_target / f"{source_path.stem}.typ"
-                try:
-                    write_output_file(target, payload)
-                except OSError as exc:
-                    emit_error(str(exc), exception=exc)
-                    raise typer.Exit(code=1) from exc
-                written_paths.append(target)
+            # Several documents make one ``main.typ``, as they make one ``main.tex``.
+            stem = (
+                prepared.documents[0].source_path.stem if len(prepared.documents) == 1 else "main"
+            )
+            target = resolved_output_target / f"{stem}.typ"
         else:
             raise RuntimeError(f"Unsupported output mode '{output_mode}' for Typst output.")
-
-        for path in written_paths:
-            typer.echo(f"Wrote {path}")
+        try:
+            write_output_file(target, payload)
+        except OSError as exc:
+            emit_error(str(exc), exception=exc)
+            raise typer.Exit(code=1) from exc
+        typer.echo(f"Wrote {target}")
         if build_pdf:
-            for path in written_paths:
-                ok, message = build_typst_pdf(path)
-                typer.echo(message)
-                if not ok and debug_enabled():
-                    raise typer.Exit(code=1)
+            ok, message = build_typst_pdf(target)
+            typer.echo(message)
+            if not ok and debug_enabled():
+                raise typer.Exit(code=1)
         _flush_diagnostics()
         return
 

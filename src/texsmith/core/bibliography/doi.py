@@ -139,7 +139,7 @@ class DoiBibliographyFetcher:
             dict(base_headers),
         )
 
-    # ------------------------------------------------------------------ caching
+    # caching
 
     def _read_cache(self, doi: str) -> str | None:
         if not self._enable_cache:
@@ -184,7 +184,7 @@ class DoiBibliographyFetcher:
         except OSError:
             return None
 
-    # ------------------------------------------------------------------ requests
+    # requests
 
     def _ensure_session(self) -> RequestsSession:
         if self._session is not None:

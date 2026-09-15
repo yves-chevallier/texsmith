@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Snippet Blocks]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith renders fenced blocks with the `.snippet` class into PDF/PNG pairs and injects them into the page with a download link. Snippets now accept a concise YAML payload instead of `data-*` attributes, and the PNG preview is left unframed so you can wrap it with the `ts-frame` fragment when needed.
 
 = YAML-driven snippets
@@ -67,7 +69,7 @@ Some content...
 ````
 
 #figure(
-image("snippet-<HASH>.png", width: 65%),
+image("snippet-<HASH>.pdf", width: 65%),
 caption: [Inline snippet],
 )
 

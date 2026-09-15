@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Supported Markdown Syntax]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith reads TMark: CommonMark plus the extension set every
 MkDocs site already loads, plus the four families that cover what print needs.
 This page is the quick tour; each row links to the page that explains the

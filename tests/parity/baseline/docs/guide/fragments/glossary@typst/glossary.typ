@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Glossary]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 In online documentation, a glossary doesn't make much sense because you can
 search for terms directly and you have hyperlinks. However, in printed documents, a
 glossary can be very useful to provide definitions of terms used in the text.

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Tables]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Markdown pipe tables are cute until they meet real reports. The minute you
 need grouped headers, wrapped text, row spans, totals, or a table that behaves
 properly in #ts-logo("LaTeX"), plain Markdown turns into duct tape. TeXSmith keeps the

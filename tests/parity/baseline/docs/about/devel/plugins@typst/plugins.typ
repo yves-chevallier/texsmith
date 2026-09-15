@@ -16,6 +16,8 @@ align(center)[#counter(page).get().first()]
 #show heading: set block(above: 1.8em, below: 1.0em)
 #set heading(numbering: "1.1")
 
+#ts-callout-style.update("fancy")
+
 = Standalone Plugins
 
 Some ideas on standalone plugins that can be developed and shared independently or included in TeXSmith by default. These are some features that I can use myself and that can be useful to others.

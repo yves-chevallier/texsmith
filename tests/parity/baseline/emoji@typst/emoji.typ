@@ -21,6 +21,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Emoji Support]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Introduction
 
 TeXSmith renders emoji as glyphs when you pick a font flavour:
@@ -49,8 +51,8 @@ You can type emoji directly in Markdown or #ts-logo("LaTeX") source.
 = Examples
 
 #table(
-columns: 2,
-align: (left, left),
+columns: (auto, 1fr),
+align: (center, left),
 table.header([Emoji], [Description]),
 [#ts-emoji[😊]], [Smiling face with smiling eyes],
 [#ts-emoji[🚀]], [Rocket],

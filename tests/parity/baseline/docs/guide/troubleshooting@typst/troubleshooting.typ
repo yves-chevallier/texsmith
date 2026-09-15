@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Troubleshooting LaTeX Builds]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Running `texsmith –build` shells out to your selected engine (Tectonic by default, `latexmk` when `–engine` is set to `xelatex`/`lualatex`), `bibtex`/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
 
 = Enable rich diagnostics

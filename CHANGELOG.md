@@ -7,6 +7,26 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- **The Typst backend has the three callout styles, a real index, stacked margin notes and the letter standards.** `texsmith.typ` reads the `callouts.style` attribute through the `ts-callout-style` state (`fancy` is the coloured frame with its icon, `classic` a rule on the left with a monochrome icon, `minimal` a thin frame and no icon — the three looks of the LaTeX fragment, which used to render as one coloured box whatever the style asked for); `#ts-index` records an entry and `#ts-print-index()` — placed by the `article` and `book` scaffolding when the document has one — prints the index with its sub-entries and page numbers, where it used to be a no-op; `#ts-aside` is a zero-width inline box placed in the margin next to its line, so a note no longer splits its paragraph; every table is set as `booktabs` sets the LaTeX ones (rules above, under the header and below, no vertical rules); the `letter` template lays out the DIN 5008, SN 010130 and NF Z 11-001 window envelopes with the measures of the KOMA-Script class options (`-aformat=din|sn|nf`), where it used to collapse the three to one layout with a grey sender block; and several input documents make one `main.typ`, as they make one `main.tex`.
+- **Typst embeds the vector diagrams.** Mermaid and draw.io diagrams, and the snippet previews, reach a Typst document as the same PDF the LaTeX document gets — Typst 0.14 reads PDF images — instead of a PNG raster.
+
+### Fixed
+
+- **The `book` header ran off the page.** `fancyhdr` sizes `\headwidth` from the layout memoir has when the package loads, the stock's, and the trimmed page is narrower: on an A5 book the running heads overflowed both edges. The template sets `\headwidth` to the text width once the layout is fixed, and its page styles read memoir's own `\if@twoside` instead of a Jinja flag nothing ever set.
+- **Mermaid diagrams rendered with Mermaid's default grey theme.** The default configuration file was looked up at a path that does not exist (`templates/article/template/assets/`), so neither the Playwright nor the CLI backend saw the black-and-white theme the article template ships.
+- **Margin notes overprinted each other.** A `\tsaside` on the document's own side is now a `\marginpar` under `marginfix`, which moves a note down past the previous one; a note on the reversed side, or inside a box, stays a `\marginnote` fixed at its line.
+- **A moustache in a Typst template attribute rendered as nothing.** `{{callouts.style}}` in a subtitle reached the writer as a `Var` node, which prints empty; the Typst path now resolves the moustaches of the attributes before rendering them, as the LaTeX path does, and a `markdown` attribute of a `[typst.template]` section renders through the Typst writer rather than the LaTeX one.
+- **The letter's `back-address` front-matter key was ignored** by the LaTeX template (only `back_address` was read), so KOMA-Script fell back to the full sender line, which overflowed the NF and SN address windows.
+- **`examples/colorful`** placed the north-west text in the south-west square (TikZ counts from the bottom), and the Typst poster set its text at 20pt where the LaTeX one uses `\Large`; both quadrants and sizes now agree.
+
+### Changed
+
+- **`examples/markdown` is `examples/tmark`**: the syntax sheet is organised by TMark construct and no longer describes the Python-Markdown extensions that used to implement it. `examples/typst-hello` and `examples/typst-article` are gone — every example builds on both backends — and `counters`, `glossary` and `tables` are built by `make -C examples`.
+- **Example builds keep one PDF per variant** (`build/<engine>/<style>/admonition-<style>.pdf`, `build/<engine>/<format>/letter-<format>.pdf`) instead of a copy next to the original, and the letter example has one `build/` directory.
+- **The CLI help no longer offers HTML input**, which the reader stopped accepting in 0.7.0.
+
 ## [0.7.0] - 2026-09-15
 
 ### Added

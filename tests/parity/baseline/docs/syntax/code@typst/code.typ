@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Code]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Code fences are one of Markdown’s greatest hits: drop a triple backtick block,
 label it, and you get nicely formatted snippets. A fenced code block is the
 degenerate case of TMark's #link("index.md#four-syntactic-families")[data-directive family]:
@@ -137,7 +139,7 @@ table.header([You wrote], [Normal form]),
 Here’s what the above examples look like when rendered with TeXSmith:
 
 #figure(
-image("snippet-<HASH>.png", width: 60%),
+image("snippet-<HASH>.pdf", width: 60%),
 )
 
 == Captioned listings
@@ -197,5 +199,5 @@ In Python, you can achieve similar functionality using the `find` method of stri
 ```
 
 #figure(
-image("snippet-<HASH>.png"),
+image("snippet-<HASH>.pdf"),
 )

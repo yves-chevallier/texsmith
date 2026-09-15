@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Headings]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Headings are your document's scaffold: Markdown `#` marks become #ts-logo("LaTeX") `\section`, `\subsection`, and friends. TeXSmith retunes them using template settings, document base levels, and promotion rules so the hierarchy stays sane even when the source is messy.
 
 Markdown is loose: some files start at `##`, others at `###`, and multi-file builds mix it all. TeXSmith computes offsets per fragment to line things up: find the shallowest heading, derive an offset, then add the template base level. This page walks that math, how title promotion changes it, and how slots keep fragments independent.

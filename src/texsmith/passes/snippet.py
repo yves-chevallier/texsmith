@@ -121,7 +121,7 @@ class _Renderer:
     ) -> model.Figure:
         ids = self.ctx.ids
         span = node.span
-        source = assets.png if self.ctx.backend == "typst" else assets.pdf
+        source = assets.pdf
         caption = block.caption
         image = model.Image(
             src=Path(source).resolve().as_posix(),

@@ -10,8 +10,6 @@
 \usepackage{ts-fonts}
 \usepackage{float}
 \usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
@@ -53,9 +51,13 @@ TeXSmith renders that snippet as:
 \begin{tscode}[lang=text, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PYZdl{} texsmith abbr.md
-The \PYZbs{}acrshort\PYZob{}HTML\PYZcb{} specification is maintained by the \PYZbs{}acrshort\PYZob{}W3C\PYZcb{}.
+The \PYZbs{}tsacr\PYZob{}HTML\PYZcb{} specification is maintained by the \PYZbs{}tsacr\PYZob{}W3C\PYZcb{}.
 \end{Verbatim}
 \end{tscode}
+\tscodeinline{\textbackslash{}tsacr\{KEY\}} renders the acronym's \textbf{short form}; \tscodeinline{ts-\allowbreak{}typesetting} defines it
+over the \tscodeinline{glossaries} package's \tscodeinline{\textbackslash{}acrshort}, and a template may redefine it.
+Typst gets the matching \tscodeinline{\#ts-\allowbreak{}acr("KEY")}, and the web writer emits \tscodeinline{<abbr>}.
+
 Which displays as:
 \begin{figure}[H]
 \centering
@@ -110,7 +112,7 @@ default acronym-table title follows the document language (it expands to
 \subsection{Automatic substitution and limitations}
 Unlike \LaTeX{}, TeXSmith does \textbf{not} require \tscodeinline{\textbackslash{}gls\{…\}} / \tscodeinline{\textbackslash{}Gls\{…\}} calls in the
 source: the converter scans the body and replaces every \textbf{strict, case-sensitive}
-match of an acronym key with \tscodeinline{\textbackslash{}acrshort\{KEY\}}. As a consequence, casing helpers
+match of an acronym key with \tscodeinline{\textbackslash{}tsacr\{KEY\}}. As a consequence, casing helpers
 such as \tscodeinline{\textbackslash{}Gls}, \tscodeinline{\textbackslash{}GLS}, \tscodeinline{\textbackslash{}acrlong}, etc. are not synthesised --- the substitution
 is the same regardless of where the acronym appears in the text. If you need
 those forms, drop down to a raw passthrough:

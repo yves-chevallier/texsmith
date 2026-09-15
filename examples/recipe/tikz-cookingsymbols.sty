@@ -1,12 +1,9 @@
-% --------------------------------------------------------------------------
 % the tikz-cookingsymbols package
 %
 %   draw cooking symbols (like top/bottom-heat) with tikz
 %
-% --------------------------------------------------------------------------
 % Fabian Matischok
 % E-Mail: f_matischok@t-online.de
-% --------------------------------------------------------------------------
 % Copyright 2025 Fabian Matischok
 %
 % This work may be distributed and/or modified under the
@@ -24,7 +21,6 @@
 \RequirePackage{calc}
 \RequirePackage{xfp}
 
-
 % catch font size
 \AtBeginDocument{
   \begingroup
@@ -34,14 +30,12 @@
   \endgroup
 }
 
-
 \pgfqkeys{/tikzCScmd}{% Create directory for keys
   scale/.store in = \tikzCS@cmd@scale,
   scale = 1,             % default value
   color/.store in = \tikzCS@cmd@color,
   color = black,         % default value
 }
-
 
 %		private box
 \newsavebox{\tikzCS@Box}
@@ -75,15 +69,12 @@ to(${15/\tikzCS@AFSize}*(#1,0pt)+(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},star
 to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=180,end angle=270];%
 }
 
-
 %		fan for circulating air
 \ProvideDocumentCommand{\tikzCS@Fan}{m}{% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
 \filldraw[line join=bevel] (${0.5}*(#1,#1)$) to[in=0,out=75] (${0.5}*(#1,#1)+{(0.5*\tikzCS@AFSize-15)/\tikzCS@AFSize}*(90:#1)$) to[out=180,in=105]cycle;%
 \filldraw[line join=bevel] (${0.5}*(#1,#1)$) to[in=120,out=195] (${0.5}*(#1,#1)+{(0.5*\tikzCS@AFSize-15)/\tikzCS@AFSize}*(210:#1)$) to[out=300,in=225]cycle;%
 \filldraw[line join=bevel] (${0.5}*(#1,#1)$) to[in=240,out=315] (${0.5}*(#1,#1)+{(0.5*\tikzCS@AFSize-15)/\tikzCS@AFSize}*(330:#1)$) to[out=420,in=345]cycle;%
 }
-
-
 
 % code for drawn the specified (starred or not) symbol in right color, size
 \newcommand{\tikzCS@cmd}[3]{% #1: starred or not, #2: option scale and color, #3: command name to draw the symbol
@@ -100,8 +91,6 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\endgroup
 }
 
-
-
 %	Top/BottomHeat
 \newcommand{\tikzCS@drawTopBottomHeat}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
 		\draw (${15/\tikzCS@AFSize}*(#1,0pt)+{15/\tikzCS@AFSize}*(0pt,#1)$)to(${(\tikzCS@AFSize-15)/\tikzCS@AFSize}*(#1,0pt)+{15/\tikzCS@AFSize}*(0pt,#1)$);%
@@ -112,9 +101,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawTopBottomHeat}
 }
 
-
 \let\OberUnterHitze\TopBottomHeat % lang: DE
-
 
 % Top Heat
 \newcommand{\tikzCS@drawTopHeat}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -125,9 +112,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawTopHeat}
 }
 
-
 \let\OberHitze\TopHeat % lang: DE
-
 
 % Bottom Heat
 \newcommand{\tikzCS@drawBottomHeat}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -138,9 +123,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawBottomHeat}
 }
 
-
 \let\UnterHitze\BottomHeat % lang: DE
-
 
 % Convection Oven
 \newcommand{\tikzCS@drawConvectionOven}[1]{\tikzCS@Border{#1}%#1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -152,9 +135,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawConvectionOven}
 }
 
-
 \let\Umluft\ConvectionOven % lang: DE
-
 
 % Convection Oven alternative
 \newcommand{\tikzCS@drawConvectionOvenAlt}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -167,9 +148,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawConvectionOvenAlt}
 }
 
-
 \let\UmluftAlt\ConvectionOvenAlt % lang: DE
-
 
 % ConvectionOvenGrill
 \newcommand{\tikzCS@drawConvectionOvenGrill}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -186,9 +165,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawConvectionOvenGrill}
 }
 
-
 \let\UmluftGrill\ConvectionOvenGrill % lang: DE
-
 
 % Grill
 \newcommand{\tikzCS@drawGrill}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -215,9 +192,7 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawMicrowave}
 }
 
-
 \let\Microwelle\Microwave % lang: DE
-
 
 % AirFryer
 \newcommand{\tikzCS@drawAirFryer}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
@@ -247,7 +222,6 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawAirFryer}
 }
 
-
 %	Pizza
 \newcommand{\tikzCS@drawPizza}[1]{\tikzCS@Border{#1}% #1 is \tikzCS@AFHeight or \tikzCS@AFHeightStar
 		\coordinate (tikzCS@coordA)at(${15/\tikzCS@AFSize}*(#1,#1)$);%
@@ -263,6 +237,5 @@ to(${15/\tikzCS@AFSize}*(0pt,#1)$) arc[radius=\tikzCS@AFRadius{#1},start angle=1
 \ProvideDocumentCommand{\Pizza}{s O{} }{% lang: EN+DE
 	\tikzCS@cmd{#1}{#2}{\tikzCS@drawPizza}
 }
-
 
 \endinput

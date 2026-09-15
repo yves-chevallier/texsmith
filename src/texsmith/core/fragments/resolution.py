@@ -121,9 +121,7 @@ def merge_fragments(
     return result
 
 
-# --------------------------------------------------------------------------
 # Activation from a writer's ``Requires`` (fragment-contracts.md §2)
-# --------------------------------------------------------------------------
 
 #: Context key carrying the fragments activated from ``Requires``. When it is
 #: present, a contract fragment renders iff its name is listed; when it is

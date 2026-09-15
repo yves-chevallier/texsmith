@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[LaTeX]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 The #ts-logo("LaTeX") body itself comes from tmark's writer; what stays on the Python side
 is the escaping table the templates and fonts reuse, the asset plumbing, the
 Pygments bridge of the `highlight` pass, and the template runtime.

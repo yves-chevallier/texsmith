@@ -5,31 +5,29 @@ FILES := a.md b.md c.md config.yml
 PDF := $(OUTPUT_DIR)/multidocument$(ENGINE_SUFFIX).pdf
 BASE_PDF := $(OUTPUT_DIR)/main.pdf
 
-# Typst output -> build/typst/{a,b,c}.pdf. The Typst backend renders one PDF per
-# input document (it has no multi-document merge like the LaTeX config.yml path).
+# Typst output -> build/typst/multidocument.pdf: the three documents make one
+# main.typ, as they make one main.tex.
 TYPST_DIR := $(OUTPUT_ROOT)/typst
-TYPST_PDFS := $(TYPST_DIR)/a.pdf $(TYPST_DIR)/b.pdf $(TYPST_DIR)/c.pdf
+TYPST_PDF := $(TYPST_DIR)/multidocument.pdf
+TYPST_BASE_PDF := $(TYPST_DIR)/main.pdf
 
-ARTIFACTS := $(PDF) $(TYPST_PDFS)
+ARTIFACTS := $(PDF) $(TYPST_PDF)
 
-all: $(PDF) $(TYPST_PDFS)
+all: $(PDF) $(TYPST_PDF)
 
 # Build a single backend on demand.
 latex: $(PDF)
-typst: $(TYPST_PDFS)
+typst: $(TYPST_PDF)
 
 $(PDF): $(FILES) | $(OUTPUT_DIR)
 	$(TEXSMITH) $^ -o$(OUTPUT_DIR) --build -tarticle $(TEXSMITH_ENGINE)
 	mv $(BASE_PDF) $(PDF)
 	$(call copy_artifact,$@)
 
-$(TYPST_DIR)/a.pdf: $(FILES) | $(TYPST_DIR)
-	$(TEXSMITH) a.md b.md c.md config.yml -o$(TYPST_DIR) -tarticle --format typst --build
-	$(call copy_artifact,$(TYPST_DIR)/a.pdf)
-	$(call copy_artifact,$(TYPST_DIR)/b.pdf)
-	$(call copy_artifact,$(TYPST_DIR)/c.pdf)
-
-$(TYPST_DIR)/b.pdf $(TYPST_DIR)/c.pdf: $(TYPST_DIR)/a.pdf
+$(TYPST_PDF): $(FILES) | $(TYPST_DIR)
+	$(TEXSMITH) $^ -o$(TYPST_DIR) -tarticle --format typst --build
+	mv $(TYPST_BASE_PDF) $(TYPST_PDF)
+	$(call copy_artifact,$@)
 
 $(TYPST_DIR):
 	mkdir -p "$@"

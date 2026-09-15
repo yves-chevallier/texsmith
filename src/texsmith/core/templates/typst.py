@@ -101,6 +101,8 @@ class TypstTemplate:
         manifest_path = _resolve_manifest_path(self.root)
         self.manifest = TemplateManifest.load(manifest_path)
         self.info: TemplateInfo = self.manifest.section(_TYPST_BACKEND)
+        for spec in self.info.attributes.values():
+            spec.backend = _TYPST_BACKEND
         self.environment = _build_typst_environment(self.root)
 
     # -- context + rendering ----------------------------------------------

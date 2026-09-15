@@ -117,9 +117,7 @@ def escape_latex_chars(text: str, *, legacy_accents: bool = False) -> str:
     return "".join(parts)
 
 
-# ---------------------------------------------------------------------------
 # Unicode → LaTeX text transforms (legacy inline.py PRE phase)
-# ---------------------------------------------------------------------------
 
 _SUPERSCRIPT_MAP = {
     "⁰": "0",

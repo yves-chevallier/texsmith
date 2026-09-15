@@ -9,44 +9,10 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{csquotes}
 \usepackage{float}
-\usepackage{xcolor}
-\usepackage{epigraph}
-\usepackage{marginnote}
-\usepackage{multicol}
-\usepackage{progressbar}
-\usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
-\renewcommand*{\marginfont}{
-\footnotesize
-\sloppy
-\emergencystretch=1em
-\hyphenpenalty=50
-\exhyphenpenalty=50
-}
-\newlength{\tsmarginparavail}
-\newlength{\tsmarginparalt}
-\newlength{\tsmarginparbuf}
-\setlength{\tsmarginparbuf}{6mm}
-\makeatletter
-\AtBeginDocument{
-\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
-\if@twoside
-\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
-\ifdim\tsmarginparalt<\tsmarginparavail
-\setlength{\tsmarginparavail}{\tsmarginparalt}
-\fi
-\fi
-\ifdim\tsmarginparavail<\marginparwidth
-\setlength{\marginparwidth}{\tsmarginparavail}
-\fi
-}
-\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -265,5 +231,61 @@ A container that means nothing: a hook for classes and an id.
 \end{Verbatim}
 \end{tscode}
 A \tscodeinline{::: name} whose name is unknown raises \tscodeinline{container-\allowbreak{}unknown} and renders its
-content transparently rather than silently becoming a \tscodeinline{<div>}.
+content transparently rather than silently becoming a \tscodeinline{<div>}. Nothing is lost
+--- the name is kept so the printer round-trips the file --- you are simply told
+the language does not know that word.
+
+There is \textbf{no mechanism to declare a container name}, on purpose: a new \emph{kind}
+of thing is a declared callout type, and a block that must look a particular
+way is \tscodeinline{::: div \{.class\}} plus a template that knows the class.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: div \PYZob{}.callout\PYZhy{}sidebar\PYZcb{}
+Rendered by whatever the template defines for this class.
+:::
+\end{Verbatim}
+\end{tscode}
+A CommonMark HTML block whose opening tag carries the \tscodeinline{markdown} attribute ---
+Python-Markdown's \tscodeinline{md\_in\_html} --- is sugar for a container named after the tag,
+its \tscodeinline{id} and \tscodeinline{class} becoming the attribute list. \tscodeinline{<div markdown>} is therefore
+\tscodeinline{::: div}, kept indefinitely because it is the only container spelling a
+Python-Markdown site renders; any other tag is an unknown container, with the
+diagnostic. HTML \textbf{without} the attribute is raw: CommonMark passes it through
+as typed, and the paged writers drop it like any foreign raw, so
+\tscodeinline{<span class="x">text</span>} prints \enquote{text} and \tscodeinline{<br>} prints nothing --- a break
+that must reach print is Markdown's hard break.
+
+A layout container reaches the paged backends through one contract ---
+\tscodeinline{\textbackslash{}begin\{tsdiv\}\{name\}[attrs]} and \tscodeinline{\#ts-\allowbreak{}div("name", ..)} --- dispatched on the name
+with the attributes forwarded as keys (\tscodeinline{\#id} as \tscodeinline{id}, classes as
+\tscodeinline{class=\{a,b\}}, \tscodeinline{key=val} as is; \tscodeinline{lang} and \tscodeinline{media} never), and \tscodeinline{<div class="name
+…">} on the web. Redefining that contract for a name is how a template restyles
+a layout, tabs included.
+\section{Foreign directives}
+A \tscodeinline{:::} line whose name is \textbf{dotted} is not a container at all. It is a
+directive for another processor --- mkdocstrings' syntax, its options in the
+indented YAML that follows, with no closing fence --- and so is
+Python-Markdown's \tscodeinline{[TOC]} paragraph.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+[TOC]
+
+::: texsmith.core.config
+    options:
+      members: true
+
+Next paragraph.
+\end{Verbatim}
+\end{tscode}
+TMark interprets neither. Each becomes a raw block kept \textbf{verbatim}: the
+\tscodeinline{[TOC]} form is the paragraph alone, the dotted form is the \tscodeinline{:::} line plus
+every following line that is blank or indented by four spaces or more, so it
+closes at the first dedent and the container fence rules --- matching \tscodeinline{:::},
+\tscodeinline{container-\allowbreak{}unknown}, \tscodeinline{container-\allowbreak{}unclosed} --- never apply to it.
+
+The printer emits the block as typed; the HTML writer and the \textbf{paged writers
+emit nothing}, because the table of contents in print is \tscodeinline{press.toc} and an
+API reference has no print form. \tscodeinline{[TOC]} is silent; a dotted directive raises
+the hint \tscodeinline{directive-\allowbreak{}foreign}, so a document meant for print does not lose a
+block without notice.
 \end{document}

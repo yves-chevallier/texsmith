@@ -34,3 +34,14 @@
 | 30  | x   |     | x   | x   | x   | __*`The quick brown fox jumps over 012345`*__     |
 | 31  |     | x   | x   | x   | x   | __**`The quick brown fox jumps over 012345`**__   |
 | 32  | x   | x   | x   | x   | x   | __***`The quick brown fox jumps over 012345`***__ |
+
+```yaml table-config
+columns:
+  - {align: right}
+  - {align: center}
+  - {align: center}
+  - {align: center}
+  - {align: center}
+  - {align: center}
+  - {align: left, width: X}
+```

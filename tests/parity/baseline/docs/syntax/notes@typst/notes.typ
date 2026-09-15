@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Notes, asides, index and glossary]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 This page collects the constructs that close the #ts-logo("LaTeX")-sized gaps stock Markdown
 leaves behind: index entries, asides, citations, theorems, the glossary and the
 acronym list. They cooperate with MkDocs and MkDocs Material, and carry enough

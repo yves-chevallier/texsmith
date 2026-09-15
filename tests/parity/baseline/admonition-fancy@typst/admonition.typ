@@ -20,8 +20,10 @@ align(center)[#counter(page).get().first()]
 #align(center)[
 #text(size: 1.8em, weight: "bold")[Admonitions / Callouts]
 #linebreak()
-#text(size: 1.2em)[An Overview of **{{callouts.style}}** framed elements]]
+#text(size: 1.2em)[An Overview of *fancy* framed elements]]
 #v(1.5em)
+
+#ts-callout-style.update("fancy")
 
 #ts-callout(kind: "note")[
 Highlights extra information that’s useful but not critical, helping readers understand nuances.]

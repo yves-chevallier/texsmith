@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Index Example]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 This document demonstrates the index generation with TeXSmith. You can nest, format and create multiple index entries for terms.
 
 = Granny Smith
@@ -38,3 +40,5 @@ A sweet and juicy apple variety that originated in Japan. It has a dense flesh a
 A popular apple variety known for its crisp texture and sweet-tart flavor. It has a distinctive red and yellow skin.
 
 #ts-index([Honeycrisp])#ts-index([apple])
+
+#ts-print-index()

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Fragments]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Fragments are reusable #ts-logo("LaTeX") snippets injected into template slots. Built-in fragments (e.g., geometry, fonts, glossary, index) and custom ones share the same structure:
 
 - `fragment.toml` with either an `entrypoint` — the Python class then owns `name`

@@ -22,11 +22,11 @@
 \fi
 \providecommand{\phantomsection}{}
 
-% ---------------------------------------------------------------- \tslead
+% \tslead
 % Lead-in of a paragraph (Para.lead): a run-in bold line.
 \NewDocumentCommand{\tslead}{m}{\par\noindent\textbf{#1}\par\nobreak\smallskip}
 
-% ---------------------------------------------------------------- \tsmark
+% \tsmark
 % Highlight (==text==). soul breaks with ucharclasses on XeTeX (coloured
 % text instead), lua-ul on LuaTeX, a colour box on pdfTeX.
 \ifXeTeX
@@ -45,12 +45,12 @@
   \fi
 \fi
 
-% ------------------------------------------------------------- \tsdivider
+% \tsdivider
 % A thematic break (---) at the top level of the document: paged templates
 % render \clearpage (decisions X2).
 \NewDocumentCommand{\tsdivider}{}{\clearpage}
 
-% ---------------------------------------------------------------- \tsrule
+% \tsrule
 % The same thematic break inside a container (quote, callout, figure, div,
 % list item, cell, aside, note): a separator, never a page break — breaking
 % the page there would tear the container in two (challenge C48). A
@@ -78,7 +78,7 @@
   \endgroup
 }
 
-% ------------------------------------------------------------ \tsepigraph
+% \tsepigraph
 \pgfkeys{/ts/epigraph/.cd,
   source/.store in=\ts@epigraph@source,
   .unknown/.code={},
@@ -95,29 +95,57 @@
   \endgroup
 }
 
-% --------------------------------------------------------------- \tsaside
+% \tsaside
 % A margin note; side=left|inner reverses the margin. Notes are typeset at
 % \footnotesize with a tolerant line breaker, and \marginparwidth is clamped
 % so a note never overflows the page edge (was the marginnote block of
-% ts-extra).
+% ts-extra). A note on the document's own side is a \marginpar, which
+% marginfix moves down past an earlier note instead of overprinting it; a
+% note inside a box — a minipage, a cell, a callout — would be lost as a
+% \marginpar, and a note on the reversed side cannot be one (the kernel
+% reads \reversemarginpar in the output routine, not where the note is
+% written), so both are a \marginnote, fixed at their line.
+\RequirePackage{marginfix}
 \pgfkeys{/ts/aside/.cd,
   side/.store in=\ts@aside@side,
   .unknown/.code={},
 }
 \def\ts@aside@left{left}
 \def\ts@aside@inner{inner}
+\def\ts@aside@outerfn{footnote}
+\newcommand{\ts@aside@note}[1]{%
+  \ifinner
+    \marginnote{#1}%
+  \else
+    \ifx\@mpfn\ts@aside@outerfn
+      \marginpar{\marginfont #1}%
+    \else
+      \marginnote{#1}%
+    \fi
+  \fi
+}
+% Which notes are reversed: `inner` always; `left` on a recto page, or in
+% a one-sided document, whose own side is the right; `right` on a verso
+% page, whose own side is the left. `outer` and the default are the
+% document's own side.
+\def\ts@aside@right{right}
+\newif\ifts@aside@reverse
 \NewDocumentCommand{\tsaside}{O{}m}{%
   \begingroup
-  \def\ts@aside@side{right}%
+  \def\ts@aside@side{outer}%
   \pgfkeys{/ts/aside/.cd,#1}%
+  \ts@aside@reversefalse
+  \ifx\ts@aside@side\ts@aside@inner\ts@aside@reversetrue\fi
   \ifx\ts@aside@side\ts@aside@left
-    {\reversemarginpar\marginnote{#2}}%
+    \if@twoside\ifodd\c@page\ts@aside@reversetrue\fi\else\ts@aside@reversetrue\fi
+  \fi
+  \ifx\ts@aside@side\ts@aside@right
+    \if@twoside\ifodd\c@page\else\ts@aside@reversetrue\fi\fi
+  \fi
+  \ifts@aside@reverse
+    \reversemarginpar\marginnote{#2}%
   \else
-    \ifx\ts@aside@side\ts@aside@inner
-      {\reversemarginpar\marginnote{#2}}%
-    \else
-      \marginnote{#2}%
-    \fi
+    \ts@aside@note{#2}%
   \fi
   \endgroup
 }
@@ -147,7 +175,7 @@
   \fi
 }
 
-% ------------------------------------------------------------ \tsprogress
+% \tsprogress
 % \tsprogress[thin]{0.45}{label}: a progress bar followed by its label.
 \newif\ifts@progress@thin
 \pgfkeys{/ts/progress/.cd,
@@ -167,11 +195,11 @@
   \endgroup
 }
 
-% ---------------------------------------------------------------- \tsicon
+% \tsicon
 % An inline icon (emoji artifact mode, Image{.icon}).
 \NewDocumentCommand{\tsicon}{m}{\includegraphics[width=1em]{#1}}
 
-% ---------------------------------------------------------------- \tslogo
+% \tslogo
 % \tslogo{XeLaTeX}: a TeX logo word (typography.tex-logos). \TeX, \LaTeX
 % and \LaTeXe are the kernel's and the writer emits them directly; the
 % others go through hologo. An unknown name is printed as text.
@@ -196,7 +224,7 @@
   \fi
 }
 
-% ------------------------------------------------------------------ tsdiv
+% tsdiv
 % \begin{tsdiv}{name}[keys] … \end{tsdiv}: the generic container. A name
 % with a tsdiv@<name> environment (defined with \NewDocumentEnvironment and
 % one optional argument, the raw key list) is dispatched to it; any other

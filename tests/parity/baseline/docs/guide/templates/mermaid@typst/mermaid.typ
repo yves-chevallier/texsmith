@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Mermaid Configuration]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith will automatically pick up a `mermaid-config.json` sitting next to the template's `manifest.toml`. The `assets` pass passes this config to Mermaid for every diagram rendered with that template.
 
 = Using a Built-in Template

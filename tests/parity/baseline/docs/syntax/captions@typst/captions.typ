@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Captions]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Markdown doesn’t ship with a native caption primitive for figures or tables. The closest thing is image `alt` text:
 
 ```md
@@ -45,7 +47,7 @@ anchor. Prefixed ids (`fig:`, `tbl:`, `lst:`) are the recommended convention
 and are what `@` references read best.
 
 #figure(
-image("snippet-<HASH>.png"),
+image("snippet-<HASH>.pdf"),
 )
 
 #ts-callout(kind: "note", title: [The PyMdownX caption block is deprecated])[
@@ -202,3 +204,23 @@ Figure: Watchdog traces before and after the fix. {#fig:traces}
 ```
 
 This renders “Figure 1” with “(a)”, “(b)”; `@fig:crash` yields “figure 1b”.
+
+#ts-callout(kind: "warning", title: [A sub-figure takes no number of its own])[
+The *container* advances the `fig` counter once, and each image resolves
+to that number suffixed with a letter in document order, lower case (`1a`,
+`1b`, …, wrapping after `z`). A page with a plain figure and a
+`::: figure` of two labelled images therefore numbers 1, then 2 with 2a and
+2b — not 1, 2, 3, 4 — so a figure count over a whole book or site advances
+once per container rather than once per image.]
+
+The rest follows from the same rule:
+
+#table(
+columns: 2,
+align: (left, left),
+table.header([The container holds], [What happens]),
+[only paragraphs of images], [the images are sub-figures, lettered],
+[a single image], [that image *is* the figure: one number, no letter],
+[a table, prose or a listing], [a plain float; an image in it numbers like any other],
+[no anchor and no caption], [nothing is numbered, sub-figures included],
+)

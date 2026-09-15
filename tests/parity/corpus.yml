@@ -285,15 +285,15 @@ examples:
     backend: typst
     requires: [typst]
 
-  # ---- examples/markdown (features.md has a mermaid fence) ----------------
-  - id: markdown
-    cwd: examples/markdown
-    args: [features.md, -tarticle]
+  # ---- examples/tmark (syntax.md has a mermaid fence) --------------------
+  - id: tmark
+    cwd: examples/tmark
+    args: [syntax.md, -tarticle]
     backend: latex
     requires: [docker]
-  - id: markdown@typst
-    cwd: examples/markdown
-    args: [features.md, -tarticle, --format, typst]
+  - id: tmark@typst
+    cwd: examples/tmark
+    args: [syntax.md, -tarticle, --format, typst]
     backend: typst
     requires: [docker, typst]
 
@@ -376,14 +376,3 @@ examples:
     backend: typst
     requires: [typst]
 
-  # ---- examples/typst-* (Typst-only examples) -----------------------------
-  - id: typst-article
-    cwd: examples/typst-article
-    args: [article.md, --format, typst]
-    backend: typst
-    requires: [typst]
-  - id: typst-hello
-    cwd: examples/typst-hello
-    args: [hello.md, --format, typst]
-    backend: typst
-    requires: [typst]

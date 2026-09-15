@@ -71,7 +71,7 @@ class ParityError(Exception):
     """A configuration problem the user must fix (corpus, toolchain)."""
 
 
-# --------------------------------------------------------------------------- corpus
+# corpus
 
 
 @dataclass(frozen=True)
@@ -235,7 +235,7 @@ def select_entries(entries: Iterable[Entry], patterns: Sequence[str] | None) -> 
     ]
 
 
-# --------------------------------------------------------------------- requirements
+# requirements
 
 
 def _texsmith_home() -> Path:
@@ -378,8 +378,7 @@ def missing_requirements(
     return missing
 
 
-# ------------------------------------------------------------------------ rendering
-
+# rendering
 
 SHARED_CACHE_NAMESPACES = ("texmf", "playwright", "snippets")
 
@@ -509,7 +508,7 @@ def render_many(
     return results
 
 
-# -------------------------------------------------------------------- normalisation
+# normalisation
 
 VERBATIM_ENVIRONMENTS = frozenset(
     {
@@ -815,7 +814,12 @@ def normalise_tex(text: str, stems: Iterable[str] = ()) -> str:
 
 
 def normalise_typ(text: str, stems: Iterable[str] = ()) -> str:
+    from texsmith.core.conversion.typst import typst_prelude
+
     text = text.replace("\r\n", "\n")
+    # The inlined library is one verbatim block: drop it before the comment
+    # filter touches its lines, so its set and show rules go with its bindings.
+    text = text.replace(typst_prelude(), "", 1)
     lines = [
         line
         for line in text.split("\n")
@@ -833,7 +837,7 @@ def normalise(text: str, suffix: str, stems: Iterable[str] = ()) -> str:
     return normalise_typ(text, stems) if suffix == ".typ" else normalise_tex(text, stems)
 
 
-# ----------------------------------------------------------------------- diffing
+# diffing
 
 
 @dataclass(frozen=True)
@@ -889,7 +893,7 @@ def compare_texts(old: str, new: str, *, relpath: str) -> FileVerdict:
     return verdict
 
 
-# ------------------------------------------------------------------------- reports
+# reports
 
 
 @dataclass
@@ -969,7 +973,7 @@ def error_report(result: RenderResult) -> EntryReport:
     )
 
 
-# -------------------------------------------------------------------- subcommands
+# subcommands
 
 
 def _partition(
@@ -1137,7 +1141,7 @@ def cmd_seed_cache(_args: argparse.Namespace) -> int:
     return 0
 
 
-# -------------------------------------------------------------------------- pdf
+# pdf
 
 
 def _rasterise(pdf: Path, *, dpi: int) -> tuple[list[Any], list[str]]:
@@ -1160,7 +1164,7 @@ def _ink(image: Any) -> Any:
     return image.point(lambda value: 255 if value < 200 else 0)
 
 
-# ------------------------------------------------------------------ pdf baseline
+# pdf baseline
 
 # The entries the nightly job guards: one acronym-heavy page, the counter
 # contract, the index and the margin notes — the four the triage's §6 pixel diff
@@ -1321,7 +1325,7 @@ def _require_pdf_toolchain(entries: Sequence[Entry]) -> None:
             raise ParityError(f"{entry.entry_id}: {needed} is required to build its PDF")
 
 
-# -------------------------------------------------------------------------- main
+# main
 
 
 def _default_jobs() -> int:

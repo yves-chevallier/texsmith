@@ -18,10 +18,11 @@
 {%- endmacro -%}
 #set page(paper: "a4", margin: (top: 2cm, left: 2cm, right: 2cm, bottom: 1cm))
 #set text(font: ("TeX Gyre Heros", "Helvetica", "Arial"), size: 10pt)
-#set par(justify: true)
+#set par(justify: true, spacing: 0.5em)
+#set list(spacing: 0.4em)
 
 #text(size: 2.2em, weight: "bold")[{{ recipe.title | default('Recette', true) | te }}]
-#v(0.8cm)
+#v(0.6cm)
 
 #grid(
   columns: (3fr, 7fr),
@@ -50,17 +51,18 @@
   [
     {% for section in recipe.sections | default([], true) %}
     #text(weight: "bold", size: 1.1em)[{{ section.title | default('Étape', true) | te }}]
-    #v(0.4em)
+    #v(0.2em)
     {% if section.instructions %}
     {% for instruction in section.instructions %}
     - {{ instruction | te }}
     {% endfor %}
+    #v(0.2em)
     {% endif %}
     {% if section.steps %}
     #table(
       columns: (auto, auto, 1fr),
       stroke: none,
-      inset: (x: 4pt, y: 5pt),
+      inset: (x: 4pt, y: 3pt),
       align: (left + top, left + top, left + top),
       {% for step in section.steps %}
       {% set step_loop = loop %}
@@ -80,7 +82,7 @@
       {% endfor %}
     )
     {% endif %}
-    #v(0.8em)
+    #v(0.5em)
     {% endfor %}
   ],
 )

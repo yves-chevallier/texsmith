@@ -18,6 +18,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import contextlib
 import copy
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -32,6 +33,7 @@ from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
 from texsmith.core.exceptions import raise_conversion_error
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
+from texsmith.core.mustache import replace_mustaches_in_structure
 from texsmith.core.templates import resolve_template_language
 from texsmith.core.templates.typst import TypstTemplate, load_typst_template
 from texsmith.diagnostics import (
@@ -307,44 +309,62 @@ def typst_bibliography(
     return collection, resource
 
 
-def render_typst_document(
+@dataclass(slots=True)
+class _Rendered:
+    """One document through the passes and the writers, before the wrapping."""
+
+    document: Document
+    processed: Document
+    bodies: dict[str, Body]
+    requires: Requires
+    front_matter: dict[str, Any]
+    overrides: dict[str, Any]
+    template_overrides: dict[str, Any]
+    default_slot: str
+    declared_slots: dict[str, Any]
+    #: The ``.bib`` files the passes wrote (fetched DOIs).
+    pass_bibliography: list[Path]
+
+
+def _callout_style(overrides: Mapping[str, Any]) -> str:
+    """The ``callouts.style`` of the document, as the LaTeX fragment resolves it."""
+    from texsmith.fragments.callouts import CalloutsFragment
+
+    spec = CalloutsFragment.attributes["callout_style"]
+    value, found = spec.fetch_override(overrides)
+    if not found:
+        return str(spec.default)
+    resolved = spec.coerce_value(value, from_override=True)
+    return str(resolved or spec.default)
+
+
+def _typst_string(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _run_document(
     document: Document,
     request: ConversionRequest,
     *,
-    output_dir: Path | None = None,
-    emitter: DiagnosticEmitter | None = None,
-    chain: ResolutionChain | None = None,
-    state: DocumentState | None = None,
-) -> str:
-    """Render a tmark-read document to a ``.typ`` source (standalone or templated).
-
-    ``request`` is the one the caller assembled, not a reconstruction of it:
-    the template, the bibliography, the diagram backend and the template
-    options are read from it, and so are the flags the passes need — the asset
-    strategy and ``include_paths``, which a rebuilt request silently reset to
-    their defaults.
-
-    ``state``, when given, receives what the passes computed (script usage,
-    fallback summary, ``fonts_scanned``) through ``apply_pass_values``; the
-    same values reach the template context (``fonts``, ``emoji``).
-    """
+    typst_template: TypstTemplate | None,
+    output_dir: Path | None,
+    emitter: DiagnosticEmitter,
+    chain: ResolutionChain,
+    state: DocumentState,
+) -> _Rendered:
+    """Run the passes and the writers on one document."""
     if document.ir is None:
         raise ValueError("render_typst_document needs a document parsed into the IR")
-    active_emitter = emitter or NullEmitter()
-    template = request.template
-    bibliography_files = list(request.bibliography_files)
     front_matter = _front_matter(document)
     overrides = _press_overrides(dict(front_matter))
     options = dict(request.template_options)
-    title = _document_title(document, overrides)
 
-    typst_template: TypstTemplate | None = None
     declared_slots: dict[str, Any] = {}
     default_slot = "mainmatter"
     requests: dict[str, str] = {}
     strip: set[str] = set()
-    if template is not None:
-        typst_template = load_typst_template(template)
+    if typst_template is not None:
         declared_slots, default_slot = typst_template.info.resolve_slots()
         titles = _slot_titles(document)
         for name, slot in declared_slots.items():
@@ -379,11 +399,7 @@ def render_typst_document(
         # ``1 - min_level`` offset) and the scaffolding decides the rest.
         base_level=1 if typst_template is not None else 0,
     )
-    ctx: PassContext = build_pass_context(
-        context, active_emitter, template=slot_template, backend="typst"
-    )
-    if chain is None:
-        chain = ResolutionChain(bibliography=bibliography_paths(bibliography_files))
+    ctx: PassContext = build_pass_context(context, emitter, template=slot_template, backend="typst")
     # Same inputs as the LaTeX path: the resolved language as tmark's BCP 47
     # ``lang`` and the ``--numbering`` mode from the template overrides.
     language = tmark_language(context.language) or processed_lang(document)
@@ -407,45 +423,148 @@ def render_typst_document(
     processed.diagnostics.extend(
         record for record in ctx.diagnostics if record not in processed.diagnostics
     )
-    pass_state = state if state is not None else DocumentState()
-    apply_pass_values(ctx, pass_state, context.template_overrides)
+    apply_pass_values(ctx, state, context.template_overrides)
+    return _Rendered(
+        document=document,
+        processed=processed,
+        bodies=bodies,
+        requires=requires,
+        front_matter=front_matter,
+        overrides=overrides,
+        template_overrides=context.template_overrides,
+        default_slot=default_slot,
+        declared_slots=declared_slots,
+        pass_bibliography=[Path(path) for path in ctx.bibliography],
+    )
 
-    if not title and typst_template is not None:
-        # The legacy Typst path promotes the leading top-level heading in
-        # ``_render_templated``/``_promote_title``; on the IR path the ``title``
-        # pass has already dropped that heading from the body, so the title has
-        # to come from the document's own promotion decision — without it the
-        # template renders ``title: ""``, no title block, and (in ``letter``) no
-        # salutation. Standalone keeps the heading in the body, as legacy does.
-        title = document.promoted_title()
-    mainmatter = bodies.get(default_slot, Body(text="")).text
-    prelude = typst_prelude()
+
+def render_typst_document(
+    document: Document,
+    request: ConversionRequest,
+    *,
+    output_dir: Path | None = None,
+    emitter: DiagnosticEmitter | None = None,
+    chain: ResolutionChain | None = None,
+    state: DocumentState | None = None,
+) -> str:
+    """Render one tmark-read document to a ``.typ`` source (standalone or templated)."""
+    return render_typst_documents(
+        [document], request, output_dir=output_dir, emitter=emitter, chain=chain, state=state
+    )
+
+
+def render_typst_documents(
+    documents: Sequence[Document],
+    request: ConversionRequest,
+    *,
+    output_dir: Path | None = None,
+    emitter: DiagnosticEmitter | None = None,
+    chain: ResolutionChain | None = None,
+    state: DocumentState | None = None,
+) -> str:
+    """Render the documents to one ``.typ`` source (standalone or templated).
+
+    Several documents make one document, as the LaTeX ``main.tex`` does: the
+    bodies of each slot follow each other in argument order, the requirements
+    are the union, the front matter of the first document (which carries the
+    shared configuration files) names the title and the template attributes.
+
+    ``request`` is the one the caller assembled, not a reconstruction of it:
+    the template, the bibliography, the diagram backend and the template
+    options are read from it, and so are the flags the passes need — the asset
+    strategy and ``include_paths``, which a rebuilt request silently reset to
+    their defaults.
+
+    ``state``, when given, receives what the passes computed (script usage,
+    fallback summary, ``fonts_scanned``) through ``apply_pass_values``; the
+    same values reach the template context (``fonts``, ``emoji``).
+    """
+    if not documents:
+        raise ValueError("render_typst_documents needs at least one document")
+    active_emitter = emitter or NullEmitter()
+    template = request.template
+    bibliography_files = list(request.bibliography_files)
+    typst_template = load_typst_template(template) if template is not None else None
+    if chain is None:
+        chain = ResolutionChain(bibliography=bibliography_paths(bibliography_files))
+    pass_state = state if state is not None else DocumentState()
+
+    rendered = [
+        _run_document(
+            document,
+            request,
+            typst_template=typst_template,
+            output_dir=output_dir,
+            emitter=active_emitter,
+            chain=chain,
+            state=pass_state,
+        )
+        for document in documents
+    ]
+    first = rendered[0]
+    requires = Requires.union(item.requires for item in rendered)
+    default_slot = first.default_slot
+
+    def slot_text(name: str) -> str:
+        parts = [item.bodies.get(name, Body(text="")).text.strip() for item in rendered]
+        return "\n\n".join(part for part in parts if part)
+
+    title = _document_title(first.document, first.overrides)
+    callout_style = _callout_style(first.template_overrides)
+    has_index = bool(requires.index) or "ts-index" in requires.fragments
+    # The contract definitions, then the document's choices among them.
+    preamble = f"{typst_prelude()}\n\n#ts-callout-style.update({_typst_string(callout_style)})"
+    mainmatter = f"{preamble}\n\n{slot_text(default_slot)}"
 
     if typst_template is None:
         return render_document(
-            f"{prelude}\n\n{mainmatter}",
+            mainmatter,
             title=title,
             uses_mitex=_uses_mitex(requires),
             uses_eqnref=_uses_eqnref(requires),
+            has_index=has_index,
         )
 
-    _collection, bib_resource = typst_bibliography(
-        document, bibliography_files, ctx.bibliography, output_dir, active_emitter
+    if not title:
+        # The ``title`` pass has already dropped the promoted heading from the
+        # body, so the title has to come from the document's own promotion
+        # decision — without it the template renders ``title: ""``, no title
+        # block, and (in ``letter``) no salutation.
+        title = first.document.promoted_title()
+
+    resources: list[str] = []
+    for item in rendered:
+        _collection, resource = typst_bibliography(
+            item.document, bibliography_files, item.pass_bibliography, output_dir, active_emitter
+        )
+        if resource and resource not in resources:
+            resources.append(resource)
+
+    source_dir = first.document.source_path.parent
+    # The attributes are prose: a moustache in a subtitle names a value of the
+    # front matter or of a ``-a`` option, resolved before the attribute is
+    # rendered, as the LaTeX path does in ``resolve_conversion_context``.
+    attribute_overrides = replace_mustaches_in_structure(
+        first.template_overrides,
+        (first.template_overrides, first.front_matter),
+        emitter=active_emitter,
+        source="template attributes",
     )
-    source_dir = document.source_path.parent
-    template_context = dict(typst_template.resolve_attributes(overrides))
+    template_context = dict(typst_template.resolve_attributes(attribute_overrides))
     for key in ("fonts", "emoji"):
-        value = context.template_overrides.get(key)
+        value = first.template_overrides.get(key)
         if value is not None:
             template_context.setdefault(key, value)
-    author_names, author_blocks = _author_views(overrides)
+    author_names, author_blocks = _author_views(first.overrides)
     template_context["title"] = title
     template_context["author_names"] = author_names
     template_context["author_blocks"] = author_blocks
     # The language the context resolved (``--language`` or the front matter);
-    # the scaffolding's ``lang:`` and the date filter read it. The legacy path
-    # only ever saw the front-matter attribute, so this is a ``setdefault``.
-    template_context.setdefault("language", context.language)
+    # the scaffolding's ``lang:`` and the date filter read it.
+    template_context.setdefault(
+        "language",
+        first.document.language or resolve_template_language(request.language, first.front_matter),
+    )
     date_value = template_context.get("date")
     if date_value:
         from texsmith.core.document_date import format_date
@@ -453,40 +572,51 @@ def render_typst_document(
         template_context["date"] = format_date(
             date_value, language=template_context.get("language"), cwd=source_dir
         )
-    template_context["front_matter"] = front_matter
+    template_context["front_matter"] = first.front_matter
     template_context["asset"] = lambda value: _copy_template_asset(value, source_dir, output_dir)
-    template_context["mainmatter"] = f"{prelude}\n\n{mainmatter}"
-    template_context["abstract"] = bodies.get("abstract", Body(text="")).text
-    for name in declared_slots:
+    template_context["mainmatter"] = mainmatter
+    template_context["abstract"] = slot_text("abstract")
+    for name in first.declared_slots:
         if name in (default_slot, "abstract"):
             continue
-        template_context[name] = bodies.get(name, Body(text="")).text
+        template_context[name] = slot_text(name)
     if "paper" not in template_context:
-        paper = overrides.get("paper")
+        paper = first.overrides.get("paper")
         if isinstance(paper, str) and paper.strip():
             template_context["paper"] = paper.strip()
-    template_context["acronyms"] = _render_acronyms(processed, requires)
-    template_context["has_bibliography"] = bool(requires.bibliography and bib_resource)
-    template_context["bibliography_resource"] = bib_resource or ""
+    template_context["acronyms"] = _render_acronyms([item.processed for item in rendered], requires)
+    template_context["callout_style"] = callout_style
+    template_context["has_index"] = has_index
+    template_context["has_bibliography"] = bool(requires.bibliography and resources)
+    template_context["bibliography_resource"] = resources[0] if resources else ""
+    # What ``#bibliography()`` takes: one path, or an array of them.
+    template_context["bibliography_sources"] = (
+        _typst_string(resources[0])
+        if len(resources) == 1
+        else "(" + ", ".join(_typst_string(item) for item in resources) + ",)"
+    )
     template_context["uses_mitex"] = _uses_mitex(requires)
     template_context["uses_eqnref"] = _uses_eqnref(requires)
     return typst_template.render(template_context)
 
 
-def _render_acronyms(document: Document, requires: Requires) -> str:
-    """The acronym backmatter of the written keys (``typst._render_acronyms`` on the IR)."""
-    from texsmith.core.context import DocumentState
+def _render_acronyms(documents: Sequence[Document], requires: Requires) -> str:
+    """The acronym backmatter of the written keys, over every document's abbreviations."""
     from texsmith.core.fragments.activation import apply_requires
 
-    assert document.ir is not None
-    state = apply_requires(DocumentState(), requires, abbreviations=document.ir.abbreviations)
-    return _acronym_backmatter(state.abbreviations)
+    abbreviations: dict[str, str] = {}
+    for document in documents:
+        assert document.ir is not None
+        state = apply_requires(DocumentState(), requires, abbreviations=document.ir.abbreviations)
+        abbreviations.update(state.abbreviations)
+    return _acronym_backmatter(abbreviations)
 
 
 __all__ = [
     "TYPST_PRELUDE",
     "build_typst_pdf",
     "render_typst_document",
+    "render_typst_documents",
     "typst_bibliography",
     "typst_prelude",
 ]

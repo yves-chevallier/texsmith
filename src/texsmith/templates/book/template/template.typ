@@ -76,5 +76,10 @@
 
 {% if has_bibliography %}
 #pagebreak()
-#bibliography("{{ bibliography_resource }}", style: "{{ bibliography_style | default('ieee') }}")
+#bibliography({{ bibliography_sources }}, style: "{{ bibliography_style | default('ieee') }}")
+{% endif %}
+
+{% if has_index %}
+#pagebreak()
+#ts-print-index()
 {% endif %}

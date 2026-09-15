@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Typesetting controls]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith bundles a `ts-typesetting` fragment that tweaks basic paragraph layout, line spacing, and optional line numbers. By default it stays silent—nothing is injected unless you set one of its options.
 
 = Configuration

@@ -11,9 +11,18 @@ from __future__ import annotations
 
 
 def render_document(
-    body: str, *, title: str = "", uses_mitex: bool = False, uses_eqnref: bool = False
+    body: str,
+    *,
+    title: str = "",
+    uses_mitex: bool = False,
+    uses_eqnref: bool = False,
+    has_index: bool = False,
 ) -> str:
-    """Wrap a Typst writer ``body`` into a standalone, compilable document."""
+    """Wrap a Typst writer ``body`` into a standalone, compilable document.
+
+    ``has_index`` prints the index the body's ``#ts-index`` entries make, at
+    the end, as ``\\printindex`` does for LaTeX.
+    """
     lines: list[str] = []
     if uses_mitex:
         lines.append('#import "@preview/mitex:0.2.7": mi, mitex')
@@ -29,7 +38,8 @@ def render_document(
         lines.append(f'#align(center)[#text(size: 1.6em, weight: "bold")[{title.strip()}]]')
         lines.append("#v(1em)")
     preamble = "\n".join(lines)
-    return f"{preamble}\n\n{body.strip()}\n"
+    backmatter = "\n\n#ts-print-index()" if has_index else ""
+    return f"{preamble}\n\n{body.strip()}{backmatter}\n"
 
 
 __all__ = ["render_document"]

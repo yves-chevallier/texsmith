@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Contract macros]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 The #ts-logo("LaTeX") body of a document comes from tmark's writer, which emits a
 fixed macro or environment per construct. Structural constructs (emphasis,
 lists, headings, figures, tables, links, footnotes) are plain #ts-logo("LaTeX") the

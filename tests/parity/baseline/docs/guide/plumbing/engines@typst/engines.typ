@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[TeX Engines]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #ts-logo("TeX") has grown far beyond Knuth’s original engine, evolving into a whole ecosystem of specialized typesetting machines. Each engine inherits the soul of classic #ts-logo("TeX") but adds its own twist—some focusing on programmability, others on Unicode, scripting, or a modern toolchain experience. Together they form a strange but delightful family tree where 1980s design meets cutting-edge typography.
 
 = #ts-logo("TeX")

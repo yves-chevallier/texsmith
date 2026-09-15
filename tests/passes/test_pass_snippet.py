@@ -110,14 +110,15 @@ def test_fences_become_figures(harness, renderer: FakeRenderer, tmp_path: Path) 
     assert third.content.strip() == "# Inside a callout"
 
 
-def test_typst_backend_takes_the_png(harness, renderer: FakeRenderer, tmp_path: Path) -> None:
+def test_typst_backend_takes_the_pdf(harness, renderer: FakeRenderer, tmp_path: Path) -> None:
+    """Typst embeds the PDF preview itself (Typst 0.14 reads PDF images)."""
     document = harness.load("snippet", "basic")
     ctx = harness.context(document, output_dir=tmp_path, backend="typst")
     out = harness.run("snippet", document, ctx)
     images = [node for node in walk(out.ir) if isinstance(node, model.Image)]
     snippets = (tmp_path / "snippets").resolve()
     assert [image.src for image in images] == [
-        (snippets / f"snippet-{n}.png").as_posix() for n in (1, 2, 3)
+        (snippets / f"snippet-{n}.pdf").as_posix() for n in (1, 2, 3)
     ]
 
 

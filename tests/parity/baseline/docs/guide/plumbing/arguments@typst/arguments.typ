@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Arguments]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Attribute ownership & consumers
 
 - *Owner*: each attribute belongs to either the template (default) or a fragment (`fragment.toml` attributes set `owner = <fragment name>` implicitly). Conflicting owners raise a `TemplateError`.

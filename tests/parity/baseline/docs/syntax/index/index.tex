@@ -12,9 +12,6 @@
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage{tabularx}
-\usepackage{tcolorbox}
-\usepackage{xcolor}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
@@ -118,7 +115,13 @@ Figure: Watchdog traces. \PYZob{}\PYZsh{}fig:traces\PYZcb{}
 :::
 \end{Verbatim}
 \end{tscode}
-Nesting is by fence length (\tscodeinline{::::} outside \tscodeinline{:::}), as in Pandoc.
+Nesting is by fence length (\tscodeinline{::::} outside \tscodeinline{:::}), as in Pandoc. The container
+names TMark knows are a \textbf{closed registry} --- the callout types, \tscodeinline{aside},
+\tscodeinline{figure}, \tscodeinline{tabs}, \tscodeinline{tab}, \tscodeinline{multicolumn \{cols=\}} and \tscodeinline{div} --- so an unknown name
+raises \tscodeinline{container-\allowbreak{}unknown} and renders its content transparently, and a
+template that needs a new look uses \tscodeinline{::: div \{.class\}} rather than a new name.
+A \textbf{dotted} \tscodeinline{::: pkg.module} line is not a container at all but a foreign
+directive, kept verbatim and dropped in print.
 
 \textbf{Data directives} hold non-Markdown content in a fenced code block whose info
 string is \tscodeinline{<lang> <node>}. The second word names the node the fence produces and
@@ -230,7 +233,10 @@ PyMdownX & \tscodeinline{details}, \tscodeinline{tasklist}, \tscodeinline{fancyl
 \toprule
 \textbf{Feature} & \textbf{Canonical spelling} & \textbf{Page} \\
 \midrule
+Headings, implicit ids & \tscodeinline{\#\# Title \{\#sec:x\}}, \tscodeinline{\{.unnumbered\}} & Headings \\
 Small caps & \tscodeinline{\{sc\}[x]} (sugar \tscodeinline{\_\_x\_\_}) & Formatting \\
+Smart symbols and quotes & \tscodeinline{(c)}, \tscodeinline{-\allowbreak{}-\allowbreak{}>}, \tscodeinline{"a phrase"} & Symbols \\
+Emoji and icons & \tscodeinline{:smile:}, \tscodeinline{:material-\allowbreak{}cog:} & Emoji \\
 Margin notes / asides & \tscodeinline{\{aside\}[…]}, \tscodeinline{::: aside} & Notes \\
 Index entries & \tscodeinline{\{index\}[term]}, \tscodeinline{\#[term]} & Tags \\
 Counter items & \tscodeinline{\#(fw:key)}, \tscodeinline{\{counter\}(fw:key)} & Counters \\
@@ -242,6 +248,8 @@ Raw passthrough & \tscodeinline{\{raw latex\}(…)}, \tscodeinline{```latex raw}
 Includes & \tscodeinline{\{include\}(file.md)} & below \\
 Progress bars & \tscodeinline{[=75\% "Done"]} & Progress bars \\
 Containers & \tscodeinline{::: name \{attrs\}} & Admonitions \\
+Content tabs & \tscodeinline{::: tabs} + \tscodeinline{::: tab \{title=…\}} & \href{admonitions.md\#content-tabs}{Admonitions} \\
+Foreign directives & \tscodeinline{[TOC]}, \tscodeinline{::: pkg.module} & \href{admonitions.md\#foreign-directives}{Admonitions} \\
 \bottomrule
 \end{tabularx}
 \end{center}

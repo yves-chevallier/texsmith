@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Language Support]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith can render documents in multiple languages and scripts, including those with
 complex typesetting requirements. Below are examples of various languages and scripts
 supported by TeXSmith, showcasing its versatility in handling diverse linguistic

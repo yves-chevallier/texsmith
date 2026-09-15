@@ -124,19 +124,19 @@ def test_code_example_highlights_through_the_pass(tmp_path: Path) -> None:
     assert "\\PY@reset" in (out / "ts-code.sty").read_text(encoding="utf-8")
 
 
-def test_features_example_splices_the_fence_include(tmp_path: Path) -> None:
-    out = tmp_path / "features"
+def test_syntax_example_splices_the_fence_include(tmp_path: Path) -> None:
+    out = tmp_path / "syntax"
     _render(
         [
-            str(EXAMPLES / "markdown" / "features.md"),
+            str(EXAMPLES / "tmark" / "syntax.md"),
             "-o",
             str(out),
             "-t",
             "article",
         ]
     )
-    body = _body(out / "features.tex")
-    # ``--8<-- "hanoi.py"`` inside the python fence: the include pass read the file.
+    body = _body(out / "syntax.tex")
+    # ``include="hanoi.py"`` on the python fence: the include pass read the file.
     assert "\\PY{n+nf}{tower\\PYZus{}of\\PYZus{}hanoi}" in body
     assert "[include:" not in body
 
@@ -258,7 +258,7 @@ def test_snippet_example_renders_the_previews(
         assert f"{{assets/{name}}}" in body
 
 
-def test_snippet_example_typst_takes_the_png(
+def test_snippet_example_typst_takes_the_pdf(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _fake_snippet_renderer(monkeypatch)
@@ -274,21 +274,29 @@ def test_snippet_example_typst_takes_the_png(
     )
     typ = (out / "index.typ").read_text(encoding="utf-8")
     assert typ.count('image("assets/') == 2
-    assert typ.count('.png", width: 80%)') == 2
+    assert typ.count('.pdf", width: 80%)') == 2
     assert "caption: [Demo]" in typ and "[asset:" not in typ
 
 
-def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:
+HELLO_MD = """---
+title: Hello Typst
+---
+
+# Hello Typst
+
+A paragraph with `inline code`, a [link](https://typst.app), and a rule.
+
+---
+
+That is all.
+"""
+
+
+def test_typst_standalone_writes_a_typst_body(tmp_path: Path) -> None:
+    source = tmp_path / "hello.md"
+    source.write_text(HELLO_MD, encoding="utf-8")
     out = tmp_path / "hello"
-    _render(
-        [
-            str(EXAMPLES / "typst-hello" / "hello.md"),
-            "--format",
-            "typst",
-            "-o",
-            str(out),
-        ]
-    )
+    _render([str(source), "--format", "typst", "-o", str(out)])
     typ = (out / "hello.typ").read_text(encoding="utf-8")
     assert "= Hello Typst" in typ  # implicit ids are labelled only when referenced (C38)
     assert "#ts-divider()" in typ
@@ -298,18 +306,10 @@ def test_typst_hello_example_writes_a_typst_body(tmp_path: Path) -> None:
 
 
 def test_typst_templated_uses_the_scaffolding(tmp_path: Path) -> None:
+    source = tmp_path / "hello.md"
+    source.write_text(HELLO_MD, encoding="utf-8")
     out = tmp_path / "hello-article"
-    _render(
-        [
-            str(EXAMPLES / "typst-hello" / "hello.md"),
-            "--format",
-            "typst",
-            "-t",
-            "article",
-            "-o",
-            str(out),
-        ]
-    )
+    _render([str(source), "--format", "typst", "-t", "article", "-o", str(out)])
     typ = (out / "hello.typ").read_text(encoding="utf-8")
     assert "#set document(" in typ
     assert "= Hello Typst" in typ
@@ -590,7 +590,7 @@ def test_the_typst_backend_honours_the_request_it_is_given(tmp_path: Path) -> No
 
 
 def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
-    """Diagrams become PNG for Typst, images land under assets/, the pass values reach the state."""
+    """Diagrams stay PDF for Typst, images land under assets/, the pass values reach the state."""
     from texsmith.adapters.transformers import register_converter, registry
     from texsmith.core.context import DocumentState
     from texsmith.core.conversion.typst import render_typst_document
@@ -610,8 +610,8 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     def fake_mermaid(diagram: str, *, output_dir: Path, **options: object) -> Path:
         formats.append(options.get("format"))
         output_dir.mkdir(parents=True, exist_ok=True)
-        artefact = output_dir / "diagram.png"
-        artefact.write_bytes(b"\x89PNG\r\n\x1a\nfake")
+        artefact = output_dir / "diagram.pdf"
+        artefact.write_bytes(b"%PDF-1.4 fake")
         return artefact
 
     saved = registry.get("mermaid")
@@ -634,9 +634,9 @@ def test_typst_assets_and_pass_values(tmp_path: Path, monkeypatch) -> None:
     finally:
         register_converter("mermaid", saved)
 
-    assert formats == ["png"]
-    assert 'image("assets/diagram.png")' in typ
-    assert (out / "assets" / "diagram.png").is_file()
+    assert formats == [None]
+    assert 'image("assets/diagram.pdf")' in typ
+    assert (out / "assets" / "diagram.pdf").is_file()
     assert 'image("assets/figure.png"' in typ
     assert (out / "assets" / "figure.png").is_file()
     assert "caption: [Pipeline]" in typ

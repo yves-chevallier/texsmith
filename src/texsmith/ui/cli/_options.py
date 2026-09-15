@@ -20,7 +20,7 @@ InputPathArgument = Annotated[
     typer.Argument(
         metavar="INPUT...",
         help=(
-            "Conversion inputs such as Markdown (.md) or HTML (.html) source documents. "
+            "Conversion inputs: Markdown (.md) source documents. "
             "Optionally, BibTeX files (.bib) for citation processing."
         ),
         exists=True,

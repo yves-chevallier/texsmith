@@ -20,12 +20,14 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Demo Snippet]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #figure(
-image("snippet-<HASH>.png", width: 80%),
+image("snippet-<HASH>.pdf", width: 80%),
 caption: [Demo],
 )
 
 #figure(
-image("snippet-<HASH>.png", width: 80%),
+image("snippet-<HASH>.pdf", width: 80%),
 caption: [Demo],
 )

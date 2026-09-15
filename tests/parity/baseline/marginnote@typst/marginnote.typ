@@ -25,6 +25,8 @@ align(center)[#counter(page).get().first()]
 TeXSmith]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Margin Notes
 
 TeXSmith's margin-note extension adds a single inline shorthand to the
@@ -36,8 +38,9 @@ unified `{keyword}[content]` family already used by `{index}[term]` and
 ```
 
 where `side` is an optional placement — `left`, `right`, `outer` or `inner` —
-selecting a margin explicitly. It compiles down to `\marginnote{…}` from the
-`marginnote` #ts-logo("LaTeX") package (auto-loaded on first use).
+selecting a margin explicitly. It compiles down to `\tsaside`: a `\marginpar`
+that `marginfix` moves past the previous note on the document's own side, a
+`\marginnote` fixed at its line on the other side or inside a box.
 
 == Default placement
 

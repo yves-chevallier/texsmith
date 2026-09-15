@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Plugin API]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Plugins bundle the build-time helpers an IR pass drives — the snippet
 compiler's nested build, the MkDocs site-side HTML rewriting — so you can extend
 TeXSmith without patching the core parse #ts-script("symbols")[→ ]IR #ts-script("symbols")[→ ]write pipeline.

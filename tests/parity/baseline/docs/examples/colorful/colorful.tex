@@ -10,43 +10,8 @@
 \usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{float}
-\usepackage{xcolor}
-\usepackage{epigraph}
-\usepackage{marginnote}
-\usepackage{multicol}
-\usepackage{progressbar}
-\usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
-\renewcommand*{\marginfont}{
-\footnotesize
-\sloppy
-\emergencystretch=1em
-\hyphenpenalty=50
-\exhyphenpenalty=50
-}
-\newlength{\tsmarginparavail}
-\newlength{\tsmarginparalt}
-\newlength{\tsmarginparbuf}
-\setlength{\tsmarginparbuf}{6mm}
-\makeatletter
-\AtBeginDocument{
-\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
-\if@twoside
-\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
-\ifdim\tsmarginparalt<\tsmarginparavail
-\setlength{\tsmarginparavail}{\tsmarginparalt}
-\fi
-\fi
-\ifdim\tsmarginparavail<\marginparwidth
-\setlength{\marginparwidth}{\tsmarginparavail}
-\fi
-}
-\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
@@ -168,10 +133,8 @@ courage we dare today. Humanity’s masterpiece is still ahead.
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
 \PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
 
-\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
 \PY{c+c1}{\PYZsh{} Typst backend: a native 2x2 colour\PYZhy{}grid poster (parallel to the TikZ LaTeX}
 \PY{c+c1}{\PYZsh{} template). Each quadrant is a declared slot filled from the matching section.}
-\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
 \PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{]}
 \PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{colorful\PYZhy{}grid}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
@@ -234,13 +197,13 @@ courage we dare today. Humanity’s masterpiece is still ahead.
 \PY{k}{\PYZbs{}pagestyle}\PY{n+nb}{\PYZob{}}empty\PY{n+nb}{\PYZcb{}}
 
 \PY{k}{\PYZbs{}BLOCK}\PY{n+nb}{\PYZob{}} set squares = [
-  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}nw\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}0,0\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}5,5\PYZdq{},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}nw\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}0,10\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}5,15\PYZdq{},
    \PYZdq{}label\PYZdq{}: \PYZdq{}NW\PYZdq{}, \PYZdq{}content\PYZdq{}: nw, \PYZdq{}color\PYZdq{}: colors.nw\PY{n+nb}{\PYZcb{}},
-  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}ne\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}10,0\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}15,5\PYZdq{},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}ne\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}10,10\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}15,15\PYZdq{},
    \PYZdq{}label\PYZdq{}: \PYZdq{}NE\PYZdq{}, \PYZdq{}content\PYZdq{}: ne, \PYZdq{}color\PYZdq{}: colors.ne\PY{n+nb}{\PYZcb{}},
-  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}sw\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}0,10\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}5,15\PYZdq{},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}sw\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}0,0\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}5,5\PYZdq{},
    \PYZdq{}label\PYZdq{}: \PYZdq{}SW\PYZdq{}, \PYZdq{}content\PYZdq{}: sw, \PYZdq{}color\PYZdq{}: colors.sw\PY{n+nb}{\PYZcb{}},
-  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}se\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}10,10\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}15,15\PYZdq{},
+  \PY{n+nb}{\PYZob{}}\PYZdq{}slot\PYZdq{}: \PYZdq{}se\PYZdq{}, \PYZdq{}origin\PYZdq{}: \PYZdq{}10,0\PYZdq{}, \PYZdq{}center\PYZdq{}: \PYZdq{}15,5\PYZdq{},
    \PYZdq{}label\PYZdq{}: \PYZdq{}SE\PYZdq{}, \PYZdq{}content\PYZdq{}: se, \PYZdq{}color\PYZdq{}: colors.se\PY{n+nb}{\PYZcb{}},
 ] \PY{n+nb}{\PYZcb{}}
 

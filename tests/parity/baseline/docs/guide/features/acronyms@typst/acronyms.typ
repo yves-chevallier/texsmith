@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Acronyms]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Acronyms are abbreviations formed from the initial components of words or phrases, usually individual letters (e.g., NASA, HTML). They are commonly used in technical writing to simplify complex terms and improve readability.
 
 = Syntax
@@ -34,7 +36,7 @@ civilian space program.
 ```
 
 #figure(
-image("snippet-<HASH>.png"),
+image("snippet-<HASH>.pdf"),
 caption: [Demo],
 )
 

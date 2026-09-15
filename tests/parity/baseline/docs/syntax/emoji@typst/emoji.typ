@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Emoji and icons]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Two colon-delimited shortcodes look alike and behave differently, because one
 names a *character* and the other names an *SVG that only a website has*.
 

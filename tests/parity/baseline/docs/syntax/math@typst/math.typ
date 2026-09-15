@@ -21,6 +21,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Math Extension]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #ts-logo("LaTeX") is the gold standard for math notation. TeXSmith relies on the same syntax that MathJax/Arithmatex understand.
 
 = Inline Math
@@ -187,7 +189,7 @@ window.MathJax = {
 Here’s what the above snippets look like once rendered through TeXSmith:
 
 #figure(
-image("snippet-<HASH>.png", width: 60%),
+image("snippet-<HASH>.pdf", width: 60%),
 )
 
 With the source:

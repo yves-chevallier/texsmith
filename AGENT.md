@@ -35,7 +35,10 @@ tmark.parse ─▶ IR ─▶ pre passes ─▶ tmark.resolve ─▶ post passes 
 - **Writers**: tmark's. Each construct is a fixed macro (`\ts<name>`) or
   environment (`ts<name>`), or a Typst function (`#ts-<name>`). `writers/` keeps
   only what has to stay Python-side: LaTeX and Typst escaping, asset naming, the
-  standalone Typst document wrapper.
+  standalone Typst document wrapper. `core/conversion/typst.py` inlines
+  `templates/common/texsmith.typ` ahead of the body and follows it with the
+  document's choices (`#ts-callout-style.update(...)`); several input
+  documents make one `main.typ`, as they make one `main.tex`.
 - **Fragments** (`fragments/`): a `ts-*` fragment *provides* the contract macros
   a writer can name (`specs/migration/fragment-contracts.md` §1 is the mapping).
   A body's `Requires.fragments` activates them — by construction, never by

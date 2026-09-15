@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Migrating to TMark]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith 0.7 parses its Markdown with #link("https://github.com/yves-chevallier/tmark")[TMark],
 a CommonMark parser with a specified extension set, instead of Python-Markdown
 and its plugin stack. Every spelling TeXSmith 0.6 understood is still accepted,

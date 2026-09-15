@@ -7,8 +7,8 @@ width: 10cm,
 height: 10cm,
 fill: fill,
 stroke: none,
-inset: 1.5cm,
-)[#align(center + horizon)[#text(size: 20pt)[#body]]]
+inset: 1.25cm,
+)[#align(center + horizon)[#text(size: 14.4pt)[#body]]]
 
 #grid(
 columns: (10cm, 10cm),

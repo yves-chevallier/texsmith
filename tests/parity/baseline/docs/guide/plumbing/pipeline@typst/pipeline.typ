@@ -20,16 +20,18 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[How does TeXSmith work?]]
 #v(1.5em)
 
-TeXSmith ingests *Markdown* (`.md`), *HTML* (`.html`), *YAML* (`.yaml`),
-and *#ts-logo("BibTeX")* (`.bib`), then runs them through a conversion pipeline to produce
-#ts-logo("LaTeX"), Typst, or a finished PDF.
+#ts-callout-style.update("fancy")
+
+TeXSmith ingests *Markdown* (`.md`), *YAML* (`.yaml`) and *#ts-logo("BibTeX")*
+(`.bib`), then runs them through a conversion pipeline to produce #ts-logo("LaTeX"), Typst,
+or a finished PDF.
 
 Templates define the layout and expose slots that get filled with content from
 your sources. The template also relies on *fragments* — extra layers that add
 a bibliography, glossary, fonts, page geometry, or other typesetting options.
 
 #figure(
-image("workflow.png"),
+image("workflow.pdf"),
 caption: [Workflow diagram of TeXSmith],
 )
 
@@ -71,7 +73,7 @@ table.header([Concern], [Owner]),
 = Internal pipeline
 
 + *Collect and classify inputs.*
-The CLI and `ConversionService` accept Markdown/HTML documents, optional
+The CLI and `ConversionService` accept Markdown documents, optional
 front matter YAML, and bibliography files. `split_inputs` peels off
 `.bib`/`.bibtex`, treats a lone YAML file as the only document when needed,
 and normalises any provided front matter. When documents share front matter,
@@ -84,8 +86,7 @@ span for every node. `texsmith.ir.model` is the generated Python mirror of
 that schema, so the Python side never hand-writes the node catalogue. Parse
 diagnostics — including the deprecation warnings of
 Migrating to TMark — land in the render's
-`DiagnosticSink`. An `.html` input goes through `texsmith.readers.html`
-instead and joins the same IR at this point.
+`DiagnosticSink`.
 + *Run the `pre` passes.*
 A pass is a pure function `(Document, PassContext) -> Document` over the
 generated models: it never mutates its input, returns the same object when it

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Getting Started]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 In our journey to typeset beautiful documents with TeXSmith, we'll start with the basics:
 
 + Turn Markdown or HTML into #ts-logo("LaTeX")/PDF.
@@ -105,10 +107,7 @@ $ texsmith sample.html
 \section{Title}
 
 Some \textbf{bold} text.
-```
-
-An `.html` input is read by the HTML reader (`–selector`, `–parser`,
-`–full-document` steer it) and joins the same IR as a Markdown source.]
+```]
 
 = Generate a PDF
 
@@ -153,7 +152,7 @@ With Tectonic as the default engine, fonts, packages, and dependencies resolve t
 Enjoy a fresh PDF at `build/booby.pdf`:
 
 #figure(
-image("snippet-<HASH>.png", width: 70%),
+image("snippet-<HASH>.pdf", width: 70%),
 caption: [Demo],
 )
 
@@ -243,9 +242,7 @@ texsmith build/site/guides/overview/index.html \
 ```
 
 #ts-callout(kind: "tip")[
-The default selector (`article.md-content__inner`) already matches MkDocs Material content; skip `–selector` unless you heavily customise templates.
-
-When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `–slot mainmatter:build/site/manual/index.html`).
+When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, `–slot mainmatter:docs/manual/index.md`).
 
 For live previews, point TeXSmith at the temporary site directory that `mkdocs serve` prints on startup.
 

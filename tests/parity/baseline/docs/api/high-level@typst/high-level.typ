@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[High-Level Workflows]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = High-Level Workflows
 
 TeXSmith exposes a thin, expressive façade over the lower-level conversion primitives. Mix and match Markdown, HTML, and template-aware documents without touching the CLI or re-implementing glue code.

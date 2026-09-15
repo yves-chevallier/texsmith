@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Mermaid Diagrams]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Just like MkDocs, TeXSmith understands #link("https://mermaid.js.org")[Mermaid] diagrams. Browsers render them on the fly, but PDFs need static assets, so TeXSmith converts each diagram into a vector PDF during the build. That requires either:
 
 + Installing `mermaid-cli` and its dependencies in your environment, or
@@ -50,7 +52,7 @@ flowchart LR
 ````
 
 #figure(
-image("<HASH>.png"),
+image("<HASH>.pdf"),
 )
 
 = External diagrams
@@ -70,7 +72,7 @@ Using a `.mmd` file is as simple as including an image:
 ```
 
 #figure(
-image("<HASH>.png"),
+image("<HASH>.pdf"),
 caption: [Build pipeline],
 )
 
@@ -87,7 +89,7 @@ TMKI0TKKABkHswQ-wlPrxOtrSKNnSOA2SsPfgd2oN_DTZ9H9_ZXFC)
 When TeXSmith renders HTML/PDF it wraps the image with a link to the Mermaid Live editor. Click the preview to inspect the source:
 
 #figure(
-image("<HASH>.png"),
+image("<HASH>.pdf"),
 caption: [Example Pako],
 )
 
@@ -96,7 +98,7 @@ caption: [Example Pako],
 Here’s how the diagrams look once TeXSmith embeds them:
 
 #figure(
-image("snippet-<HASH>.png"),
+image("snippet-<HASH>.pdf"),
 )
 
 = Conversion by TeXSmith

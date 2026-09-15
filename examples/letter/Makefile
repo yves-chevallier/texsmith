@@ -1,56 +1,47 @@
 include ../common.mk
 
-DIN_ROOT := build_din
-SN_ROOT := build_sn
-NF_ROOT := build_nf
+SOURCE := letter.md marie-curie.svg
+# The three national standards the letter template lays out, on both backends:
+# build/<engine>/<format>/letter-<format>.pdf and build/typst/<format>/letter-<format>.pdf.
+FORMATS := din sn nf
 
-DIN_DIR := $(DIN_ROOT)/$(ENGINE)
-SN_DIR := $(SN_ROOT)/$(ENGINE)
-NF_DIR := $(NF_ROOT)/$(ENGINE)
+latex_pdf = $(ENGINE_DIR)/$1/letter-$1$(ENGINE_SUFFIX).pdf
+LATEX_PDFS := $(foreach FORMAT,$(FORMATS),$(call latex_pdf,$(FORMAT)))
 
-DIN_PDF := $(DIN_DIR)/letter-din$(ENGINE_SUFFIX).pdf
-SN_PDF := $(SN_DIR)/letter-sn$(ENGINE_SUFFIX).pdf
-NF_PDF := $(NF_DIR)/letter-nf$(ENGINE_SUFFIX).pdf
-DIN_BASE := $(DIN_DIR)/letter.pdf
-SN_BASE := $(SN_DIR)/letter.pdf
-NF_BASE := $(NF_DIR)/letter.pdf
+typst_pdf = $(OUTPUT_ROOT)/typst/$1/letter-$1.pdf
+TYPST_PDFS := $(foreach FORMAT,$(FORMATS),$(call typst_pdf,$(FORMAT)))
 
-# Typst output -> build/typst/letter.pdf. The DIN/SN/NF national standards are
-# KOMA-Script (LaTeX) specifics; the Typst backend emits one clean layout.
-TYPST_DIR := $(OUTPUT_ROOT)/typst
-TYPST_PDF := $(TYPST_DIR)/letter.pdf
+ARTIFACTS := $(LATEX_PDFS) $(TYPST_PDFS)
 
-ARTIFACTS := $(DIN_PDF) $(SN_PDF) $(NF_PDF) $(TYPST_PDF)
-
-$(DIN_DIR) $(SN_DIR) $(NF_DIR) $(TYPST_DIR):
-	mkdir -p "$@"
-
-all: $(DIN_PDF) $(SN_PDF) $(NF_PDF) $(TYPST_PDF)
+all: $(LATEX_PDFS) $(TYPST_PDFS)
 
 # Build a single backend on demand.
-latex: $(DIN_PDF) $(SN_PDF) $(NF_PDF)
-typst: $(TYPST_PDF)
+latex: $(LATEX_PDFS)
+typst: $(TYPST_PDFS)
 
-$(DIN_PDF): letter.md marie-curie.svg | $(DIN_DIR)
-	$(TEXSMITH) $< -o$(DIN_DIR) --build -tletter -aformat=din $(TEXSMITH_ENGINE)
-	mv $(DIN_BASE) $(DIN_PDF)
-	$(call copy_artifact,$@)
+define RENDER_LATEX
+$(call latex_pdf,$1): $(SOURCE)
+	@mkdir -p $$(dir $$@)
+	$(TEXSMITH) $$< -o$$(dir $$@) --build -tletter -aformat=$1 $(TEXSMITH_ENGINE)
+	mv $$(dir $$@)letter.pdf $$@
+	$(call copy_artifact,$$@)
 
-$(SN_PDF): letter.md marie-curie.svg | $(SN_DIR)
-	$(TEXSMITH) $< -o$(SN_DIR) --build -tletter -aformat=sn $(TEXSMITH_ENGINE)
-	mv $(SN_BASE) $(SN_PDF)
-	$(call copy_artifact,$@)
+$1: $(call latex_pdf,$1)
+endef
 
-$(NF_PDF): letter.md marie-curie.svg | $(NF_DIR)
-	$(TEXSMITH) $< -o$(NF_DIR) --build -tletter -aformat=nf $(TEXSMITH_ENGINE)
-	mv $(NF_BASE) $(NF_PDF)
-	$(call copy_artifact,$@)
+$(foreach FORMAT,$(FORMATS),$(eval $(call RENDER_LATEX,$(FORMAT))))
 
-$(TYPST_PDF): letter.md marie-curie.svg | $(TYPST_DIR)
-	$(TEXSMITH) $< -o$(TYPST_DIR) -tletter --format typst --build
-	$(call copy_artifact,$@)
+define RENDER_TYPST
+$(call typst_pdf,$1): $(SOURCE)
+	@mkdir -p $$(dir $$@)
+	$(TEXSMITH) $$< -o$$(dir $$@) -tletter --format typst --build -aformat=$1
+	mv $$(dir $$@)letter.pdf $$@
+	$(call copy_artifact,$$@)
+endef
+
+$(foreach FORMAT,$(FORMATS),$(eval $(call RENDER_TYPST,$(FORMAT))))
 
 clean:
-	rm -rf $(OUTPUT_ROOT) $(DIN_ROOT) $(SN_ROOT) $(NF_ROOT)
+	rm -rf $(OUTPUT_ROOT)
 
-.PHONY: all clean latex typst
+.PHONY: all clean latex typst $(FORMATS)

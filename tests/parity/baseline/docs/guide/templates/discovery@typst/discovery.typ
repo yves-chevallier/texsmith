@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Template Discovery]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith finds templates from multiple locations in a deterministic order:
 
 + *Built-ins*: shipped with TeXSmith (`article`, `book`, `letter`, `snippet`).

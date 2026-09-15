@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Tectonic Engine]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Tectonic is the default PDF engine in TeXSmith. It bundles automatic package
 fetching, fast incremental builds, and minimal setup – ideal for CI pipelines and
 lightweight containers. You can switch to `latexmk` with `–engine lualatex` or

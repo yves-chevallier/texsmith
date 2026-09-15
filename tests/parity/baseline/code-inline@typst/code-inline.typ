@@ -2,6 +2,8 @@
 #set text(font: "New Computer Modern", size: 11pt)
 #set par(justify: true)
 
+#ts-callout-style.update("fancy")
+
 = Inline Code
 
 In C the `strstr` function defined with the prototype

@@ -109,7 +109,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from slugify import slugify
 
 
 class CommonConfig(BaseModel):
@@ -152,13 +151,6 @@ class BookConfig(CommonConfig):
     index_is_foreword: bool = False
     drop_title_index: bool = False
     cover: CoverConfig = Field(default_factory=CoverConfig)
-
-    @model_validator(mode="after")
-    def set_folder(self) -> BookConfig:
-        """Populate the output folder from the book title when missing."""
-        if self.folder is None and self.title:
-            self.folder = Path(slugify(self.title, separator="-"))
-        return self
 
 
 class LaTeXConfig(CommonConfig):

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Extending TeXSmith]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith's dialect is TMark, and TMark is a *closed*
 language: the four syntactic families, the role registry and the container
 registry do not grow per project. That is the point — a construct you have never

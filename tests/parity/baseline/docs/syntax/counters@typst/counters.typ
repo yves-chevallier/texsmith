@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Custom counters]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Technical documents number things that #ts-logo("LaTeX") knows nothing about: findings,
 requirements, bugs, risks, test cases. Declare such a series under
 `press.declare.counters`, define each item in the body, and refer to it with

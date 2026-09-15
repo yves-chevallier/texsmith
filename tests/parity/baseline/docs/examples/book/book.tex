@@ -8,10 +8,9 @@
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
 \usepackage{ts-fonts}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
-\usepackage{amsmath}
 \usepackage{float}
+\usepackage{graphicx}
+\usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
 
@@ -76,20 +75,10 @@ For this example, we decided to use a small paper size (A5) and a sans serif fon
 \PY{+w}{    }\PY{n+nt}{preface}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Preface}
 \end{Verbatim}
 \end{tscode}
-\begin{tscode}[lang=yaml, class={snippet}, engine=pygments]
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-\PY{n+nt}{layout}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{4x2}
-\PY{n+nt}{cwd}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{../../examples/book}
-\PY{n+nt}{sources}\PY{p}{:}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book.md}
-\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{<STEM>.bib}
-\PY{n+nt}{template}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{book}
-\PY{n+nt}{fragments}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{ts\PYZhy{}frame}\PY{p}{:}
-\PY{n+nt}{press}\PY{p}{:}
-\PY{+w}{  }\PY{n+nt}{frame}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{true}
-\end{Verbatim}
-\end{tscode}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{snippet-<HASH>.pdf}
+\end{figure}
 The example can be built independently using the CLI in the \tscodeinline{examples/book/} folder. The engine can be chosen between \tscodeinline{tectonic}, \tscodeinline{xelatex}, and \tscodeinline{lualatex}
 as follows:
 \begin{tscode}[lang=bash, engine=pygments]

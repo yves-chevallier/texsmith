@@ -20,10 +20,12 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Cooking Recipes]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith isn’t just for papers and slides – it can plate up gorgeous recipes straight from structured data. Here’s a French walnut cake expressed as YAML, pushed through a custom `recipe` template. Click the card to grab the PDF.
 
 #figure(
-image("snippet-<HASH>.png", width: 60%),
+image("snippet-<HASH>.pdf", width: 60%),
 caption: [Demo],
 )
 
@@ -198,10 +200,8 @@ default = ""
 type = "string"
 allow_empty = true
 
-# --------------------------------------------------------------------------- #
 # Typst backend: a native recipe card rendered directly from the YAML front
 # matter (data-driven, like the LaTeX template — the document body is unused).
-# --------------------------------------------------------------------------- #
 [typst.template]
 name = "recipe"
 version = "0.1.0"

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Advanced Tables Formatting]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 One true missing feature in Markdown and in most #ts-logo("LaTeX") documents is the
 ability to describe complex tables without tedious boilerplate. The standard
 Markdown specification is too restrictive — no multi-line cells, no multi-row

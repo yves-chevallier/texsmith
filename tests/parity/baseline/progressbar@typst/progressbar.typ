@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Progress Bars]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 The `texsmith.progressbar` extension renders Markdown shorthand into #ts-logo("LaTeX") progress bars:
 
 ```

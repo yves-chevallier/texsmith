@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Abbreviations]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 In modern chemical analysis, techniques like #ts-acr("NMR"), #ts-acr("FTIR"), and #ts-acr("GCMS") are essential for identifying compounds, while methods such as #ts-acr("HPLC") and #ts-acr("ICPOES") provide high-precision quantification of analytes across a wide range of matrices. Researchers often rely on computational tools like #ts-acr("DFT") and Molecular Dynamics to model reaction pathways and molecular behavior, supported by data from X-ray Diffraction for crystalline structure determination.
 
 #v(1em)

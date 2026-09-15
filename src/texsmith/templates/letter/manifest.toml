@@ -80,7 +80,7 @@ sources = ["from_address"]
 default = ""
 type = "string"
 escape = "latex"
-sources = ["back_address"]
+sources = ["back-address", "back_address"]
 
 [latex.template.attributes.from_location]
 default = ""
@@ -197,11 +197,9 @@ strip_heading = true
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }
 
-# --------------------------------------------------------------------------- #
-# Typst backend: a clean business-letter layout. The LaTeX backend's KOMA-Script
-# national standards (DIN/SN/NF) collapse to a single Typst layout; sender /
+# Typst backend: the same DIN / SN / NF window-envelope layouts as the
+# KOMA-Script class options, laid out from the page corner; sender /
 # recipient blocks read the nested ``from`` / ``to`` front matter directly.
-# --------------------------------------------------------------------------- #
 [typst.template]
 name = "formal-letter"
 version = "0.1.0"
@@ -269,6 +267,41 @@ type = "string"
 allow_empty = true
 format = "raw"
 sources = ["ps", "postscript"]
+
+[typst.template.attributes.format]
+default = "din"
+type = "string"
+choices = ["din", "sn", "nf"]
+sources = ["format", "standard"]
+description = "Letter standard: din (DIN 5008), sn (SN 010130) or nf (NF Z 11-001)."
+
+[typst.template.attributes.fold_marks]
+default = false
+type = "boolean"
+sources = ["fold_marks", "fold-marks"]
+description = "Toggle fold marks."
+
+[typst.template.attributes.object]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["object", "subject"]
+description = "Subject line."
+
+[typst.template.attributes.closing]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["closing"]
+description = "Closing phrase."
+
+[typst.template.attributes.page_numbers]
+default = false
+type = "boolean"
+sources = ["page_numbers", "page-numbers"]
+description = "Enable page numbers."
 
 [typst.template.slots.mainmatter]
 default = true

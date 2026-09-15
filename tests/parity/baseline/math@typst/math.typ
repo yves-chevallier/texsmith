@@ -21,6 +21,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Inline Math]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 You can include inline math expressions using the standard #ts-logo("LaTeX") delimiters `\( ... \)` or `$ ... $` :
 
 ```markdown

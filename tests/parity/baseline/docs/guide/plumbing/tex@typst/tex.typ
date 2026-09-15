@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[TeX]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Donald Knuth
 
 Donald Knuth is an American mathematician and computer scientist, born in 1938.

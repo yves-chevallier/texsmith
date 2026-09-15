@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Cross-document references]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 A counter number only exists inside the conversion that allocated it. A second
 document citing `FW-10` has no way to know what `FW-10` is, and — worse — no way
 to notice when a renumbering turns it into `FW-12`. Hard-coded numbers in a

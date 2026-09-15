@@ -20,10 +20,12 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Diagrams]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Markdown doesn’t have to be flat text. Here’s how we wire live #link("https://mermaid.js.org/")[Mermaid] and #link("https://app.diagrams.net/")[Draw.io] diagrams straight into TeXSmith, no opaque binaries, friendly diffs.
 
 #figure(
-image("snippet-<HASH>.png", width: 60%),
+image("snippet-<HASH>.pdf", width: 60%),
 )
 
 Here is the source:
@@ -68,7 +70,7 @@ Obviously everything built with TeXSmith can also be rendered in this very Markd
 == Draw.io Diagram
 
 #figure(
-image("pgcd.png"),
+image("pgcd.pdf"),
 caption: [Euclidean algorithm for the greatest common divisor.],
 ) <fig:pgcd>
 
@@ -78,7 +80,7 @@ A bare `mermaid` fence is sugar for `mermaid image` and is kept indefinitely,
 because that is what MkDocs Material renders natively.
 
 #figure(
-image("<HASH>.png"),
+image("<HASH>.pdf"),
 caption: [Vegetable harvesting algorithm],
 )
 

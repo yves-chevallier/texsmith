@@ -10,43 +10,8 @@
 \usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{float}
-\usepackage{xcolor}
-\usepackage{epigraph}
-\usepackage{marginnote}
-\usepackage{multicol}
-\usepackage{progressbar}
-\usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
-\renewcommand*{\marginfont}{
-\footnotesize
-\sloppy
-\emergencystretch=1em
-\hyphenpenalty=50
-\exhyphenpenalty=50
-}
-\newlength{\tsmarginparavail}
-\newlength{\tsmarginparalt}
-\newlength{\tsmarginparbuf}
-\setlength{\tsmarginparbuf}{6mm}
-\makeatletter
-\AtBeginDocument{
-\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
-\if@twoside
-\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
-\ifdim\tsmarginparalt<\tsmarginparavail
-\setlength{\tsmarginparavail}{\tsmarginparalt}
-\fi
-\fi
-\ifdim\tsmarginparavail<\marginparwidth
-\setlength{\marginparwidth}{\tsmarginparavail}
-\fi
-}
-\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -164,8 +129,6 @@ Add \tscodeinline{-\allowbreak{}-\allowbreak{}output build/} to write \tscodeinl
 Some \PYZbs{}textbf\PYZob{}bold\PYZcb{} text.
 \end{Verbatim}
 \end{tscode}
-An \tscodeinline{.html} input is read by the HTML reader (\tscodeinline{-\allowbreak{}-\allowbreak{}selector}, \tscodeinline{-\allowbreak{}-\allowbreak{}parser},
-\tscodeinline{-\allowbreak{}-\allowbreak{}full-\allowbreak{}document} steer it) and joins the same IR as a Markdown source.
 \end{tsdiv}
 \section{Generate a PDF}
 Want the full PDF? Start with our playful \href{https://en.wikipedia.org/wiki/Booby}{booby} example or create your own \tscodeinline{booby.md}:
@@ -292,9 +255,7 @@ texsmith\PY{+w}{ }build/site/guides/overview/index.html\PY{+w}{ }\PY{l+s+se}{\PY
 \end{Verbatim}
 \end{tscode}
 \begin{tscallout}[kind=tip]
-The default selector (\tscodeinline{article.md-\allowbreak{}content\_\_inner}) already matches MkDocs Material content; skip \tscodeinline{-\allowbreak{}-\allowbreak{}selector} unless you heavily customise templates.
-
-When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, \tscodeinline{-\allowbreak{}-\allowbreak{}slot mainmatter:build/site/manual/index.html}).
+When your site spans multiple documents, repeat the command per page and stitch them together with template slots (for example, \tscodeinline{-\allowbreak{}-\allowbreak{}slot mainmatter:docs/manual/index.md}).
 
 For live previews, point TeXSmith at the temporary site directory that \tscodeinline{mkdocs serve} prints on startup.
 

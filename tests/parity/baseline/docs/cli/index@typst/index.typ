@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[TeXSmith Command-Line Interface]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith ships with a feature-rich CLI that lets you convert Markdown or HTML into #ts-logo("LaTeX"), compile PDFs, and inspect bibliography files directly from a terminal. The CLI now exposes a single command: `texsmith`. Every flag hangs off that root entry point.
 
 ```

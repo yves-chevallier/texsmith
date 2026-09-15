@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Integration with MkDocs]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 One plugin, `texsmith`, carries the whole integration: it renders the TMark
 constructs on the site _and_ exports the same sources as a PDF. Add it to
 `mkdocs.yml` and nothing else:

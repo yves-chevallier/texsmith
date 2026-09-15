@@ -20,10 +20,12 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Colorful Squares]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 This example shows off a custom poster-ish template with four slots wired through a local template. Front matter steers colors, slot routing, and layout—no #ts-logo("LaTeX") tweaks needed.
 
 #figure(
-image("snippet-<HASH>.png", width: 60%),
+image("snippet-<HASH>.pdf", width: 60%),
 caption: [Demo],
 )
 
@@ -118,10 +120,8 @@ strip_heading = true
 [latex.template.slots.mainmatter]
 default = false
 
-# --------------------------------------------------------------------------- #
 # Typst backend: a native 2x2 colour-grid poster (parallel to the TikZ LaTeX
 # template). Each quadrant is a declared slot filled from the matching section.
-# --------------------------------------------------------------------------- #
 [typst.template]
 name = "colorful-grid"
 version = "0.1.0"
@@ -182,13 +182,13 @@ default = true
 \pagestyle{empty}
 
 \BLOCK{ set squares = [
-  {"slot": "nw", "origin": "0,0", "center": "5,5",
+  {"slot": "nw", "origin": "0,10", "center": "5,15",
    "label": "NW", "content": nw, "color": colors.nw},
-  {"slot": "ne", "origin": "10,0", "center": "15,5",
+  {"slot": "ne", "origin": "10,10", "center": "15,15",
    "label": "NE", "content": ne, "color": colors.ne},
-  {"slot": "sw", "origin": "0,10", "center": "5,15",
+  {"slot": "sw", "origin": "0,0", "center": "5,5",
    "label": "SW", "content": sw, "color": colors.sw},
-  {"slot": "se", "origin": "10,10", "center": "15,15",
+  {"slot": "se", "origin": "10,0", "center": "15,5",
    "label": "SE", "content": se, "color": colors.se},
 ] }
 

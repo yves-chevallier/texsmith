@@ -29,6 +29,8 @@ Firmware Quality Board]
 #outline()
 #v(1em)
 
+#ts-callout-style.update("fancy")
+
 = Scope
 
 This report reviews release candidate 1.4.2-rc1 of the sensor node firmware.

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Welcome to TeXSmith]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 *TeXSmith* turns #link("https://www.markdownguide.org/")[Markdown] into
 press-ready #link("https://www.latex-project.org/")[#ts-logo("LaTeX")] — or
 #link("https://typst.app")[Typst], with `–format typst`. Keep your

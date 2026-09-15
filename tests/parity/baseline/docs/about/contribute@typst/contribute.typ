@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Contributing]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 I welcome contributions from the community to help improve TeXSmith! Whether it's reporting bugs, suggesting new features, or submitting code changes, your input is valuable. Here's how you can contribute:
 
 / Reporting issues: If you encounter any bugs or issues while using TeXSmith, please #link("https://github.com/yves-chevallier/texsmith/issues")[report them].

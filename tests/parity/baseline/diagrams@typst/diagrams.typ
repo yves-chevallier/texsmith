@@ -22,6 +22,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.2em)[An Overview of drawio and mermaid diagram integration]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 You can embed Draw.io or Mermaid diagrams directly in Markdown. This keeps
 technical documentation close to the visuals it describes, and the package
 takes care of converting each diagram to an image that the final #ts-logo("LaTeX")
@@ -30,13 +32,13 @@ document can reference automatically.
 = Draw.io Diagram
 
 #figure(
-image("pgcd.png", width: 60%),
+image("pgcd.pdf", width: 60%),
 caption: [Euclidean algorithm for the greatest common divisor],
 )
 
 = Mermaid Diagram
 
 #figure(
-image("<HASH>.png", width: 80%),
+image("<HASH>.pdf", width: 80%),
 caption: [Vegetable harvesting algorithm],
 )

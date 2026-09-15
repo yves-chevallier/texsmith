@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Wiki Links]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 `[[Page Title]]` belongs to the PyMdownX compatibility profile, not to TMark:
 there is no wiki-link node, and the printer never emits the spelling. It is
 listed as sugar for a link to the project file of that name.

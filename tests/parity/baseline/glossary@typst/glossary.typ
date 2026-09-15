@@ -23,6 +23,8 @@ align(center)[#counter(page).get().first()]
 #outline()
 #v(1em)
 
+#ts-callout-style.update("fancy")
+
 = Introduction
 
 This document showcases TeXSmith's structured glossary support. Definitions

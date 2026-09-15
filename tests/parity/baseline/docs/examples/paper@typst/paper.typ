@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Research Paper]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #metadata(none) <cheese>
 
 This example shows how TeXSmith can be used to write scientific papers with
@@ -30,20 +32,10 @@ citations, cross-references, and floating figures/tables.
 The documentation preview uses the default A4 portrait layout. Click the image
 to download the PDF.
 
-#ts-code(class: ("snippet"), caption: "Download PDF")[
-```yaml
-width: 70%
-fragments:
-  ts-frame
-press:
-  frame: true
-layout: 2x2
-cwd: ../../examples/paper
-sources:
-  - cheese.md
-  - cheese.bib
-template: article
-```]
+#figure(
+image("snippet-<HASH>.pdf", width: 70%),
+caption: [Download PDF],
+)
 
 Here is the source code for this example:
 

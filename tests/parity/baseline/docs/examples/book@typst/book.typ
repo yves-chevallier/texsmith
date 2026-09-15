@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Book]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #metadata(none) <einstein>
 
 For this example we want to render homage to Albert Einstein by creating a small book using the #link("https://en.wikipedia.org/wiki/Albert_Einstein")[Wikipedia]
@@ -62,19 +64,9 @@ press:
     preface: Preface
 ```
 
-#ts-code(class: ("snippet"))[
-```yaml
-layout: 4x2
-cwd: ../../examples/book
-sources:
-  - book.md
-  - <STEM>.bib
-template: book
-fragments:
-  ts-frame:
-press:
-  frame: true
-```]
+#figure(
+image("snippet-<HASH>.pdf"),
+)
 
 The example can be built independently using the CLI in the `examples/book/` folder. The engine can be chosen between `tectonic`, `xelatex`, and `lualatex`
 as follows:

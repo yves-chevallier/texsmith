@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[TeXSmith]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 And of course, the grand finale—the true climax of the project—is that this very documentation can itself be converted into a #ts-logo("LaTeX") document using TeXSmith.
 
 ```bash

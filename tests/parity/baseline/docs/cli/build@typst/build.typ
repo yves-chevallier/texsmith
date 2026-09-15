@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Build]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 To build your #ts-logo("LaTeX") document into a PDF, use the `–build` (or `-b`) option. This command compiles the generated #ts-logo("LaTeX") file using the default engine. TeXSmith uses `tectonic` by default as it is the only self-contained #ts-logo("LaTeX") engine, but you can configure it to use `lualatex` or `xelatex` via `latexmk` if preferred. Here is an example of a simple document built with different engines:
 
 ```bash

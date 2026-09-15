@@ -84,7 +84,7 @@ class CachedConversionStrategy:
         message = f"Conversion failed for '{self.namespace}' after {self.max_attempts} attempts"
         raise TransformerExecutionError(message) from last_error
 
-    # --------------------------------------------------------------------- helpers
+    # helpers
 
     def _perform_conversion(
         self,

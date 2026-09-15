@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[LaTeX]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #ts-logo("LaTeX") is the layer that turned #ts-logo("TeX") from a brilliant but arcane typesetting engine into a real document preparation system. Where #ts-logo("TeX") gives you microscopic control of every typographic atom, #ts-logo("LaTeX") gives you structure, meaning, and reusable design. It’s the difference between soldering your own circuit board and using a well-designed development kit: the power is still there, but now it’s ergonomic, consistent, and scalable. Over the decades, #ts-logo("LaTeX") has become the lingua franca of academic publishing, math-heavy documents, and anyone who appreciates the elegance of markup-driven writing.
 
 = Leslie Lamport

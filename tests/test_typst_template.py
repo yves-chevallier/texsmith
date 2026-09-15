@@ -46,7 +46,7 @@ def test_article_scaffolding_renders_title_and_body() -> None:
             "mainmatter": "= Section\n\nbody",
             "abstract": "",
             "has_bibliography": False,
-            "bibliography_resource": "",
+            "bibliography_sources": '""',
             "uses_mitex": False,
         }
     )
@@ -68,7 +68,7 @@ def test_article_scaffolding_emits_bibliography_when_present() -> None:
             "mainmatter": "body",
             "abstract": "",
             "has_bibliography": True,
-            "bibliography_resource": "refs.bib",
+            "bibliography_sources": '"refs.bib"',
             "uses_mitex": False,
             "bibliography_style": "ieee",
         }

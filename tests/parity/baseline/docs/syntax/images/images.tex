@@ -10,8 +10,6 @@
 \usepackage{ts-fonts}
 \usepackage{float}
 \usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
 \usepackage{ts-code}
@@ -57,6 +55,23 @@ Figure: The long caption, with \PY{g+gs}{**Markdown**}. \PYZob{}\PYZsh{}fig:nois
 A video or audio source (\tscodeinline{![Demo](demo.mp4)}) is a player on the web and, in
 print, its poster frame with the URL as a textual reference;
 \tscodeinline{\{media=web\}} hides it from print altogether.
+\section{Sub-figures}
+A \tscodeinline{::: figure} container groups images into one float:
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: figure \PYZob{}cols=2\PYZcb{}
+![\PY{n+nt}{Boot}](\PY{n+na}{boot.png})\PYZob{}\PYZsh{}fig:boot\PYZcb{}
+![\PY{n+nt}{Crash}](\PY{n+na}{crash.png})\PYZob{}\PYZsh{}fig:crash\PYZcb{}
+
+Figure: Watchdog traces before and after the fix. \PYZob{}\PYZsh{}fig:traces\PYZcb{}
+:::
+\end{Verbatim}
+\end{tscode}
+The container takes \textbf{one} figure number and each image takes that number
+suffixed with a letter, so \tscodeinline{@fig:crash} reads ``figure 1b'' and an image never
+consumes a number of the \tscodeinline{fig} series on its own. The cases --- a lone image, a
+container holding prose, a container with no caption --- are spelled out under
+\href{captions.md\#subfigures}{Captions}.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{snippet-<HASH>.pdf}

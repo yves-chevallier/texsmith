@@ -24,6 +24,8 @@ Yves Chevallier]
 #align(center)[November 16, 2025]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Introduction
 
 Boobies are seabirds in the genus _Sula_, family Sulidae. They are

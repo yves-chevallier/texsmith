@@ -144,11 +144,6 @@ class FallbackManager:
             }
         return sorted(fonts.values(), key=lambda entry: entry["name"])
 
-    def _merge_range_strings(self, codes: Iterable[int]) -> list[str]:
-        from texsmith.fonts.fallback import FallbackLookup as _Lookup
-
-        return _Lookup._merge_ranges(list(codes))  # noqa: SLF001
-
     def scan_text(self, text: str) -> FallbackPlan:
         lookup = self._ensure_lookup()
         summary = lookup.summary(text)

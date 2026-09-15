@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[YAML Front Matter]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Every Markdown document can carry a small block of metadata at the very top, fenced by `—` markers. This is the *front matter*: a YAML island living rent-free above your prose. Static site generators like MkDocs read it to drive per-page configuration, and TeXSmith hooks into the same convention to steer how a document is parsed, typeset, and ultimately rendered to #ts-logo("LaTeX") or PDF.
 
 A guiding principle: *keep content and form apart*. Templates, font sizes, margins, paper format, and other typographic knobs belong in the front matter; the body should care only about ideas, sentences, and equations. Other tools take a different stance, see #link("https://quarkdown.com/")[Quarkdown], which weaves configuration directly into the document body. Both are valid, but TeXSmith favors the separation, your future self will thank you when swapping templates without touching a single paragraph.

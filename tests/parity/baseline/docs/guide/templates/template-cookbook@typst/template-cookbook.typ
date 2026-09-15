@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Template Cookbook]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 This cookbook collects repeatable patterns for building and iterating on TeXSmith templates. Use it in combination with the Templates primer when you need concrete commands or Jinja snippets.
 
 = Clone a starter and rename it

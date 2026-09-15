@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Bibliography]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith reads bibliographic data from #ts-logo("BibTeX") files and from YAML front matter. Use it to keep citations and references tidy in academic writing, technical docs, or any project that wants repeatable citation management.
 
 = Using Bibliography Files
@@ -91,12 +93,12 @@ Cheese exhibits unique melting properties @WADHWANI20111713.
 Which renders into:
 
 #figure(
-image("snippet-<HASH>.png", width: 70%),
+image("snippet-<HASH>.pdf", width: 70%),
 caption: [Demo],
 )
 
-`@key` is the in-text (narrative) citation and `@[key, locator]` the
-parenthetical one:
+A bare `@key` is the short, parenthetical citation by default and
+`@[key, locator]` the same short form with a locator attached:
 
 ```md
 As shown by @[WADHWANI20111713, p. 33], and elsewhere
@@ -107,6 +109,13 @@ As shown by @[WADHWANI20111713, p. 33], and elsewhere
 Locators follow Pandoc: a recognised locator word (`p.`, `pp.`, `ch.`, `sec.`,
 `§`…) followed by a range, or free suffix text. Pandoc's own `[@key, locator]`
 is accepted for import and never emitted.
+
+Setting `press.features: {citations.narrative: true}` in the front matter
+switches every bare `@key` of the document to the narrative form instead
+(`\textcite` in #ts-logo("LaTeX"), `#cite(<key>, form: "prose")` in Typst — "Einstein \[3\]"
+rather than "\[3\]"). Either form stays reachable per citation regardless of the
+document's default: `@[+key]` forces the narrative form inside brackets,
+`@[-key]` forces the year alone.
 
 A DOI can be cited in place through the predeclared `doi` prefix, without a
 front-matter entry: `@doi:10.3168/jds.2010-3952`. The same DOI cited twice is

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Progress Bars]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 A progress bar is an inline node with a value and an optional label. The
 spelling is PyMdownX's and is the canonical one, so the HTML preview and the
 PDF build stay in sync out of the box; in print it becomes a `\tsprogress`
@@ -77,5 +79,5 @@ texsmith progressbar.md --template article --output-dir build --build
 ```
 
 #figure(
-image("snippet-<HASH>.png"),
+image("snippet-<HASH>.pdf"),
 )

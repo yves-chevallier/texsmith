@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Index Generation]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #metadata(none) <index-tags>
 
 In static site generators such as MkDocs, every build emits a `search_index.json`

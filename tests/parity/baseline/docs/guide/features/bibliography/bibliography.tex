@@ -9,44 +9,10 @@
 \usepackage[a4paper]{geometry}
 \usepackage{ts-typesetting}
 \usepackage{ts-fonts}
+\usepackage{csquotes}
 \usepackage{float}
-\usepackage{xcolor}
-\usepackage{epigraph}
-\usepackage{marginnote}
-\usepackage{multicol}
-\usepackage{progressbar}
-\usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
-\renewcommand*{\marginfont}{
-\footnotesize
-\sloppy
-\emergencystretch=1em
-\hyphenpenalty=50
-\exhyphenpenalty=50
-}
-\newlength{\tsmarginparavail}
-\newlength{\tsmarginparalt}
-\newlength{\tsmarginparbuf}
-\setlength{\tsmarginparbuf}{6mm}
-\makeatletter
-\AtBeginDocument{
-\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
-\if@twoside
-\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
-\ifdim\tsmarginparalt<\tsmarginparavail
-\setlength{\tsmarginparavail}{\tsmarginparalt}
-\fi
-\fi
-\ifdim\tsmarginparavail<\marginparwidth
-\setlength{\marginparwidth}{\tsmarginparavail}
-\fi
-}
-\makeatother
 \usepackage{ts-callouts}
 \usepackage{ts-code}
 
@@ -138,8 +104,8 @@ Which renders into:
 \includegraphics[width=0.7\linewidth]{snippet-<HASH>.pdf}
 \caption[Demo]{Demo}
 \end{figure}
-\tscodeinline{@key} is the in-text (narrative) citation and \tscodeinline{@[key, locator]} the
-parenthetical one:
+A bare \tscodeinline{@key} is the short, parenthetical citation by default and
+\tscodeinline{@[key, locator]} the same short form with a locator attached:
 \begin{tscode}[lang=md, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 As shown by @[WADHWANI20111713, p. 33], and elsewhere
@@ -150,6 +116,13 @@ As shown by @[WADHWANI20111713, p. 33], and elsewhere
 Locators follow Pandoc: a recognised locator word (\tscodeinline{p.}, \tscodeinline{pp.}, \tscodeinline{ch.}, \tscodeinline{sec.},
 \tscodeinline{§}...) followed by a range, or free suffix text. Pandoc's own \tscodeinline{[@key, locator]}
 is accepted for import and never emitted.
+
+Setting \tscodeinline{press.features: \{citations.narrative: true\}} in the front matter
+switches every bare \tscodeinline{@key} of the document to the narrative form instead
+(\tscodeinline{\textbackslash{}textcite} in \LaTeX{}, \tscodeinline{\#cite(<key>, form: "prose")} in Typst --- \enquote{Einstein [3]}
+rather than \enquote{[3]}). Either form stays reachable per citation regardless of the
+document's default: \tscodeinline{@[+key]} forces the narrative form inside brackets,
+\tscodeinline{@[-\allowbreak{}key]} forces the year alone.
 
 A DOI can be cited in place through the predeclared \tscodeinline{doi} prefix, without a
 front-matter entry: \tscodeinline{@doi:10.3168/jds.2010-\allowbreak{}3952}. The same DOI cited twice is

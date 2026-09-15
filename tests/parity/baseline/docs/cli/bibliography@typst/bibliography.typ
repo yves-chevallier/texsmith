@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Bibliography]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Add Bibliography Entries
 
 To include bibliography entries in your document, provide one or more #ts-logo("BibTeX") files as inputs when running TeXSmith. TeXSmith will parse these files and integrate the references into your document during the conversion process. For example:

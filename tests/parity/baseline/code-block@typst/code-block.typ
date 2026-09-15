@@ -2,6 +2,8 @@
 #set text(font: "New Computer Modern", size: 11pt)
 #set par(justify: true)
 
+#ts-callout-style.update("fancy")
+
 = Code Blocks
 
 == Name your code blocks

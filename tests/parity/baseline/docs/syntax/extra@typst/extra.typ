@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Attributes]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Attributes are the first of TMark's #link("index.md#four-syntactic-families")[four families]:
 they decorate an element that already exists, and they are written in braces
 *after* it.

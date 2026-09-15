@@ -10,43 +10,8 @@
 \usepackage{ts-typesetting}
 \usepackage{ts-fonts}
 \usepackage{float}
-\usepackage{xcolor}
-\usepackage{epigraph}
-\usepackage{marginnote}
-\usepackage{multicol}
-\usepackage{progressbar}
-\usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
-\renewcommand*{\marginfont}{
-\footnotesize
-\sloppy
-\emergencystretch=1em
-\hyphenpenalty=50
-\exhyphenpenalty=50
-}
-\newlength{\tsmarginparavail}
-\newlength{\tsmarginparalt}
-\newlength{\tsmarginparbuf}
-\setlength{\tsmarginparbuf}{6mm}
-\makeatletter
-\AtBeginDocument{
-\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
-\if@twoside
-\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
-\ifdim\tsmarginparalt<\tsmarginparavail
-\setlength{\tsmarginparavail}{\tsmarginparalt}
-\fi
-\fi
-\ifdim\tsmarginparavail<\marginparwidth
-\setlength{\marginparwidth}{\tsmarginparavail}
-\fi
-}
-\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
@@ -369,7 +334,7 @@ With great scientific affection,
 \PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{escape}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{latex}\PY{l+s+s2}{\PYZdq{}}
-\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{back\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{back\PYZhy{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{back\PYZus{}address}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{from\PYZus{}location}\PY{k}{]}
 \PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
@@ -486,11 +451,9 @@ With great scientific affection,
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
 \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/modernline.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/modernline.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
 
-\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
-\PY{c+c1}{\PYZsh{} Typst backend: a clean business\PYZhy{}letter layout. The LaTeX backend\PYZsq{}s KOMA\PYZhy{}Script}
-\PY{c+c1}{\PYZsh{} national standards (DIN/SN/NF) collapse to a single Typst layout; sender /}
+\PY{c+c1}{\PYZsh{} Typst backend: the same DIN / SN / NF window\PYZhy{}envelope layouts as the}
+\PY{c+c1}{\PYZsh{} KOMA\PYZhy{}Script class options, laid out from the page corner; sender /}
 \PY{c+c1}{\PYZsh{} recipient blocks read the nested ``from`` / ``to`` front matter directly.}
-\PY{c+c1}{\PYZsh{} \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} \PYZsh{}}
 \PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{]}
 \PY{n}{name}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{formal\PYZhy{}letter}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{version}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{0.1.0}\PY{l+s+s2}{\PYZdq{}}
@@ -558,6 +521,41 @@ With great scientific affection,
 \PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
 \PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
 \PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{ps}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{postscript}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{format}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{din}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{choices}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{din}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{sn}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{nf}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{format}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{standard}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Letter standard: din (DIN 5008), sn (SN 010130) or nf (NF Z 11\PYZhy{}001).}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{fold\PYZus{}marks}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fold\PYZus{}marks}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fold\PYZhy{}marks}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Toggle fold marks.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{object}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{object}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{subject}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Subject line.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{closing}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{string}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{allow\PYZus{}empty}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}
+\PY{n}{format}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{raw}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{closing}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Closing phrase.}\PY{l+s+s2}{\PYZdq{}}
+
+\PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{attributes}\PY{k}{.}\PY{k}{page\PYZus{}numbers}\PY{k}{]}
+\PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{false}
+\PY{n}{type}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{boolean}\PY{l+s+s2}{\PYZdq{}}
+\PY{n}{sources}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{page\PYZus{}numbers}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{page\PYZhy{}numbers}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{description}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Enable page numbers.}\PY{l+s+s2}{\PYZdq{}}
 
 \PY{k}{[}\PY{k}{typst}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{slots}\PY{k}{.}\PY{k}{mainmatter}\PY{k}{]}
 \PY{n}{default}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{k+kc}{true}

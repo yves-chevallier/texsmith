@@ -25,7 +25,6 @@ class GenerationStrategy:
     copy_assets: bool = True
     convert_assets: bool = False
     hash_assets: bool = False
-    persist_manifest: bool = False
 
     @classmethod
     def from_request(cls, request: ConversionRequest) -> GenerationStrategy:
@@ -34,7 +33,6 @@ class GenerationStrategy:
             copy_assets=request.copy_assets,
             convert_assets=request.convert_assets,
             hash_assets=request.hash_assets,
-            persist_manifest=request.manifest,
         )
 
 

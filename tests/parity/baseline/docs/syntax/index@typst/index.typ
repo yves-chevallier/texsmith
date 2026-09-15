@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[TMark]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 If Markdown is new to you, start with the #link("https://www.markdownguide.org/basic-syntax/")[canonical guide].
 
 The original spec is spartan—tables, diagrams, and other niceties didn’t exist.
@@ -101,7 +103,13 @@ Figure: Watchdog traces. {#fig:traces}
 :::
 ```
 
-Nesting is by fence length (`::::` outside `:::`), as in Pandoc.
+Nesting is by fence length (`::::` outside `:::`), as in Pandoc. The container
+names TMark knows are a *closed registry* — the callout types, `aside`,
+`figure`, `tabs`, `tab`, `multicolumn {cols=}` and `div` — so an unknown name
+raises `container-unknown` and renders its content transparently, and a
+template that needs a new look uses `::: div {.class}` rather than a new name.
+A *dotted* `::: pkg.module` line is not a container at all but a foreign
+directive, kept verbatim and dropped in print.
 
 *Data directives* hold non-Markdown content in a fenced code block whose info
 string is `<lang> <node>`. The second word names the node the fence produces and
@@ -216,7 +224,10 @@ table.header([Package], [Extensions], [Constructs]),
 columns: 3,
 align: (left, left, left),
 table.header([Feature], [Canonical spelling], [Page]),
+[Headings, implicit ids], [`## Title {#sec:x}`, `{.unnumbered}`], [Headings],
 [Small caps], [`{sc}[x]` (sugar `__x__`)], [Formatting],
+[Smart symbols and quotes], [`(c)`, `–>`, `"a phrase"`], [Symbols],
+[Emoji and icons], [`:smile:`, `:material-cog:`], [Emoji],
 [Margin notes / asides], [`{aside}[…]`, `::: aside`], [Notes],
 [Index entries], [`{index}[term]`, `#[term]`], [Tags],
 [Counter items], [`#(fw:key)`, `{counter}(fw:key)`], [Counters],
@@ -228,6 +239,8 @@ table.header([Feature], [Canonical spelling], [Page]),
 [Includes], [`{include}(file.md)`], [below],
 [Progress bars], [`[=75% "Done"]`], [Progress bars],
 [Containers], [`::: name {attrs}`], [Admonitions],
+[Content tabs], [`::: tabs` + `::: tab {title=…}`], [#link("admonitions.md#content-tabs")[Admonitions]],
+[Foreign directives], [`[TOC]`, `::: pkg.module`], [#link("admonitions.md#foreign-directives")[Admonitions]],
 )
 
 = Raw passthrough

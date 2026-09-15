@@ -68,3 +68,9 @@ You can type emoji directly in Markdown or LaTeX source.
 | ❌    | Cross mark                     |
 | 🧪    | Experiment                     |
 | 💡    | Light Bulb                     |
+
+```yaml table-config
+columns:
+  - {align: center}
+  - {align: left, width: X}
+```

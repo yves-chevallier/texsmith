@@ -234,8 +234,6 @@ class _AssetPass:
         }
         if self.options.mermaid_config is not None:
             options["mermaid_config"] = self.options.mermaid_config
-        if self.backend == "typst":
-            options["format"] = "png"
         try:
             artefact = mermaid2pdf(body, output_dir=self.registry.output_root, **options)
         except Exception as exc:
@@ -293,7 +291,7 @@ class _AssetPass:
         return replace(node, src=self.relative(stored))
 
     def _store_typst(self, resolved: Path, options: Mapping[str, str]) -> Path:
-        """Typst reads PNG/JPEG/SVG natively: only diagrams are converted (to PNG)."""
+        """Typst reads PNG/JPEG/SVG/PDF natively: only diagrams are converted (to PDF)."""
         from texsmith.adapters.transformers import drawio2pdf, mermaid2pdf
         from texsmith.adapters.transformers.strategies import option_flag
         from texsmith.writers.latex.assets import (
@@ -313,22 +311,20 @@ class _AssetPass:
             staged = drawio2pdf(
                 resolved,
                 output_dir=_conversion_cache_root(self.options),
-                format="png",
                 backend=backend,
                 crop=option_flag(options.get("crop"), default=default),
                 emitter=self.ctx.emitter,
             )
-            final = ".png"
+            final = ".pdf"
         elif suffix in MERMAID_FILE_SUFFIXES:
             staged = mermaid2pdf(
                 resolved,
                 output_dir=_conversion_cache_root(self.options),
-                format="png",
                 backend=backend,
                 mermaid_config=self.options.mermaid_config,
                 emitter=self.ctx.emitter,
             )
-            final = ".png"
+            final = ".pdf"
         else:
             staged = resolved
             final = suffix or ".bin"

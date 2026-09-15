@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Headings]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 `#` to `######`, six levels, *never numbered by hand*. Numbering and the
 mapping to #ts-logo("LaTeX") sectioning come from `press.base_level` and the template.
 Attributes go at the end of the line.

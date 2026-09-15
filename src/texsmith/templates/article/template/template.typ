@@ -82,6 +82,10 @@
 {{ acronyms }}
 {% endif %}
 
+{% if has_index %}
+#ts-print-index()
+{% endif %}
+
 {% if has_bibliography %}
-#bibliography("{{ bibliography_resource }}", style: "{{ bibliography_style | default('ieee') }}")
+#bibliography({{ bibliography_sources }}, style: "{{ bibliography_style | default('ieee') }}")
 {% endif %}

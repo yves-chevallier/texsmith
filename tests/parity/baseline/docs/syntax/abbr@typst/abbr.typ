@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Abbreviations / Acronyms]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Abbreviations are a lightweight mechanism to define acronyms and their
 expansions. The spelling is PHP-Markdown-Extra's `abbr`, which every MkDocs site
 renders; in #ts-logo("LaTeX") they go through the `glossaries` package, which provides a
@@ -36,13 +38,17 @@ TeXSmith renders that snippet as:
 
 ```
 $ texsmith abbr.md
-The \acrshort{HTML} specification is maintained by the \acrshort{W3C}.
+The \tsacr{HTML} specification is maintained by the \tsacr{W3C}.
 ```
+
+`\tsacr{KEY}` renders the acronym's *short form*; `ts-typesetting` defines it
+over the `glossaries` package's `\acrshort`, and a template may redefine it.
+Typst gets the matching `#ts-acr("KEY")`, and the web writer emits `<abbr>`.
 
 Which displays as:
 
 #figure(
-image("snippet-<HASH>.png", width: 65%),
+image("snippet-<HASH>.pdf", width: 65%),
 )
 
 Of course, this also works on this #ts-acr("HTML") site. Try hovering over the abbreviations.
@@ -97,7 +103,7 @@ default acronym-table title follows the document language (it expands to
 
 Unlike #ts-logo("LaTeX"), TeXSmith does *not* require `\gls{…}` / `\Gls{…}` calls in the
 source: the converter scans the body and replaces every *strict, case-sensitive*
-match of an acronym key with `\acrshort{KEY}`. As a consequence, casing helpers
+match of an acronym key with `\tsacr{KEY}`. As a consequence, casing helpers
 such as `\Gls`, `\GLS`, `\acrlong`, etc. are not synthesised — the substitution
 is the same regardless of where the acronym appears in the text. If you need
 those forms, drop down to a raw passthrough:

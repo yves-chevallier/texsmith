@@ -66,8 +66,6 @@ class PageRecord:
     next_start: dict[str, int] = field(default_factory=dict)
     #: This page's labels for its siblings (``location`` is ``src_uri#key``).
     labels: list[dict[str, Any]] = field(default_factory=list)
-    #: The diagnostics of the pre-pass front matter (an invalid declaration).
-    front_matter_diagnostics: list[dict[str, Any]] = field(default_factory=list)
     #: The counters the page declares itself (either spelling).
     page_counters: dict[str, Any] = field(default_factory=dict)
     lowered: bool = False
@@ -183,7 +181,7 @@ class SiteIndex:
         )
         padded = "\n" * record.padding + body
         doc = tmark.parse(padded, file=self._display_path(path))
-        node, record.front_matter_diagnostics = self._front_matter_node(
+        node, _diagnostics = self._front_matter_node(
             record.meta, file_id=0, node_id=max_node_id(doc) + 1
         )
         # ``front_matter: null`` is not a tmark document: a page with neither

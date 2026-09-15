@@ -100,7 +100,7 @@ The `examples/` directory includes reproducible demos:
 
 - `examples/paper` – end-to-end render with bibliographies and latexmk (or Tectonic with `--engine tectonic`).
 - `examples/diagrams` – Mermaid and Draw.io conversions.
-- `examples/markdown` – exhaustive Markdown showcase with diagram/front-matter overrides.
+- `examples/tmark` – the TMark syntax construct by construct, with diagram/front-matter overrides.
 
 Each example ships build instructions inside [`docs/examples/index.md`](docs/examples/index.md).
 

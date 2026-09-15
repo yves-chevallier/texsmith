@@ -16,7 +16,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import threading
 from threading import Lock, Thread
 from typing import Any, ClassVar, TypeVar
 from urllib.parse import unquote, urlparse
@@ -34,12 +33,10 @@ from .utils import normalise_pdf_version
 
 _EXPORT3_URL = "https://app.diagrams.net/export3.html"
 _DEFAULT_MERMAID_CONFIG_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "texsmith"
+    Path(__file__).resolve().parents[2]
     / "templates"
     / "article"
     / "template"
-    / "assets"
     / "mermaid-config.json"
 )
 _DEFAULT_MERMAID_CONFIG: dict[str, Any] = {}
@@ -793,14 +790,12 @@ class _PlaywrightManager:
 
     _playwright = None
     _browser = None
-    _owner_thread_id: ClassVar[int | None] = None
     _lock: ClassVar[Lock] = Lock()
     _cleanup_registered = False
 
     @classmethod
     def ensure_browser(cls, *, emitter: Any = None) -> Any:
         with cls._lock:
-            current_thread = threading.get_ident()
             # Always recreate per call to avoid cross-thread greenlet issues.
             cls._cleanup_unlocked()
             try:
@@ -842,7 +837,6 @@ class _PlaywrightManager:
                     cls._playwright.stop()
                     cls._playwright = None
                     raise _wrap_playwright_error(exc, emitter) from exc
-            cls._owner_thread_id = current_thread
             if not cls._cleanup_registered:
                 atexit.register(cls._cleanup)
                 cls._cleanup_registered = True
@@ -867,7 +861,6 @@ class _PlaywrightManager:
             pass
         cls._browser = None
         cls._playwright = None
-        cls._owner_thread_id = None
 
 
 class MermaidToPdfStrategy(CachedConversionStrategy):

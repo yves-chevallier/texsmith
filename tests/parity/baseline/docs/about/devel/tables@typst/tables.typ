@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Tables]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 *Mostly settled.* The answer TeXSmith shipped is the `yaml table` fence,
 which the TMark parser reads and validates: grouped headers, column widths
 (fixed, auto, relative), a `width-group` that makes several columns share one

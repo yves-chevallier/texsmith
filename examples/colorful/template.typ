@@ -12,13 +12,14 @@
 #set text(font: ("TeX Gyre Heros", "Helvetica", "Arial"), fill: white, weight: "bold")
 #set par(justify: false)
 
+// A 7.5cm text box in each 10cm square, as the LaTeX \parbox, at \Large (14.4pt).
 #let quadrant(fill, body) = rect(
   width: 10cm,
   height: 10cm,
   fill: fill,
   stroke: none,
-  inset: 1.5cm,
-)[#align(center + horizon)[#text(size: 20pt)[#body]]]
+  inset: 1.25cm,
+)[#align(center + horizon)[#text(size: 14.4pt)[#body]]]
 
 #grid(
   columns: (10cm, 10cm),

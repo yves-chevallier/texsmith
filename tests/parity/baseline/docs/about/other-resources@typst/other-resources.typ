@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Other Similar Projects]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Here are some other projects and tools that are related to TeXSmith in terms of functionality, purpose, or target audience.
 
 = Converters and Parsers

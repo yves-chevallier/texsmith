@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Limitations]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 = Highlighting with `ucharclasses`
 
 The `ucharclasses` package allows you to define font transitions based on Unicode character classes. However, when using it in combination with the `soul` package for highlighting, there can be compatibility issues. For example, the following code may not work as expected:

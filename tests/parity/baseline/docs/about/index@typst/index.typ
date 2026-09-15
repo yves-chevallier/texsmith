@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[About]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith was originally created by Yves Chevallier in 2025 to address the need for a seamless workflow between Markdown-based documentation and #ts-logo("LaTeX")-based publishing, initially for his own academic #link("https://heig-tin-info.github.io/handbook/")[courses] at HEIG-VD.
 
 Aside from #link("https://pandoc.org/")[Pandoc]—written in #link("https://en.wikipedia.org/wiki/Haskell")[Haskell] and not directly suited for #link("https://www.mkdocs.org/")[MkDocs]—there were no tools capable of converting MkDocs-flavored Markdown into #ts-logo("LaTeX") while preserving the original content’s semantic intent.

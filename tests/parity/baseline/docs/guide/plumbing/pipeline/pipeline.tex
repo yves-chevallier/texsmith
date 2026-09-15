@@ -13,45 +13,10 @@
 \usepackage{csquotes}
 \usepackage{float}
 \usepackage{tabularx}
-\usepackage{xcolor}
-\usepackage{epigraph}
-\usepackage{marginnote}
-\usepackage{multicol}
-\usepackage{progressbar}
-\usepackage{graphicx}
-\usepackage{tcolorbox}
-\usepackage{fvextra}
 \usepackage{amsmath}
 \usepackage{seqsplit}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \newcolumntype{Z}{>{\raggedleft\arraybackslash}X}
-\renewcommand*{\marginfont}{
-\footnotesize
-\sloppy
-\emergencystretch=1em
-\hyphenpenalty=50
-\exhyphenpenalty=50
-}
-\newlength{\tsmarginparavail}
-\newlength{\tsmarginparalt}
-\newlength{\tsmarginparbuf}
-\setlength{\tsmarginparbuf}{6mm}
-\makeatletter
-\AtBeginDocument{
-\setlength{\tsmarginparavail}{\dimexpr\paperwidth-\textwidth-1in-\oddsidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparavail<\z@\setlength{\tsmarginparavail}{\z@}\fi
-\if@twoside
-\setlength{\tsmarginparalt}{\dimexpr1in+\evensidemargin-\marginparsep-\tsmarginparbuf\relax}
-\ifdim\tsmarginparalt<\z@\setlength{\tsmarginparalt}{\z@}\fi
-\ifdim\tsmarginparalt<\tsmarginparavail
-\setlength{\tsmarginparavail}{\tsmarginparalt}
-\fi
-\fi
-\ifdim\tsmarginparavail<\marginparwidth
-\setlength{\marginparwidth}{\tsmarginparavail}
-\fi
-}
-\makeatother
 \usepackage{ts-code}
 
 \usepackage{lastpage}
@@ -74,9 +39,9 @@
 \author{}\date{}
 \begin{document}
 \maketitle
-TeXSmith ingests \textbf{Markdown} (\tscodeinline{.md}), \textbf{HTML} (\tscodeinline{.html}), \textbf{YAML} (\tscodeinline{.yaml}),
-and \textbf{\tslogo{BibTeX}} (\tscodeinline{.bib}), then runs them through a conversion pipeline to produce
-\LaTeX{}, Typst, or a finished PDF.
+TeXSmith ingests \textbf{Markdown} (\tscodeinline{.md}), \textbf{YAML} (\tscodeinline{.yaml}) and \textbf{\tslogo{BibTeX}}
+(\tscodeinline{.bib}), then runs them through a conversion pipeline to produce \LaTeX{}, Typst,
+or a finished PDF.
 
 Templates define the layout and expose slots that get filled with content from
 your sources. The template also relies on \textbf{fragments} --- extra layers that add
@@ -125,7 +90,7 @@ The CLI and the MkDocs companion & TeXSmith \\
 \section{Internal pipeline}
 \begin{enumerate}
 \item \textbf{Collect and classify inputs.}
-The CLI and \tscodeinline{ConversionService} accept Markdown/HTML documents, optional
+The CLI and \tscodeinline{ConversionService} accept Markdown documents, optional
 front matter YAML, and bibliography files. \tscodeinline{split\_inputs} peels off
 \tscodeinline{.bib}/\tscodeinline{.bibtex}, treats a lone YAML file as the only document when needed,
 and normalises any provided front matter. When documents share front matter,
@@ -138,8 +103,7 @@ span for every node. \tscodeinline{texsmith.ir.model} is the generated Python mi
 that schema, so the Python side never hand-writes the node catalogue. Parse
 diagnostics --- including the deprecation warnings of
 Migrating to TMark --- land in the render's
-\tscodeinline{DiagnosticSink}. An \tscodeinline{.html} input goes through \tscodeinline{texsmith.readers.html}
-instead and joins the same IR at this point.
+\tscodeinline{DiagnosticSink}.
 \item \textbf{Run the \tscodeinline{pre} passes.}
 A pass is a pure function \tscodeinline{(Document, PassContext) -\allowbreak{}> Document} over the
 generated models: it never mutates its input, returns the same object when it

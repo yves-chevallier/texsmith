@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Text Formatting]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Like vanilla Markdown, you can apply basic text formatting using a variety of
 delimiters. Every inline node has a *role* as its canonical spelling, and most
 have a familiar shorthand as sugar; both produce the same node.
@@ -63,7 +65,7 @@ profile. `__` duplicates `**`, and academic writing needs small caps far more
 than a second bold — and the difference is visible, not silent.
 
 #figure(
-image("snippet-<HASH>.png"),
+image("snippet-<HASH>.pdf"),
 )
 
 Delimiters stack for bold italic, and `_` never opens emphasis inside a word,

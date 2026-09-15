@@ -42,6 +42,8 @@ proposed formulation. The findings provide a quantitative framework for linking
 the microstructure of hard cheeses to their macroscopic mechanical response.]
 #v(1em)
 
+#ts-callout-style.update("fancy")
+
 = Introduction
 
 Cheese, though traditionally perceived as a food product, can also be regarded

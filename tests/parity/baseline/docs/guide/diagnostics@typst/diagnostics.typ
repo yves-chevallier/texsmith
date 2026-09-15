@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Diagnostics]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith reports what it could not do well — a missing image, a
 cross-reference nobody publishes, a counter defined twice — as
 *diagnostics*: one line each, in the shape the `tmark` toolchain prints, so a

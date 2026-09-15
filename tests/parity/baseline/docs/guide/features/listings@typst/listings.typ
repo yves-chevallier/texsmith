@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Code listings]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith bundles a single fragment, `ts-code`, that can render fenced code blocks with four different engines:
 
 / `pygments` (default): highlights code with Pygments at render time and injects the generated macros into `ts-code.sty`. No shell escape is required and the output works with #ts-logo("XeLaTeX") and Tectonic. Not suited for editing the #ts-logo("LaTeX") output directly.

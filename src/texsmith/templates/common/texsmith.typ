@@ -1,13 +1,12 @@
 // texsmith.typ — the Typst mirror of the LaTeX fragment contracts
 // (specs/migration/fragment-contracts.md §1, §3 rule 7). One hyphenated
 // function per contract; named arguments mirror the LaTeX keys, the content
-// comes last. The tmark Typst writer emits these calls; this file is copied
-// next to the .typ and a template overrides a function after importing it:
-//
-//   #import "texsmith.typ": *
-//   #let ts-divider() = v(1em)
+// comes last. The tmark Typst writer emits these calls; this file is inlined
+// ahead of the body and a template restyles a construct after it, either by
+// redefining the function with the same signature or through the states
+// below (`#ts-callout-style.update("classic")`).
 
-// ---------------------------------------------------------------- palette
+// palette
 
 #let ts-callout-colors = (
   note: (bg: rgb("ecf3ff"), frame: rgb("448aff")),
@@ -30,6 +29,14 @@
   default: (bg: rgb("f0f0f0"), frame: rgb("808080")),
 )
 
+// The icons of texsmith.core.callouts.DEFAULT_CALLOUTS, one per kind.
+#let ts-callout-icons = (
+  note: "📝", abstract: "📄", summary: "📋", info: "ℹ", seealso: "ℹ",
+  tip: "⭐", hint: "💡", success: "✅", question: "❓", warning: "⚠",
+  caution: "🚧", failure: "❗", danger: "🔥", important: "❗", bug: "🐞",
+  example: "🧪", quote: "✒", default: "🎤",
+)
+
 #let ts-callout-words = (
   note: "Note", tip: "Tip", warning: "Warning", important: "Important",
   danger: "Danger", info: "Info", hint: "Hint", seealso: "See also",
@@ -44,7 +51,12 @@
   if s.len() == 0 { s } else { upper(s.slice(0, 1)) + s.slice(1) }
 }
 
-// ---------------------------------------------------------- ts-typesetting
+// The emoji fonts, colour first (`ts-emoji`) or monochrome first (icons of
+// the classic callouts). Typst falls back along the list.
+#let ts-emoji-fonts = ("Noto Color Emoji", "OpenMoji")
+#let ts-emoji-fonts-black = ("OpenMoji", "Noto Color Emoji")
+
+// ts-typesetting
 
 // Lead-in of a paragraph (Para.lead): a run-in bold line.
 #let ts-lead(body) = block(above: 0.6em, below: 0.3em, strong(body))
@@ -77,15 +89,41 @@
   ]
 }
 
-// #ts-aside(side: "left")[body]: a margin note.
-#let ts-aside(side: "right", body) = {
-  let note = block(width: 2.4cm, text(size: 0.8em, body))
-  if side == "left" or side == "inner" {
-    place(left, dx: -2.8cm, note)
+// The page margin on `side` ("left" / "right"), whatever form `page.margin`
+// took: a length, a dictionary, or `auto` (Typst's default, 2.5/21 of the
+// shorter page side). Read in a `context`.
+#let ts-page-margin(side) = {
+  let margin = page.margin
+  let fallback = 2.5 / 21 * calc.min(page.width, page.height)
+  let pick(value) = if value == auto { fallback } else { value }
+  if type(margin) == dictionary {
+    pick(margin.at(side, default: margin.at("x", default: margin.at("rest", default: auto))))
   } else {
-    place(right, dx: 2.8cm, note)
+    pick(margin)
   }
 }
+
+// #ts-aside(side: "left")[body]: a margin note. Inline — a zero-width box,
+// so the paragraph flows on — placed in the margin next to the line that
+// carries it; `left` / `inner` reverse the side.
+#let ts-aside(side: "right", body) = box(width: 0pt, height: 0pt, context {
+  let gap = 0.35cm
+  let position = here().position()
+  let note = text(size: 0.75em, body)
+  if side == "left" or side == "inner" {
+    let margin = ts-page-margin("left")
+    place(
+      top + left, dx: gap - position.x, dy: -0.8em,
+      block(width: margin - 2 * gap, align(right, note)),
+    )
+  } else {
+    let margin = ts-page-margin("right")
+    place(
+      top + left, dx: page.width - margin + gap - position.x, dy: -0.8em,
+      block(width: margin - 2 * gap, align(left, note)),
+    )
+  }
+})
 
 // #ts-progress(0.45, label: "label", thin: false)
 #let ts-progress(value, label: none, thin: false, class: (), ..rest) = {
@@ -121,7 +159,87 @@
   }
 }
 
-// ------------------------------------------------------------- ts-callouts
+// tables
+
+// Every table is set the way `booktabs` sets the LaTeX ones: no vertical
+// rules, a rule above and below the table and a thinner one under the
+// header row. The writer only passes `columns`, `align` and the cells.
+#set table(
+  stroke: (x, y) => if y == 0 { (bottom: 0.4pt + black) } else { none },
+  inset: (x: 0.6em, y: 0.35em),
+)
+#show table: it => block(
+  width: auto,
+  inset: 0pt,
+  stroke: (top: 0.8pt + black, bottom: 0.8pt + black),
+  it,
+)
+
+// ts-callouts
+
+// The style of every callout — `fancy` (coloured frame, icon), `classic`
+// (a rule on the left, monochrome icon) or `minimal` (a thin frame, no
+// icon) — mirrors the LaTeX `callouts.style` attribute. A template picks it
+// after the prelude: `#ts-callout-style.update("classic")`.
+#let ts-callout-style = state("ts-callout-style", "fancy")
+
+#let ts-callout-icon(kind, fonts) = text(
+  font: fonts, size: 0.95em, ts-callout-icons.at(kind, default: ts-callout-icons.default),
+)
+
+#let ts-callout-fancy(kind, colors, heading, body) = block(
+  width: 100%,
+  stroke: (left: 1.5mm + colors.frame, rest: 0.4pt + colors.frame),
+  radius: (right: 2pt),
+  // Half the strokes sit inside the block: keep the fills off them.
+  inset: (left: 0.75mm, right: 0.2pt, top: 0.2pt, bottom: 0.2pt),
+  breakable: true,
+  above: 1em,
+  below: 1em,
+  stack(
+    dir: ttb,
+    block(
+      width: 100%, fill: colors.frame.lighten(93%), inset: (x: 0.7em, y: 0.4em),
+      [#ts-callout-icon(kind, ts-emoji-fonts)#h(0.5em)#text(
+        weight: "bold", font: "DejaVu Sans", size: 0.9em, fill: colors.frame, heading,
+      )],
+    ),
+    block(width: 100%, inset: (x: 0.7em, top: 0.5em, bottom: 0.6em), body),
+  ),
+)
+
+#let ts-callout-classic(kind, colors, heading, body) = block(
+  width: 100%,
+  stroke: (left: 1mm + luma(40%)),
+  inset: (left: 0.5mm + 0.7em, right: 0.3em, top: 0.3em, bottom: 0.4em),
+  breakable: true,
+  above: 1em,
+  below: 1em,
+  stack(
+    dir: ttb,
+    spacing: 0.45em,
+    [#ts-callout-icon(kind, ts-emoji-fonts-black)#h(0.5em)#text(weight: "bold", fill: luma(20%), heading)],
+    body,
+  ),
+)
+
+#let ts-callout-minimal(kind, colors, heading, body) = block(
+  width: 100%,
+  stroke: 0.3mm + black,
+  radius: 0.4mm,
+  inset: (rest: 0.15mm),
+  breakable: true,
+  above: 1em,
+  below: 1em,
+  stack(
+    dir: ttb,
+    block(
+      width: 100%, inset: (x: 0.6em, y: 0.3em), stroke: (bottom: 0.2mm + black),
+      text(weight: "bold", heading),
+    ),
+    block(width: 100%, inset: (x: 0.6em, top: 0.45em, bottom: 0.5em), body),
+  ),
+)
 
 // #ts-callout(kind: "note", title: [..], id: "x", class: (..), collapsed: true)[body]
 #let ts-callout(
@@ -133,22 +251,20 @@
   let heading = if title != none { title } else {
     ts-callout-words.at(kind, default: ts-capitalize(kind))
   }
-  let content = block(
-    width: 100%,
-    stroke: (left: 3pt + colors.frame, rest: 0.4pt + colors.frame),
-    radius: (right: 2pt),
-    inset: 0pt,
-    breakable: true,
-    below: 1em,
-  )[
-    #block(width: 100%, fill: colors.bg, inset: (x: 0.8em, y: 0.5em),
-      text(weight: "bold", heading))
-    #block(width: 100%, inset: (x: 0.8em, y: 0.6em), body)
-  ]
+  let content = context {
+    let style = ts-callout-style.get()
+    if style == "classic" {
+      ts-callout-classic(key, colors, heading, body)
+    } else if style == "minimal" {
+      ts-callout-minimal(key, colors, heading, body)
+    } else {
+      ts-callout-fancy(key, colors, heading, body)
+    }
+  }
   if id != none [#content #label(id)] else { content }
 }
 
-// ----------------------------------------------------------------- ts-code
+// ts-code
 
 // #ts-code(title: [..], linenums: 1, hl-lines: ("2-3",), id: "x", caption: [..])[```lang … ```]
 #let ts-code(
@@ -179,7 +295,7 @@
 
 #let ts-codeinline(lang: none, body) = raw(body, lang: lang)
 
-// ------------------------------------------------------------ ts-keystrokes
+// ts-keystrokes
 
 // #ts-keys("Ctrl", "Alt", "Del")
 #let ts-keys(..keys) = {
@@ -191,7 +307,7 @@
   boxes.join([ + ])
 }
 
-// -------------------------------------------------------------- ts-todolist
+// ts-todolist
 
 // #ts-task("done")[body]
 #let ts-task(state, body) = {
@@ -199,30 +315,83 @@
   [#mark #body]
 }
 
-// -------------------------------------------------------------- ts-glossary
+// ts-glossary
 
 #let ts-gls(key) = key
 #let ts-acr(key) = key
 
-// ----------------------------------------------------------------- ts-index
+// ts-index
 
-// #ts-index([a], [b], registry: "r", main: true): no-op (open question 6).
-#let ts-index(..path, registry: none, main: false) = none
+// The plain text of `it` (a string or content), for sorting index entries.
+#let ts-plain(it) = {
+  if type(it) == str { it }
+  else if type(it) == content {
+    if it.has("text") { it.text }
+    else if it.has("children") { it.children.map(ts-plain).join("") }
+    else if it.has("body") { ts-plain(it.body) }
+    else if it.func() == smartquote { "'" }
+    else { "" }
+  }
+  else { repr(it) }
+}
 
-// ---------------------------------------------------------- ts-bibliography
+// #ts-index([a], [b], registry: "r", main: true): an entry of the index —
+// `[a]` a term, `[a], [b]` the sub-entry `b` of `a`. It leaves no ink; the
+// page it sits on is what `ts-print-index` reports.
+#let ts-index(..path, registry: none, main: false) = {
+  let parts = path.pos()
+  [#metadata((
+    path: parts, plain: parts.map(ts-plain), registry: registry, main: main,
+  )) <ts-index-entry>]
+}
+
+// #ts-print-index(title: [Index], registry: none): the index of a registry
+// (`none` is the default registry), the terms sorted, a sub-entry under its
+// parent, the page numbers of each term in order.
+#let ts-print-index(title: [Index], registry: none) = context {
+  let entries = query(<ts-index-entry>)
+  let groups = (:)
+  for entry in entries {
+    let value = entry.value
+    if value.registry != registry { continue }
+    let page = counter(page).at(entry.location()).first()
+    // A sub-entry lists its parents too, without a page: `apple` above `Fuji`.
+    for depth in range(1, value.path.len() + 1) {
+      let key = value.plain.slice(0, depth).map(lower).join("\u{1}")
+      let own = depth == value.path.len()
+      if key not in groups {
+        groups.insert(key, (path: value.path.slice(0, depth), pages: ()))
+      }
+      if own and page not in groups.at(key).pages { groups.at(key).pages.push(page) }
+    }
+  }
+  if groups.len() == 0 { return }
+  heading(level: 1, numbering: none, title)
+  columns(2, {
+    set par(hanging-indent: 1em, first-line-indent: 0em)
+    for key in groups.keys().sorted() {
+      let group = groups.at(key)
+      let depth = group.path.len() - 1
+      let pages = if group.pages.len() > 0 [, #group.pages.map(str).join(", ")] else []
+      block(
+        inset: (left: depth * 1em), above: 0.35em, below: 0.35em,
+        [#group.path.last()#pages],
+      )
+    }
+  })
+}
+
+// ts-bibliography
 
 // #ts-page(<label>): the page number of a label (textual references).
 #let ts-page(target) = context { counter(page).at(target).first() }
 
-// ----------------------------------------------------------------- ts-fonts
+// ts-fonts
 
 #let ts-script(slug, body) = body
-#let ts-emoji(body) = text(
-  font: ("Noto Color Emoji", "Noto Emoji", "Apple Color Emoji", "Segoe UI Emoji"),
-  body,
-)
+#let ts-emoji(body) = text(font: ts-emoji-fonts, body)
 
-// ---------------------------------------------------------------- ts-critic
+// ts-critic
 
 #let ts-ins(body) = text(fill: rgb("1b7f3b"), underline(body))
 #let ts-del(body) = text(fill: rgb("b3261e"), strike(body))
@@ -243,7 +412,7 @@
   else { name }
 }
 
-// --------------------------------------------------------------- subfigures
+// subfigures
 
 // The images of a `::: figure` are subfigures (spec §Captions and floats,
 // challenge C43): they carry no number of the `fig` series, and a reference

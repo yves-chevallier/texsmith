@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[IR passes and fragment contracts]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith no longer reads HTML and no longer emits #ts-logo("LaTeX") from
 Python. The parser, the intermediate representation, the resolver and the
 writers are tmark's; what remains on the Python side is the part that needs the

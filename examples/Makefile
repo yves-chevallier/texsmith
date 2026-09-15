@@ -8,14 +8,16 @@ EXAMPLES := \
 	book \
 	code \
 	colorful \
+	counters \
 	diagrams \
 	dialects \
 	emoji \
 	fonts \
+	glossary \
 	index \
 	letter \
 	marginnote \
-	markdown \
+	tmark \
 	math \
 	mermaid \
 	multi-document \
@@ -24,8 +26,7 @@ EXAMPLES := \
 	progressbar \
 	recipe \
 	snippet \
-	typst-hello \
-	typst-article
+	tables
 
 EXAMPLES_WITH_COMPARE := multi-document
 

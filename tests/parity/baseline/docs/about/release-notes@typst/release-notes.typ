@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Release Notes & Compatibility]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #metadata(none) <releasenotes>
 
 Use this page to see what changed in each TeXSmith release, what the current

@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Geometry Fragment]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 The geometry fragment allows you to customize the page layout of your document, including paper size, orientation, margins, and adding watermarks. It relies on the #ts-logo("LaTeX") `geometry` package to manage these settings and uses TikZ for watermarking if you want any.
 
 = Paper format
@@ -105,7 +107,7 @@ This document demonstrates custom page geometry settings using the geometry frag
 ```
 
 #figure(
-image("snippet-<HASH>.png", width: 70%),
+image("snippet-<HASH>.pdf", width: 70%),
 )
 
 Here's another example with custom paper width:
@@ -123,5 +125,5 @@ $$ E=mc^2 $$
 ```
 
 #figure(
-image("snippet-<HASH>.png", width: 70%),
+image("snippet-<HASH>.pdf", width: 70%),
 )

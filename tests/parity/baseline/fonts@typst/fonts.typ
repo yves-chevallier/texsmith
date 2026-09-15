@@ -20,9 +20,11 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Font styles]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 #table(
-columns: 7,
-align: (left, left, left, left, left, left, left),
+columns: (auto, auto, auto, auto, auto, auto, 1fr),
+align: (right, center, center, center, center, center, left),
 table.header([\#], [i], [b], [m], [s], [c], [Exemple]),
 [1], [], [], [], [], [], [The quick brown fox jumps over 012345],
 [2], [x], [], [], [], [], [_The quick brown fox jumps over 012345_],

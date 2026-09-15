@@ -1,27 +1,34 @@
-#set page(paper: "a4", margin: 2.5cm)
+#set page(
+paper: "a4",
+margin: (left: 25mm, right: 20mm, top: 25mm, bottom: 25mm),
+)
 #set text(font: "New Computer Modern", size: 11pt, lang: "en")
 #set par(justify: true)
 
-#text(size: 9pt, fill: luma(40%))[
-#strong[Marie Skłodowska Curie]#linebreak()
-Laboratory of Physics and Chemistry#linebreak()
-Sorbonne University#linebreak()
-75005 Paris, France]
+#let at(x, y, body) = place(top + left, dx: x - 25mm, dy: y - 25mm, body)
 
-#v(1.2em)
-#align(right)[July 14, 1903]
-#v(0.6em)
+#at(20.0mm, 8mm, block(width: 170mm, text(size: 10pt)[
+Marie Skłodowska Curie\
+Laboratory of Physics and Chemistry\
+Sorbonne University\
+75005 Paris, France]))
 
-Leonardo da Vinci#linebreak()
-Casa di Leonardo#linebreak()
-Near the Church of Santa Croce#linebreak()
-Florence, Republic of Florence (c. 1500)
+#at(20mm, 45mm, block(width: 85mm, height: 45mm, inset: (left: 0mm))[
+#block(width: 100%, height: 5mm, align(bottom + left, text(size: 7pt)[
+#underline[Laboratory of Physics and Chemistry, Sorbonne Univ., Paris]]))
+#v(2.5mm)
+Leonardo da Vinci\
+Casa di Leonardo\
+Near the Church of Santa Croce\
+Florence, Republic of Florence (c. 1500)])
 
-#v(2em)
+#place(top + right, dy: 98.5mm - 25mm, [July 14, 1903])
 
-Dear Maestro Leonardo,
+#v(83.5mm)
 
-#v(0.4em)
+Dear Maestro Leonardo
+
+#ts-callout-style.update("fancy")
 
 I have received your latest letter—delivered, I assume, by whatever ingenious flying
 machine you are currently testing—and feel compelled to clarify a few scientific
@@ -48,12 +55,11 @@ into flying machines—I remain at your service.
 
 With great scientific affection,
 
-#v(1.4em)
-
+#v(0.8em)
 #image("marie-curie.svg", height: 1.6cm)
 
 Marie Skłodowska Curie
 
 #v(1em)
-#emph[PS: How did you manage to withstand the ravages of time?
-You should have been dead for 384 years by now.]
+PS: How did you manage to withstand the ravages of time?
+You should have been dead for 384 years by now.

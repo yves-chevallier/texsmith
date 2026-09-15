@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Templates]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith templates define the #ts-logo("LaTeX") skeleton that wraps converted Markdown. Each
 template bundles assets, slot definitions, attribute schemas, and build metadata
 so you can aim the renderer at anything from articles to slide decks.

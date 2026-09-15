@@ -58,7 +58,6 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.conversion.models import ConversionRequest
     from texsmith.core.documents import Document
 
-
 __all__ = [
     "DEFAULT_PIPELINE",
     "REGISTRY",
@@ -206,9 +205,7 @@ class PassContext:
     values: dict[str, Any] = field(default_factory=dict)
 
 
-# ---------------------------------------------------------------------------
 # Registry and pipeline
-# ---------------------------------------------------------------------------
 
 REGISTRY: dict[str, PassSpec] = {}
 

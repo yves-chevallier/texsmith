@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Template fragments]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 Fragments are small, pluggable #ts-logo("LaTeX") packages (`.sty` rendered from Jinja) that
 TeXSmith can inject into any template at `\VAR{extra_packages}`. They keep
 shared logic (callouts, code listings, …) out of individual templates

@@ -97,9 +97,10 @@ def test_local_assets_copied_converted_fetched_and_reported(
     assert missing.span == gone.span and missing.id not in before
 
 
-def test_typst_keeps_native_formats_and_renders_diagrams_as_png(
+def test_typst_keeps_native_formats_and_renders_diagrams_as_pdf(
     harness, tmp_path: Path, fake_converters
 ) -> None:
+    """Typst reads SVG itself and embeds the same PDF diagram LaTeX gets."""
     document = materialise(harness, tmp_path, "local")
     ctx = context(harness, document, tmp_path, backend="typst")
     out = harness.run("assets", document, ctx)
@@ -108,12 +109,12 @@ def test_typst_keeps_native_formats_and_renders_diagrams_as_png(
     assert srcs == [
         "assets/figure.png",
         "assets/diagram.svg",
-        "assets/sketch.png",
+        "assets/sketch.pdf",
         "assets/photo.png",
         "assets/figure.png",
     ]
     assert fake_converters["svg"].calls == []
-    assert fake_converters["drawio"].calls[0]["format"] == "png"
+    assert fake_converters["drawio"].calls[0].get("format") in (None, "pdf")
 
 
 def test_hash_assets_names_by_digest(harness, tmp_path: Path, fake_converters) -> None:
@@ -163,12 +164,12 @@ def test_mermaid_fences_files_and_live_urls(harness, tmp_path: Path, fake_conver
     assert rendered.id == image.id and rendered.attrs.kv == ()
 
 
-def test_mermaid_for_typst_is_png(harness, tmp_path: Path, fake_converters) -> None:
+def test_mermaid_for_typst_is_the_same_pdf(harness, tmp_path: Path, fake_converters) -> None:
     document = materialise(harness, tmp_path, "mermaid")
     ctx = context(harness, document, tmp_path, backend="typst")
     out = harness.run("assets", document, ctx)
-    assert all(node.src.endswith(".png") for node in images(out))
-    assert all(call["format"] == "png" for call in fake_converters["mermaid"].calls)
+    assert all(node.src.endswith(".pdf") for node in images(out))
+    assert all(call.get("format") in (None, "pdf") for call in fake_converters["mermaid"].calls)
 
 
 def test_copy_assets_false_substitutes_the_legacy_placeholders(

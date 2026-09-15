@@ -101,6 +101,7 @@ class TemplateSlot(BaseModel):
 
 AttributePrimitiveType = Literal["any", "string", "integer", "float", "boolean", "list", "mapping"]
 AttributeFormatType = Literal["markdown", "raw"]
+AttributeBackend = Literal["latex", "typst"]
 AttributeEscapeMode = Literal["latex"]
 
 
@@ -138,12 +139,12 @@ def _normalise_sources(payload: Any) -> list[str]:
     return []
 
 
-def _render_attribute_markdown(value: str) -> str:
-    """Render a short Markdown snippet (``format = "markdown"``) into LaTeX.
+def _render_attribute_markdown(value: str, backend: AttributeBackend = "latex") -> str:
+    """Render a short Markdown snippet (``format = "markdown"``) for ``backend``.
 
     A template attribute is a line or two of prose — an imprint paragraph, a
     subtitle — so it goes through the same parser and writer as the body:
-    ``tmark.parse`` then ``tmark.write(…, "latex")``. A construct that needs a
+    ``tmark.parse`` then ``tmark.write(…, backend)``. A construct that needs a
     fragment (inline code wants ``ts-code``) is the template's business; the
     attribute itself carries no ``Requires``.
     """
@@ -152,7 +153,7 @@ def _render_attribute_markdown(value: str) -> str:
     from texsmith.readers.tmark import parse_payload
 
     payload = parse_payload(value, name="<template attribute>")
-    return str(tmark.write(payload, "latex", {}).get("text") or "").strip()
+    return str(tmark.write(payload, backend, {}).get("text") or "").strip()
 
 
 _ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, TemplateAttributeSpec, Any], Any]] = {}
@@ -509,6 +510,9 @@ class TemplateAttributeSpec(BaseModel):
     default: Any = None
     type: AttributePrimitiveType | None = None
     format: AttributeFormatType = "markdown"
+    #: The writer a ``markdown`` attribute renders through; the Typst loader
+    #: sets ``typst`` on the specs of a ``[typst.template]`` section.
+    backend: AttributeBackend = "latex"
     choices: list[Any] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
     escape: AttributeEscapeMode | None = None
@@ -615,7 +619,7 @@ class TemplateAttributeSpec(BaseModel):
             if not result and not self.allow_empty:
                 result = None
             if result and self.format == "markdown":
-                result = _render_attribute_markdown(result)
+                result = _render_attribute_markdown(result, self.backend)
         elif target_type == "integer":
             try:
                 result = int(value)

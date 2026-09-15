@@ -20,6 +20,8 @@ align(center)[#counter(page).get().first()]
 #text(size: 1.8em, weight: "bold")[Metadata Conventions]]
 #v(1.5em)
 
+#ts-callout-style.update("fancy")
+
 TeXSmith normalizes a handful of common front matter fields so that templates and fragments can lean on a single canonical name. External configuration files, CLI `–attribute` overrides, and Markdown `press.*` blocks are all merged into one flat namespace before the template resolver runs, so manifests can simply reference the final attribute (e.g. `emoji`, `glossary_style`, `width`) without worrying about where it originally came from. The full `press` tree is still kept around for backwards compatibility, but no other part of the codebase needs to dig through dotted `press.*` paths anymore.
 
 = Title & Subtitle
