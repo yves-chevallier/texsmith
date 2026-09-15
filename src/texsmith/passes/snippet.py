@@ -23,7 +23,7 @@ Tests replace :func:`render_snippet_assets` with a fake renderer.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeGuard
 
 from tmark.ir import model
 from tmark.ir.walk import map_tree
@@ -44,7 +44,14 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-__all__ = ["SNIPPET_CLASS", "render_snippet_assets", "run"]
+__all__ = [
+    "SNIPPET_CLASS",
+    "fence_attributes",
+    "is_snippet",
+    "render_snippet_assets",
+    "run",
+    "snippet_block",
+]
 
 #: The fence class that marks a snippet preview.
 SNIPPET_CLASS = "snippet"
@@ -67,7 +74,12 @@ def render_snippet_assets(
     )
 
 
-def _fence_attributes(block: model.CodeBlock) -> dict[str, Any]:
+def is_snippet(node: model.Node) -> TypeGuard[model.CodeBlock]:
+    """Whether ``node`` is a fence carrying the :data:`SNIPPET_CLASS`."""
+    return isinstance(node, model.CodeBlock) and SNIPPET_CLASS in node.options.classes
+
+
+def fence_attributes(block: model.CodeBlock) -> dict[str, Any]:
     """The snippet attributes of a fence: its ``key=value`` options and the ``#id`` as ``label``."""
     attributes: dict[str, Any] = {
         key: value for key, value in block.options.kv if key in FENCE_ATTRIBUTES
@@ -75,6 +87,25 @@ def _fence_attributes(block: model.CodeBlock) -> dict[str, Any]:
     if block.options.id and not attributes.get("label"):
         attributes["label"] = block.options.id
     return attributes
+
+
+def snippet_block(
+    block: model.CodeBlock, *, host_path: Path, text: str | None = None
+) -> SnippetBlock | None:
+    """The :class:`SnippetBlock` of a ``.snippet`` fence in the IR.
+
+    The IR half of what :func:`~texsmith.adapters.plugins.snippet.build_snippet_block`
+    does for the HTML of the same fence: the pass reads it from the document
+    it is rewriting, ``texsmith site assets`` from the page it is scanning.
+    ``text`` overrides the fence body, for a fence whose ``include=`` the
+    caller resolved itself (the pass has the ``include`` pass in front of it).
+    """
+    return build_snippet_block(
+        block.text if text is None else text,
+        language=block.lang,
+        attributes=fence_attributes(block),
+        host_path=host_path,
+    )
 
 
 class _Renderer:
@@ -87,15 +118,10 @@ class _Renderer:
         self.host = host
 
     def rewrite(self, node: model.Node) -> model.Node:
-        if not isinstance(node, model.CodeBlock) or SNIPPET_CLASS not in node.options.classes:
+        if not is_snippet(node):
             return node
         try:
-            block = build_snippet_block(
-                node.text,
-                language=node.lang,
-                attributes=_fence_attributes(node),
-                host_path=self.host,
-            )
+            block = snippet_block(node, host_path=self.host)
             if block is None:
                 return self._failed(node, "the fence has neither inline content nor sources")
             assets = render_snippet_assets(

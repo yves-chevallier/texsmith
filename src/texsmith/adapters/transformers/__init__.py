@@ -9,7 +9,7 @@ from texsmith.core.exceptions import TransformerExecutionError
 
 from .base import ConverterStrategy
 from .strategies import (
-    DrawioToPdfStrategy,
+    DrawioStrategy,
     FetchImageStrategy,
     ImageToPdfStrategy,
     MermaidToPdfStrategy,
@@ -57,7 +57,7 @@ registry = ConverterRegistry()
 registry.register("svg", SvgToPdfStrategy())
 registry.register("image", ImageToPdfStrategy())
 registry.register("fetch-image", FetchImageStrategy())
-registry.register("drawio", DrawioToPdfStrategy())
+registry.register("drawio", DrawioStrategy())
 registry.register("mermaid", MermaidToPdfStrategy())
 
 
@@ -81,8 +81,8 @@ def image2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
     return registry.convert("image", source, output_dir=output_dir, **options)
 
 
-def drawio2pdf(source: Path | str, output_dir: Path, **options: Any) -> Path:
-    """Convert draw.io diagrams to PDF."""
+def drawio_export(source: Path | str, output_dir: Path, **options: Any) -> Path:
+    """Export a draw.io diagram in the ``format`` asked of it (``pdf`` by default)."""
     return registry.convert("drawio", source, output_dir=output_dir, **options)
 
 
@@ -99,9 +99,9 @@ def fetch_image(url: str, output_dir: Path, **options: Any) -> Path:
 __all__ = [
     "ConverterRegistry",
     "ConverterStrategy",
-    "DrawioToPdfStrategy",
+    "DrawioStrategy",
     "MermaidToPdfStrategy",
-    "drawio2pdf",
+    "drawio_export",
     "fetch_image",
     "has_converter",
     "image2pdf",

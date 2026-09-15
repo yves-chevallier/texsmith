@@ -1,85 +1,151 @@
-import logging
-from pathlib import Path
-from types import SimpleNamespace
+"""The plugin as an adapter: MkDocs' navigation as the book builder reads it.
 
-from mkdocs_plugin_texsmith.plugin import LatexPlugin, log
-from mkdocs_plugin_texsmith.site import SiteIndex
+The book itself is ``texsmith.site.book``'s (``tests/test_site_book.py``); what
+the plugin still owns is the conversion of MkDocs' own ``Navigation`` into the
+:mod:`texsmith.site.nav` tree, which has to agree with what the resolver
+produces for the same tree — otherwise the book of a Zensical build and the
+book of an MkDocs build would not have the same chapters.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
 import pytest
 
-from texsmith.diagnostics import LoggingEmitter
+from texsmith.core.config import BookConfig
+from texsmith.site.book import flatten_navigation, item_title
+from texsmith.site.config import load_site_config
+from texsmith.site.nav import NavLink, NavPage, NavSection, resolve_navigation
 
 
-def test_lowering_reports_a_diagnostic_with_the_page_path(
-    caplog: pytest.LogCaptureFixture, tmp_path: Path
-) -> None:
-    """A page's diagnostics are logged as ``path:line:col: severity code: message``."""
-    page_path = tmp_path / "docs" / "intro.md"
-    page_path.parent.mkdir(parents=True)
-    page_path.write_text("# Intro\n\nSee @fw:nothing.\n", encoding="utf-8")
+mkdocs = pytest.importorskip("mkdocs", reason="MkDocs is not installed")
 
-    site = SiteIndex(project_dir=tmp_path, emitter=LoggingEmitter(logger_obj=log))
-    page = SimpleNamespace(
-        file=SimpleNamespace(src_uri="docs/intro.md", abs_src_path=str(page_path))
+from mkdocs.commands.build import build as mkdocs_build  # noqa: E402
+from mkdocs.config import load_config  # noqa: E402
+from mkdocs.structure.files import get_files  # noqa: E402
+from mkdocs.structure.nav import get_navigation  # noqa: E402
+from mkdocs_plugin_texsmith.plugin import _nav_items  # noqa: E402
+
+
+MKDOCS_YML = """\
+site_name: A site
+plugins: []
+nav:
+  - Home: index.md
+  - Guide:
+      - Guide: guide/index.md
+      - One: guide/one.md
+  - Elsewhere: https://example.org
+"""
+
+PAGES = {
+    "index.md": "# Home\n",
+    "guide/index.md": "# Guide\n",
+    "guide/one.md": "# One\n",
+}
+
+
+@pytest.fixture
+def site(tmp_path: Path) -> Path:
+    (tmp_path / "mkdocs.yml").write_text(MKDOCS_YML, encoding="utf-8")
+    for src_uri, body in PAGES.items():
+        path = tmp_path / "docs" / src_uri
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body, encoding="utf-8")
+    return tmp_path
+
+
+def mkdocs_navigation(site: Path):
+    config = load_config(str(site / "mkdocs.yml"))
+    files = get_files(config)
+    return get_navigation(files, config)
+
+
+def shape(items: tuple) -> list:
+    """Each item as its kind, its title and, for a page, its source."""
+    rows = []
+    for item in items:
+        if isinstance(item, NavPage):
+            rows.append(("page", item_title(item), item.src_uri))
+        elif isinstance(item, NavLink):
+            rows.append(("link", item.title, item.url))
+        elif isinstance(item, NavSection):
+            rows.append(("section", item.title, shape(item.children)))
+    return rows
+
+
+def resolved_navigation(site: Path) -> tuple:
+    """The same ``nav:``, resolved the way ``texsmith site build`` resolves it."""
+    config = load_site_config(site / "mkdocs.yml")
+    return resolve_navigation(config.docs_dir, config.nav).items
+
+
+def test_the_conversion_keeps_a_section_index_where_mkdocs_keeps_it(site: Path) -> None:
+    converted = _nav_items(mkdocs_navigation(site).items)
+
+    # The resolver promotes a section's index page to the section itself; the
+    # conversion leaves it where MkDocs keeps it, among the children. Both
+    # flatten to the same chapters, which is what the book is made of.
+    assert shape(converted) == [
+        ("page", "Home", "index.md"),
+        (
+            "section",
+            "Guide",
+            [("page", "Guide", "guide/index.md"), ("page", "One", "guide/one.md")],
+        ),
+        ("link", "Elsewhere", "https://example.org"),
+    ]
+    assert shape(resolved_navigation(site)) == [
+        ("page", "Home", "index.md"),
+        ("section", "Guide", [("page", "One", "guide/one.md")]),
+        ("link", "Elsewhere", "https://example.org"),
+    ]
+
+
+def test_both_navigations_flatten_to_the_same_chapters(site: Path) -> None:
+    def chapters(items: tuple) -> list:
+        entries = []
+        for item in items:
+            entries.extend(flatten_navigation(item, BookConfig(base_level=0)))
+        return [(entry.title, entry.level, entry.is_page, entry.src_uri) for entry in entries]
+
+    converted = chapters(_nav_items(mkdocs_navigation(site).items))
+    resolved = chapters(resolved_navigation(site))
+
+    assert converted == resolved
+    assert converted == [
+        ("Home", 0, True, "index.md"),
+        ("Guide", 0, False, None),
+        ("Guide", 1, True, "guide/index.md"),
+        ("One", 1, True, "guide/one.md"),
+        ("Elsewhere", 0, False, None),
+    ]
+
+
+def test_a_page_mkdocs_made_up_has_no_source_and_is_left_out(site: Path) -> None:
+    navigation = mkdocs_navigation(site)
+    page = navigation.pages[0]
+    page.file.abs_src_path = None
+
+    assert [
+        item.src_uri for item in _nav_items(navigation.items) if isinstance(item, NavPage)
+    ] == []
+
+
+def test_the_plugin_builds_the_book_of_a_site(site: Path) -> None:
+    """The whole hook chain, from ``on_config`` to the ``.tex`` of ``on_post_build``."""
+    (site / "mkdocs.yml").write_text(
+        MKDOCS_YML.replace(
+            "plugins: []",
+            "plugins:\n  - texsmith:\n      build_dir: press\n",
+        ),
+        encoding="utf-8",
     )
+    config = load_config(str(site / "mkdocs.yml"), site_dir=str(site / "site"))
+    config.plugins.on_startup(command="build", dirty=False)
 
-    with caplog.at_level(logging.WARNING):
-        lowered = site.lower(page, page_path.read_text(encoding="utf-8"))
-        assert lowered is not None
-        site.report(lowered)
+    mkdocs_build(config)
 
-    messages = [record.getMessage() for record in caplog.records]
-    assert messages, "Expected the plugin to log the page's diagnostics"
-    # The page path, not the temporary absolute one, and tmark's code.
-    assert any("docs/intro.md:3:6: warning ref-unresolved:" in message for message in messages)
-
-
-def test_every_page_of_a_build_registers_in_one_table(tmp_path: Path) -> None:
-    """Two pages of a site take two file ids, so their spans do not collide.
-
-    Each page used to lower against a table of its own and take id 0 in it,
-    which made the ``(code, span, message)`` identity of a finding on page two
-    equal to the same finding on page one.
-    """
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    site = SiteIndex(project_dir=tmp_path, emitter=LoggingEmitter(logger_obj=log))
-
-    spans: list[int] = []
-    for name in ("first.md", "second.md"):
-        path = docs / name
-        path.write_text(f"# {name}\n\nSee @fw:nothing.\n", encoding="utf-8")
-        page = SimpleNamespace(file=SimpleNamespace(src_uri=f"docs/{name}", abs_src_path=str(path)))
-        lowered = site.lower(page, path.read_text(encoding="utf-8"))
-        assert lowered is not None
-        spans.extend(
-            record.span.file for record in lowered.diagnostics if record.code == "ref-unresolved"
-        )
-
-    assert spans == [0, 1]
-    files = site.emitter.sink.files
-    # ``files.path()`` holds the page's ``src_uri`` as a ``PurePosixPath``:
-    # ``.as_posix()`` is the stable comparison, ``str()`` would be OS-native.
-    assert [files.path(index).as_posix() for index in spans] == ["docs/first.md", "docs/second.md"]
-
-
-def test_plugin_announces_latexmk_command(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    plugin = LatexPlugin()
-    plugin._project_dir = tmp_path
-
-    output_root = tmp_path / "press" / "book"
-    tex_path = output_root / "texsmith-docs.tex"
-
-    recorded: list[str] = []
-
-    def capture(message: str, *args: object) -> None:
-        recorded.append(message % args if args else message)
-
-    monkeypatch.setattr(log, "info", capture)
-
-    plugin._announce_latexmk_command(output_root, tex_path)
-
-    assert recorded, "Expected latexmk hint to be logged"
-    message = recorded[-1]
-    assert "Press bundle ready" in message
-    assert "latexmk -cd" in message
-    assert "press/book/texsmith-docs.tex" in message
+    assert (site / "press" / "index.tex").is_file()
+    assert (site / "press" / "sources" / "index.md").is_file()

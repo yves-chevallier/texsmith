@@ -101,7 +101,7 @@ def _make_drawio_cli(tmp_path: Path) -> Path:
                 "        break",
                 "if output is None:",
                 "    sys.exit(2)",
-                "Path(output).write_text('drawio-pdf', encoding='utf-8')",
+                "Path(output).write_text(' '.join(args), encoding='utf-8')",
             ]
         ),
         encoding="utf-8",
@@ -208,6 +208,26 @@ def test_drawio_prefers_local_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
     assert "\\includegraphics" in latex
 
 
+@pytest.mark.parametrize("fmt", ["pdf", "svg"])
+def test_drawio_exports_the_format_it_is_asked_for(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, fmt: str
+) -> None:
+    """One strategy, one code path: the format is a flag, and the target's suffix."""
+    script = _make_drawio_cli(tmp_path)
+    diagram = tmp_path / "diagram.drawio"
+    diagram.write_text("<mxfile />", encoding="utf-8")
+    monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(strategies, "_resolve_cli", lambda *_args: (str(script), True))
+
+    target = strategies.DrawioStrategy()(
+        diagram, output_dir=tmp_path / "out", backend="local", format=fmt
+    )
+
+    assert target.suffix == f".{fmt}"
+    assert f"--format {fmt}" in target.read_text(encoding="utf-8")
+    assert f"--output diagram.{fmt}" in target.read_text(encoding="utf-8")
+
+
 def test_drawio_cli_warns_when_using_hint_path(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, recording_emitter: RecordingEmitter
 ) -> None:
@@ -245,7 +265,7 @@ def test_drawio_cli_warns_when_using_hint_path(
 def test_drawio_cli_failure_falls_back_to_docker(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    strategy = strategies.DrawioToPdfStrategy()
+    strategy = strategies.DrawioStrategy()
     source = tmp_path / "diagram.drawio"
     source.write_text("<mxfile />", encoding="utf-8")
 
@@ -254,7 +274,7 @@ def test_drawio_cli_failure_falls_back_to_docker(
     def _fail_local(self, *_, **__):
         raise TransformerExecutionError("local draw.io failure")
 
-    monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_local_cli", _fail_local)
+    monkeypatch.setattr(strategies.DrawioStrategy, "_run_local_cli", _fail_local)
     monkeypatch.setattr(strategies, "normalise_pdf_version", lambda *_: None)
 
     def _fake_run_container(*_, mounts, **__):
@@ -268,7 +288,7 @@ def test_drawio_cli_failure_falls_back_to_docker(
 
 
 def test_drawio_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    strategy = strategies.DrawioToPdfStrategy()
+    strategy = strategies.DrawioStrategy()
     source = tmp_path / "diagram.drawio"
     source.write_text("<mxfile />", encoding="utf-8")
 
@@ -277,12 +297,12 @@ def test_drawio_cli_and_docker_failure(monkeypatch: pytest.MonkeyPatch, tmp_path
     def _fail_local(self, *_, **__):
         raise TransformerExecutionError("local draw.io failure")
 
-    monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_local_cli", _fail_local)
+    monkeypatch.setattr(strategies.DrawioStrategy, "_run_local_cli", _fail_local)
 
     def _fail_playwright(self, *_, **__):
         raise TransformerExecutionError("playwright unavailable")
 
-    monkeypatch.setattr(strategies.DrawioToPdfStrategy, "_run_playwright", _fail_playwright)
+    monkeypatch.setattr(strategies.DrawioStrategy, "_run_playwright", _fail_playwright)
 
     def _fail_docker(*_, **__):
         raise TransformerExecutionError("docker unavailable")

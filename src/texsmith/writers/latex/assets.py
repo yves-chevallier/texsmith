@@ -12,7 +12,7 @@ from typing import Any
 from urllib.parse import unquote, urlparse
 
 from texsmith.adapters.transformers import (
-    drawio2pdf,
+    drawio_export,
     fetch_image,
     image2pdf,
     mermaid2pdf,
@@ -276,7 +276,7 @@ def _convert_local_asset(
                 return _write_placeholder_pdf(placeholder)
         case ".drawio":
             record_event(emitter, "diagram_generate", {"source": str(source), "kind": "drawio"})
-            return drawio2pdf(
+            return drawio_export(
                 source,
                 output_dir=conversion_root,
                 backend=opts.diagrams_backend,

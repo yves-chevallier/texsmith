@@ -105,6 +105,21 @@ def option_flag(value: Any, *, default: bool = False) -> bool:
     return default if resolved is None else resolved
 
 
+#: What draw.io's ``--format`` accepts; TeXSmith asks for the first three.
+DRAWIO_FORMATS = ("pdf", "png", "svg", "jpg", "vsdx", "xml")
+
+
+def drawio_format(value: Any) -> str:
+    """The export format of a draw.io conversion, ``pdf`` when it is unnamed."""
+    fmt = str(value or "pdf").strip().lower()
+    return fmt if fmt in DRAWIO_FORMATS else "pdf"
+
+
+def drawio_suffix(value: Any) -> str:
+    """The suffix a draw.io export lands under: its format, and nothing else."""
+    return f".{drawio_format(value)}"
+
+
 def _wrap_playwright_error(exc: Exception, emitter: Any = None) -> TransformerExecutionError:
     """Return a structured error with guidance for missing Playwright deps."""
     base_message = str(exc).strip() or exc.__class__.__name__
@@ -1144,8 +1159,14 @@ async (code) => {
         page.close()
 
 
-class DrawioToPdfStrategy(CachedConversionStrategy):
+class DrawioStrategy(CachedConversionStrategy):
     """Convert draw.io diagrams using selectable backends (playwright, local, docker).
+
+    ``format`` (default ``pdf``) is draw.io's own ``--format``: the PDF a
+    document embeds, the ``png`` a Typst document takes, the ``svg`` a web
+    page shows. It is the suffix of the target too — nothing else in the code
+    path depends on it, because all three backends take the format as a flag
+    and the CLI and the container take the very same one.
 
     ``crop`` (default ``True``) trims the export to the drawing itself. Setting
     it to ``False`` exports the page(s) the drawing sits on instead — draw.io's
@@ -1162,8 +1183,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         self.export_url = _EXPORT3_URL
 
     def output_suffix(self, source: Any, options: dict[str, Any]) -> str:
-        fmt = str(options.get("format", "pdf") or "pdf").lower()
-        return ".png" if fmt == "png" else ".pdf"
+        return drawio_suffix(options.get("format"))
 
     def _perform_conversion(
         self,
@@ -1175,7 +1195,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
     ) -> Path:
         emitter = options.get("emitter")
         backend = str(options.get("backend") or options.get("diagrams_backend") or "auto").lower()
-        format_opt = str(options.get("format", "pdf") or "pdf").lower()
+        format_opt = drawio_format(options.get("format"))
         theme = str(options.get("theme", "auto") or "auto")
         crop = option_flag(options.get("crop"), default=True)
 
@@ -1196,7 +1216,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         working_source = working_dir / diagram_name
         shutil.copy2(source_path, working_source)
 
-        output_ext = ".png" if format_opt == "png" else ".pdf"
+        output_ext = drawio_suffix(format_opt)
         output_name = options.get("output_name") or f"{working_source.stem}{output_ext}"
         produced = working_dir / output_name
         if produced.exists():
@@ -1314,7 +1334,7 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
         output_name: str,
         options: dict[str, Any],
     ) -> None:
-        fmt = str(options.get("format", "pdf") or "pdf").lower()
+        fmt = drawio_format(options.get("format"))
         command = [
             executable,
             "--export",
@@ -1433,7 +1453,9 @@ class DrawioToPdfStrategy(CachedConversionStrategy):
                 )
                 page.close()
                 target.parent.mkdir(parents=True, exist_ok=True)
-                if format_opt == "png":
+                if format_opt == "svg":
+                    target.write_text(svg, encoding="utf-8")
+                elif format_opt == "png":
                     self._svg_to_png(browser, svg, target)
                 else:
                     self._svg_to_pdf(browser, svg, target)

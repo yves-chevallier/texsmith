@@ -259,6 +259,17 @@ OutputDirOption = Annotated[
     ),
 ]
 
+BuildDirOption = Annotated[
+    Path | None,
+    typer.Option(
+        "--build-dir",
+        help="Where the book's bundle lands. Defaults to the 'build_dir' option of the site.",
+        show_default=False,
+        resolve_path=True,
+        rich_help_panel=OUTPUT_PANEL,
+    ),
+]
+
 TemplateOption = Annotated[
     str | None,
     typer.Option(

@@ -10,16 +10,20 @@ page (:meth:`SiteIndex.lower`) resolves it again with ``book`` = the site
 map minus the page, then ``tmark.lower_web`` splices every TMark construct
 into what Material renders and leaves every other byte alone.
 
-MkDocs hands ``on_page_markdown`` the body without its front matter, and the
-counters declared site-wide in ``mkdocs.yml`` are in no page at all. Rather
-than re-injecting a YAML header (which shifts every line the diagnostics
-name), the body is parsed as it is — padded with as many newlines as the
-front matter occupied, so line numbers match the file — and the parsed
-document receives a synthetic ``front_matter`` node whose typed keys are the
-page's own metadata merged with the site declarations
-(``press.declare.counters``). tmark builds the keys itself, from the same
-YAML the page carried, so the deprecated spellings (a top-level
-``counters:``) keep working.
+A site generator hands the extension the body without its front matter
+(MkDocs and Zensical both do), and the counters declared site-wide in the
+generator's configuration are in no page at all. Rather than re-injecting a
+YAML header (which shifts every line the diagnostics name), the body is
+parsed as it is — padded with as many newlines as the front matter occupied,
+so line numbers match the file — and the parsed document receives a
+synthetic ``front_matter`` node whose typed keys are the page's own metadata
+merged with the site declarations (``press.declare.counters``). tmark builds
+the keys itself, from the same YAML the page carried, so the deprecated
+spellings (a top-level ``counters:``) keep working.
+
+Nothing here imports a site generator: :class:`SitePage` is all the index
+asks of one, and a generator's own page object is converted at the call
+site.
 """
 
 from __future__ import annotations
@@ -32,18 +36,41 @@ from pathlib import Path, PurePosixPath
 import posixpath
 from typing import Any
 
-from mkdocs.structure.pages import Page
-from mkdocs.utils.meta import get_data
-from texsmith.diagnostics import Diagnostic, LoggingEmitter, from_tmark
 import tmark
 import yaml
 
+from texsmith.core.front_matter import split_front_matter
+from texsmith.diagnostics import Diagnostic, LoggingEmitter, SinkEmitter, from_tmark
 
-__all__ = ["HEADING_PREFIXES", "LoweredPage", "PageRecord", "SiteIndex", "max_node_id"]
+
+__all__ = [
+    "HEADING_PREFIXES",
+    "LoweredPage",
+    "PageRecord",
+    "SiteIndex",
+    "SitePage",
+    "max_node_id",
+    "split_page",
+]
 
 #: The predeclared series whose labels live on headings: a sibling link to
 #: one of them shows the heading title (``sections: title``).
 HEADING_PREFIXES = frozenset({"part", "chap", "sec", "app"})
+
+
+@dataclass(frozen=True, slots=True)
+class SitePage:
+    """One page of the site, as little of it as the index needs.
+
+    ``src_uri`` is the page's path relative to ``docs_dir`` in POSIX form
+    (``guide/index.md``) — the identity a site generator gives a page and the
+    name a diagnostic prints. ``meta`` is the page's front matter when the
+    generator already parsed it; ``None`` asks the index to read the file.
+    """
+
+    src_uri: str
+    abs_src_path: Path
+    meta: Mapping[str, Any] | None = None
 
 
 @dataclass(slots=True)
@@ -52,10 +79,10 @@ class PageRecord:
 
     src_uri: str
     abs_src_path: Path
-    #: The page metadata (the YAML front matter as MkDocs reads it).
+    #: The page metadata (the YAML front matter).
     meta: dict[str, Any]
-    #: The Markdown body: the file's at the pre-pass, the text MkDocs handed
-    #: ``on_page_markdown`` (macros expanded) once the page was lowered.
+    #: The Markdown body: the file's at the pre-pass, the text the generator
+    #: handed the extension (macros expanded) once the page was lowered.
     body: str
     #: Lines the front matter occupied in the file, so a padded body keeps
     #: the file's line numbers.
@@ -96,15 +123,30 @@ def max_node_id(value: Any) -> int:
     return best
 
 
+def split_page(text: str) -> tuple[dict[str, Any], str, int]:
+    """The page's front matter, its body, and the lines the front matter took.
+
+    The padding is read off the *original* text — the newlines it holds minus
+    the ones the body still holds — instead of measuring the prefix a splitter
+    returns, because the splitters disagree on what the prefix is:
+    :func:`~texsmith.core.front_matter.split_front_matter` keeps the blank
+    lines that follow the closing ``---`` and normalises CRLF, where MkDocs's
+    ``get_data`` strips those blank lines with the front matter. Counting the
+    newlines that are gone is exact under either rule, and under an empty
+    front matter (``---\\n---\\n``), which parses to no metadata at all yet
+    still occupies two lines of the file.
+    """
+    meta, body = split_front_matter(text)
+    return meta, body, text.count("\n") - body.count("\n")
+
+
 def _page_counters(meta: Mapping[str, Any]) -> dict[str, Any]:
     """The counters a page declares, in either spelling."""
     declared: dict[str, Any] = {}
     press = meta.get("press")
     if isinstance(press, Mapping):
         declare = press.get("declare")
-        if isinstance(declare, Mapping) and isinstance(
-            declare.get("counters"), Mapping
-        ):
+        if isinstance(declare, Mapping) and isinstance(declare.get("counters"), Mapping):
             declared.update(declare["counters"])
     legacy = meta.get("counters")
     if isinstance(legacy, Mapping):
@@ -123,23 +165,21 @@ class SiteIndex:
         web_options: Mapping[str, Any] | None = None,
         project_dir: Path | None = None,
         logger: logging.Logger | None = None,
-        emitter: LoggingEmitter | None = None,
+        emitter: SinkEmitter | None = None,
     ) -> None:
         self.counters: dict[str, Any] = dict(counters or {})
         self.lang = lang
         self.web_options: dict[str, Any] = dict(web_options or {})
         self.project_dir = project_dir
-        self._logger = logger or logging.getLogger("mkdocs.plugins.texsmith")
+        self._logger = logger or logging.getLogger("texsmith.site")
         # One emitter for the build: its sink owns the file table every page
         # registers in, so a page's ``span.file`` identifies it among the
         # others instead of being 0 in a table of its own.
-        self.emitter = (
-            emitter if emitter is not None else LoggingEmitter(logger_obj=self._logger)
-        )
+        self.emitter = emitter if emitter is not None else LoggingEmitter(logger_obj=self._logger)
         self._records: dict[str, PageRecord] = {}
         self._chain: dict[str, int] = {}
 
-    # -- pre-pass ------------------------------------------------------------
+    # The pre-pass.
 
     @property
     def records(self) -> Mapping[str, PageRecord]:
@@ -148,36 +188,31 @@ class SiteIndex:
     def record(self, src_uri: str) -> PageRecord | None:
         return self._records.get(src_uri)
 
-    def prepass(self, pages: Iterable[Page]) -> None:
+    def prepass(self, pages: Iterable[SitePage]) -> None:
         """Parse and resolve every page in the given order, chaining ``start``."""
         for page in pages:
-            if page.file.src_uri in self._records:
+            if page.src_uri in self._records:
                 continue
             self.register(page)
 
-    def register(self, page: Page) -> PageRecord | None:
+    def register(self, page: SitePage) -> PageRecord | None:
         """Read one page, resolve it after the chain so far, keep its labels."""
-        abs_src = getattr(page.file, "abs_src_path", None)
-        if not abs_src:
-            return None
-        path = Path(abs_src)
+        path = Path(page.abs_src_path)
         try:
             text = path.read_text(encoding="utf-8-sig")
         except (OSError, UnicodeDecodeError) as exc:
-            self._logger.warning(
-                "texsmith: could not pre-scan '%s': %s", page.file.src_uri, exc
-            )
+            self._logger.warning("texsmith: could not pre-scan '%s': %s", page.src_uri, exc)
             return None
-        body, meta = get_data(text)
-        prefix = text[: len(text) - len(body)] if text.endswith(body) else ""
+        file_meta, body, padding = split_page(text)
+        meta = dict(page.meta) if page.meta is not None else file_meta
         record = PageRecord(
-            src_uri=page.file.src_uri,
+            src_uri=page.src_uri,
             abs_src_path=path,
-            meta=dict(meta or {}),
+            meta=meta,
             body=body,
-            padding=prefix.count("\n"),
+            padding=padding,
             start=dict(self._chain),
-            page_counters=_page_counters(meta or {}),
+            page_counters=_page_counters(meta),
         )
         padded = "\n" * record.padding + body
         doc = tmark.parse(padded, file=self._display_path(path))
@@ -202,7 +237,7 @@ class SiteIndex:
         self._records[record.src_uri] = record
         return record
 
-    # -- site map --------------------------------------------------------------
+    # The site map.
 
     def book_for(self, src_uri: str) -> list[dict[str, Any]]:
         """The site's labels minus the page's own, located relative to the page."""
@@ -218,19 +253,16 @@ class SiteIndex:
                 # tmark links a heading-hosted sibling by its title; a user
                 # counter defined on a heading (``## T {#fw:x}``) is still
                 # ``FW-03`` from another page.
-                if (
-                    entry.get("kind") == "header"
-                    and entry.get("prefix") not in HEADING_PREFIXES
-                ):
+                if entry.get("kind") == "header" and entry.get("prefix") not in HEADING_PREFIXES:
                     entry["kind"] = "counter_item"
                 book.append(entry)
         return book
 
-    # -- lowering --------------------------------------------------------------
+    # The lowering.
 
-    def lower(self, page: Page, markdown: str) -> LoweredPage | None:
-        """Resolve ``page`` against the site map, splice its constructs for Material."""
-        record = self._records.get(page.file.src_uri)
+    def lower(self, page: SitePage, markdown: str) -> LoweredPage | None:
+        """Resolve ``page`` against the site map, splice its constructs for the web."""
+        record = self._records.get(page.src_uri)
         if record is None:
             # A page outside the navigation never went through the pre-pass:
             # it takes the numbers after the last page.
@@ -242,9 +274,9 @@ class SiteIndex:
 
         padded = "\n" * record.padding + markdown
         files = self.emitter.sink.files
-        # ``src_uri`` is MkDocs's own path, always POSIX (unlike ``src_path``,
-        # which is OS-native): registering it as a ``PurePosixPath`` keeps a
-        # diagnostic's printed name identical on every OS, matching the
+        # ``src_uri`` is the generator's own path, always POSIX (unlike an
+        # OS-native ``src_path``): registering it as a ``PurePosixPath`` keeps
+        # a diagnostic's printed name identical on every OS, matching the
         # display name ``str()`` of a native ``Path`` would otherwise mangle
         # back to backslashes on Windows.
         display = record.src_uri
@@ -286,7 +318,7 @@ class SiteIndex:
         for record in lowered.diagnostics:
             self.emitter.diagnostic(record)
 
-    # -- helpers ---------------------------------------------------------------
+    # Helpers.
 
     def _display_path(self, path: Path) -> str:
         if self.project_dir is not None:
@@ -312,8 +344,8 @@ class SiteIndex:
     ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
         """A ``front_matter`` node carrying ``meta`` plus the site declarations.
 
-        Built by tmark from the YAML MkDocs read, so its ``keys`` are the
-        typed ones (``press.declare.counters``, ``lang``, …) and the page's
+        Built by tmark from the page's YAML, so its ``keys`` are the typed
+        ones (``press.declare.counters``, ``lang``, …) and the page's
         deprecated spellings are honoured; the site-wide counters are merged
         under the page's own. ``None`` when there is nothing to declare.
         """
@@ -333,15 +365,9 @@ class SiteIndex:
         if not merged:
             return None, []
         try:
-            header = (
-                "---\n"
-                + yaml.safe_dump(merged, sort_keys=False, allow_unicode=True)
-                + "---\n"
-            )
-        except yaml.YAMLError as exc:  # pragma: no cover - MkDocs already loaded it
-            self._logger.warning(
-                "texsmith: cannot re-serialise the page metadata: %s", exc
-            )
+            header = "---\n" + yaml.safe_dump(merged, sort_keys=False, allow_unicode=True) + "---\n"
+        except yaml.YAMLError as exc:  # pragma: no cover - already loaded once
+            self._logger.warning("texsmith: cannot re-serialise the page metadata: %s", exc)
             return None, []
         parsed = tmark.parse(header)
         node = parsed.get("front_matter")

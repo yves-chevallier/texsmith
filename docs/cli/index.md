@@ -1,11 +1,22 @@
 # TeXSmith Command-Line Interface
 
-TeXSmith ships with a feature-rich CLI that lets you convert Markdown or HTML into LaTeX, compile PDFs, and inspect bibliography files directly from a terminal. The CLI now exposes a single command: `texsmith`. Every flag hangs off that root entry point.
+TeXSmith ships with a feature-rich CLI that lets you convert Markdown or HTML into LaTeX, compile PDFs, and inspect bibliography files directly from a terminal. Conversion is the root entry point itself: `texsmith doc.md --build`, with every flag hanging off `texsmith`.
 
 ```text
 $ texsmith --help
 --8<--- "docs/assets/cli-help"
 ```
+
+Everything that is not a conversion sits in a command group of its own, reached by its name.
+
+`texsmith site assets [CONFIG]`
+: Write the files a documentation site cannot produce while it renders — the stylesheet, one preview per `.snippet` fence and one SVG per `.drawio` image — under the site's `docs_dir`, where the generator copies them as sources. `CONFIG` defaults to the first of `mkdocs.yml`, `mkdocs.yaml` or `zensical.toml` in the current directory. Run it before `zensical build`; see [Zensical](../guide/mkdocs.md#zensical).
+
+`texsmith site search [CONFIG]`
+: Add the index entries of every page (`#[term]`) to the search index of the built site under `site_dir`, which Zensical writes in Rust once Python is done. Run it after `zensical build`; MkDocs needs nothing, the plugin does it from `on_post_build`.
+
+`texsmith site build [CONFIG]`
+: Build the PDF books the site declares under its `texsmith:` options, the same way `mkdocs build` builds them from `on_post_build`: the navigation is resolved, every page is pre-passed so the book carries the site's numbers, and each book's bundle is written under `build_dir` and compiled. `--build-dir DIR`, `--book TITLE`, `--no-pdf`, and `--strict` / `--diagnostics-json` as on the root command. See [The book is a command](../guide/mkdocs.md#the-book-is-a-command).
 
 ## Options
 

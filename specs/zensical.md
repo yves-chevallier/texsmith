@@ -31,6 +31,15 @@ What survives unchanged: the hook inventory (Zensical has none of the four the
 plugin uses), the absence of a public module API, the state of backlog issue
 \#25, and the side decisions at the end.
 
+Item 1 of the strategy is done, in the shape the three premises above allow:
+the book builder is `texsmith.site.book` and the command is `texsmith site
+build [CONFIG]`. It reads no HTML — `_render_book` and `render_with_fallback`
+are gone, and each page reaches the book as the Markdown it is written in,
+through the tmark reader — and it takes the navigation of
+`texsmith.site.nav`, the resolver that reads `.nav.yml` itself. The MkDocs
+plugin is the thin adapter the item asked for: it converts its own navigation
+and calls the same builder, and the `.tex` of the two paths is identical.
+
 ## How Zensical works today
 
 - Hybrid architecture: a Rust core (the ZRX scheduler, MiniJinja templates,
@@ -85,9 +94,9 @@ and compilation). `CountersPlugin` needs `on_nav` for its cross-page numbering
 pre-pass and `on_page_content` to rewrite links. `IndexPlugin` rewrites
 `search_index.json`, which no longer exists.
 
-The part that does the actual work is already decoupled: `_render_book`
+The part that does the actual work is already decoupled: the book renderer
 consumes HTML plus a flat navigation, and `render_with_fallback` turns HTML
-into LaTeX.
+into LaTeX. (Both are gone since; see the section above.)
 
 ## Strategy
 

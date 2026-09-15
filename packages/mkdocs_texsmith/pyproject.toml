@@ -66,7 +66,6 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-awesome-nav>=3.2.0",
     "mkdocs-material>=9.6.22",
-    "mkdocs-pills>=0.1.0",
     "mkdocstrings-python>=1.18.2",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",

@@ -15,11 +15,20 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path, PurePath
+from typing import Protocol
 
 from texsmith.diagnostics import NO_SPAN, DiagnosticSink, FileTable
 
 
-__all__ = ["MemoryLoader", "TexsmithLoader", "join", "join_dir"]
+__all__ = ["Loader", "MemoryLoader", "TexsmithLoader", "join", "join_dir"]
+
+
+class Loader(Protocol):
+    """What tmark asks of a loader: the text of ``rel`` seen from ``from_path``."""
+
+    def load(self, from_path: str, rel: str) -> str | None:
+        """The file's text, or ``None`` when there is no such file."""
+        ...
 
 
 def join(from_path: str | PurePath, rel: str) -> str:

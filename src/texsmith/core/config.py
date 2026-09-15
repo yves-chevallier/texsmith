@@ -7,10 +7,6 @@ CommonConfig
   path to override the default export root that books inherit when they do not
   specify one.
 
-`save_html` (`bool`)
-: Persist the intermediate HTML render next to the PDF to aid troubleshooting
-  before LaTeX compilation.
-
 `mermaid_config` (`Path | None`)
 : Path to a Mermaid configuration file. Point to a `.json` or `.mermaid`
   document to customise diagram rendering.
@@ -117,7 +113,6 @@ class CommonConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     build_dir: Path | None = None
-    save_html: bool = False
     mermaid_config: Path | None = None
     project_dir: Path | None = None
     language: str | None = None
@@ -166,7 +161,6 @@ class LaTeXConfig(CommonConfig):
         to_propagate = (
             "build_dir",
             "mermaid_config",
-            "save_html",
             "project_dir",
             "language",
         )

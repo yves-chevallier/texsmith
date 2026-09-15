@@ -54,7 +54,6 @@ All plugin options are declared under the `texsmith` plugin entry.
 - `parser` (str): HTML parser backend used by TeXSmith (`lxml` by default).
 - `copy_assets` (bool): copy images and other assets referenced by the book into the build directory.
 - `clean_assets` (bool): remove unused files from the generated `assets/` folder after rendering.
-- `save_html` (bool): if `true`, store the rendered HTML alongside LaTeX snapshots under `html/`.
 - `language` (str): override auto-detected language for templates and hyphenation.
 - `bibliography` (list[str]): global `.bib` files applied to every book.
 - `books` (list[dict]): per-book configuration (see below).
@@ -110,7 +109,7 @@ plugins:
 
 - `copy_assets: true` copies images and other referenced files into `<build_dir>/<book>/assets/`.
 - `clean_assets: true` prunes unused files after rendering, keeping the LaTeX project tidy.
-- Enable `save_html` to keep the intermediate HTML for each page under `<build_dir>/<book>/html/`, which helps when troubleshooting rendering issues.
+- The exact Markdown each page was exported from is written under `<build_dir>/<book>/sources/`, which is the first place to look when a page renders differently in the PDF.
 
 ## Development
 

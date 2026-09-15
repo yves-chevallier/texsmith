@@ -655,7 +655,14 @@ def build_snippet_block(
     the parsed ``data-meta`` tokens of the HTML reader. The HTML path
     (:func:`_extract_snippet_block`) and the tmark ``snippet`` pass both end
     here. ``None`` when the fence has neither inline content nor sources.
+
+    The body is taken without its trailing newlines, so that the readers
+    agree on one text and therefore on one digest: the IR gives a fence body
+    that stops at the closing fence, while the HTML of the same fence ends
+    with the newline the renderer put before ``</code>``, and a file spliced
+    into a fence by ``include=`` ends with its own.
     """
+    raw_content = raw_content.rstrip("\n")
     attrs = dict(attributes or {})
     meta_attrs = dict(meta or {})
     caption = coerce_attribute(attrs.get("caption")) or None

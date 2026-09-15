@@ -119,8 +119,8 @@ docs = [
     "mkdocs-material>=9.6.22",
     "mkdocstrings[python]>=0.21.2",
     "mkdocs-drawio @ git+https://github.com/yves-chevallier/mkdocs-drawio.git@testounet",
-    "mkdocs-pills>=0.1.0",
     "mkdocs-texsmith ; python_version >= \"3.10\"",
+    "zensical>=0.0.62",
 ]
 
 
@@ -157,7 +157,9 @@ extend-exclude = [
   "examples",
   "experiments",
   "dist",
-  "site",
+  # The MkDocs and Zensical output at the repository root, not the
+  # ``texsmith.site`` package.
+  "/site",
   "docs/_build",
   "**/migrations",
 ]

@@ -34,6 +34,7 @@ its text) with ``include-missing`` at the node's span, tmark's own message.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import fields, replace
 import os
 from pathlib import Path, PurePath
@@ -47,14 +48,14 @@ from tmark.ir.model import Node, Record
 from tmark.ir.walk import map_tree
 
 from texsmith.passes import PassContext, highest_id, spec
-from texsmith.readers.loader import join, join_dir
+from texsmith.readers.loader import Loader, join, join_dir
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-__all__ = ["rebase_path", "run", "shift_ids"]
+__all__ = ["rebase_path", "resolve_include", "run", "shift_ids"]
 
 T = TypeVar("T")
 
@@ -133,6 +134,38 @@ def _option(attrs: model.Attrs, key: str) -> str | None:
     return None
 
 
+def resolve_include(
+    rel: str,
+    *,
+    from_path: str,
+    loader: Loader,
+    search: Sequence[Path] = (),
+) -> tuple[str, str] | None:
+    """``(path, text)`` of the file ``rel`` names, or ``None`` when nothing holds it.
+
+    The including file's directory decides first — the spec's §Includes rule,
+    the only one ``{include}(file)`` ever needs. Only when that misses does
+    ``search`` get a turn, in order: the deprecated ``--8<-- "path"`` spelling
+    is written against the snippet base path of the site, not against the
+    page. The path returned is the file actually read, so the file table and
+    every diagnostic name a real one.
+
+    The pass calls this with ``ctx.include_paths``; ``texsmith site assets``
+    calls it with the site's own, to read the file a ``.snippet`` fence
+    splices before it hashes the fence.
+    """
+    text = loader.load(from_path, rel)
+    if text is not None:
+        return join(from_path, rel), text
+    for directory in search:
+        target = join_dir(directory, rel)
+        # ``target`` is absolute: the loader's own join returns it as is.
+        text = loader.load(from_path, target)
+        if text is not None:
+            return target, text
+    return None
+
+
 class _Splicer:
     """One pass over one document; collects the definitions the included files bring."""
 
@@ -182,25 +215,10 @@ class _Splicer:
         )
 
     def _resolve(self, from_path: str, rel: str) -> tuple[str, str] | None:
-        """``(path, text)`` of the file ``rel`` names, or ``None`` when nothing holds it.
-
-        The including file's directory decides first — the spec's §Includes
-        rule, the only one ``{include}(file)`` ever needs. Only when that
-        misses does ``ctx.include_paths`` get a turn, in order: the deprecated
-        ``--8<-- "path"`` spelling is written against the snippet base path of
-        the site, not against the page. The path returned is the file actually
-        read, so the file table and every diagnostic name a real one.
-        """
-        text = self.ctx.loader.load(from_path, rel)
-        if text is not None:
-            return join(from_path, rel), text
-        for directory in self.ctx.include_paths:
-            target = join_dir(directory, rel)
-            # ``target`` is absolute: the loader's own join returns it as is.
-            text = self.ctx.loader.load(from_path, target)
-            if text is not None:
-                return target, text
-        return None
+        """``(path, text)`` of the file ``rel`` names, or ``None`` when nothing holds it."""
+        return resolve_include(
+            rel, from_path=from_path, loader=self.ctx.loader, search=self.ctx.include_paths
+        )
 
     def _splice(
         self, include: model.Include, origin: str, chain: frozenset[str]

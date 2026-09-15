@@ -62,7 +62,6 @@ plugins:
             docstring_style: google
             separate_signature: true
             merge_init_into_class: true
-  - pills
   - drawio:
       viewer_js: assets/drawio-viewer.js
   - texsmith:
@@ -87,6 +86,10 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/yves-chevallier/texsmith
 markdown_extensions:
+  # The web lowering. Under MkDocs the 'texsmith' plugin does the work
+  # through its hooks and the extension stands aside; under Zensical, which
+  # has no plugin hooks, the extension is the whole of it.
+  - texsmith.site.web
   - abbr
   - admonition
   - pymdownx.superfences:
@@ -105,7 +108,9 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.snippets:
       check_paths: true
-      base_path: !relative $config_dir
+      # Zensical's loader does not know '!relative'; every documented
+      # command runs from the repository root, so a plain path does.
+      base_path: .
   - pymdownx.blocks.html
   - pymdownx.blocks.caption
   - toc:
@@ -125,5 +130,9 @@ extra_javascript:
 extra_css:
   - css/brand.css
   - css/extra.css
+  # A generated file: the plugin makes it under MkDocs, 'texsmith site
+  # assets' under Zensical. Zensical reads this list before Python runs, so
+  # it is listed here rather than added by the extension.
+  - assets/texsmith/texsmith.css
 exclude_docs: |
   assets/**/*.md

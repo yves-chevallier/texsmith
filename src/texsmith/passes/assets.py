@@ -60,12 +60,12 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-__all__ = ["ASSETS_DIR", "asset_registry", "mermaid_caption", "run"]
+__all__ = ["ASSETS_DIR", "DRAWIO_SUFFIXES", "asset_registry", "mermaid_caption", "run"]
 
 #: The directory next to the output where assets are copied (``LaTeXRenderer.assets_root``).
 ASSETS_DIR = "assets"
 _THEME_VARIANTS = ("#only-light", "#only-dark")
-_DRAWIO_SUFFIXES = {".drawio", ".dio"}
+DRAWIO_SUFFIXES = {".drawio", ".dio"}
 _REMOTE_SCHEMES = {"http", "https"}
 
 
@@ -292,7 +292,7 @@ class _AssetPass:
 
     def _store_typst(self, resolved: Path, options: Mapping[str, str]) -> Path:
         """Typst reads PNG/JPEG/SVG/PDF natively: only diagrams are converted (to PDF)."""
-        from texsmith.adapters.transformers import drawio2pdf, mermaid2pdf
+        from texsmith.adapters.transformers import drawio_export, mermaid2pdf
         from texsmith.adapters.transformers.strategies import option_flag
         from texsmith.writers.latex.assets import (
             _asset_key,
@@ -306,9 +306,9 @@ class _AssetPass:
             return existing
         suffix = resolved.suffix.lower()
         backend = self.options.diagrams_backend
-        if suffix in _DRAWIO_SUFFIXES:
+        if suffix in DRAWIO_SUFFIXES:
             default = option_flag(self.options.drawio_crop, default=True)
-            staged = drawio2pdf(
+            staged = drawio_export(
                 resolved,
                 output_dir=_conversion_cache_root(self.options),
                 backend=backend,

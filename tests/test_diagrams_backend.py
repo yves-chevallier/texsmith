@@ -1,5 +1,5 @@
 from texsmith.adapters.transformers.strategies import (
-    DrawioToPdfStrategy,
+    DrawioStrategy,
     MermaidToPdfStrategy,
 )
 from texsmith.core.context import AssetRegistry
@@ -22,7 +22,7 @@ _FAKE_PDF = (
 def test_drawio_playwright_backend(tmp_path, monkeypatch):
     src = tmp_path / "diagram.drawio"
     src.write_text("<mxfile/>", encoding="utf-8")
-    strategy = DrawioToPdfStrategy()
+    strategy = DrawioStrategy()
 
     def fake_play(source, *, target, cache_dir, format_opt, theme, **_):
         target.write_bytes(_FAKE_PDF)
@@ -76,7 +76,7 @@ def test_diagrams_backend_propagates_to_converters(tmp_path, monkeypatch):
         target.write_text("ok", encoding="utf-8")
         return target
 
-    monkeypatch.setattr(_assets, "drawio2pdf", fake_drawio)
+    monkeypatch.setattr(_assets, "drawio_export", fake_drawio)
     opts = AssetOptions(
         assets=AssetRegistry(output_root=tmp_path),
         source_dir=tmp_path,
@@ -92,7 +92,7 @@ def test_drawio_crop_option_reaches_every_backend(tmp_path, monkeypatch):
     """``crop`` is normalised once and honoured identically by all backends."""
     src = tmp_path / "diagram.drawio"
     src.write_text("<mxfile/>", encoding="utf-8")
-    strategy = DrawioToPdfStrategy()
+    strategy = DrawioStrategy()
     seen: dict[str, object] = {}
 
     def fake_play(source, *, target, cache_dir, format_opt, theme, crop=True, **_):
@@ -137,7 +137,7 @@ def test_drawio_crop_option_reaches_every_backend(tmp_path, monkeypatch):
 
 
 def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, monkeypatch):
-    """``![x](d.drawio){crop=false}`` reaches ``drawio2pdf`` and keys its own asset."""
+    """``![x](d.drawio){crop=false}`` reaches ``drawio_export`` and keys its own asset."""
     src = tmp_path / "diagram.drawio"
     src.write_text("<mxfile/>", encoding="utf-8")
     seen: list[object] = []
@@ -148,7 +148,7 @@ def test_drawio_crop_attribute_flows_from_the_image_to_the_converter(tmp_path, m
         target.write_text("ok", encoding="utf-8")
         return target
 
-    monkeypatch.setattr(_assets, "drawio2pdf", fake_drawio)
+    monkeypatch.setattr(_assets, "drawio_export", fake_drawio)
     opts = AssetOptions(
         assets=AssetRegistry(output_root=tmp_path),
         source_dir=tmp_path,

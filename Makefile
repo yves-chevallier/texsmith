@@ -11,6 +11,24 @@ artifacts:
 docs: artifacts
 	TEXSMITH_BUILD=1 $(PRE_CMD) mkdocs build
 
+# The same mkdocs.yml through Zensical: the web lowering runs as the
+# 'texsmith.site.web' Markdown extension, and no PDF is built. Zensical
+# clears the site directory and caches rendered pages, so the stylesheet and
+# the snippet previews are made first, as sources under docs/.
+site-assets: artifacts
+	$(PRE_CMD) texsmith site assets mkdocs.yml
+
+# The search index is written in Rust once Python is done, so the index
+# entries of the pages are added to it after the build, not during it; the
+# book hangs off no hook either, so it is a command of its own.
+docs-zensical: site-assets
+	$(PRE_CMD) zensical build -f mkdocs.yml
+	$(PRE_CMD) texsmith site search mkdocs.yml
+	$(PRE_CMD) texsmith site build mkdocs.yml
+
+serve-zensical: site-assets
+	$(PRE_CMD) zensical serve -f mkdocs.yml
+
 spec:
 	$(PRE_CMD) texsmith $(TMARK_SPEC) -o build/spec --build
 
@@ -27,4 +45,4 @@ clean:
 	$(RM) -rf build press site
 	$(MAKE) -C examples clean
 
-.PHONY: examples artifacts docs spec clean lint ir-fixtures
+.PHONY: examples artifacts docs site-assets docs-zensical serve-zensical spec clean lint ir-fixtures

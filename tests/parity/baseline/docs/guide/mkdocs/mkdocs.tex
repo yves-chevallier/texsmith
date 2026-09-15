@@ -113,7 +113,6 @@ Counters for the numbering rules.
 \tscodeinline{books} & The documents to export (below) & \tscodeinline{[]} \\
 \tscodeinline{template\_overrides} & Template attributes for every book & \tscodeinline{\{\}} \\
 \tscodeinline{copy\_assets} / \tscodeinline{clean\_assets} & Copy the referenced assets / prune the unused ones & \tscodeinline{true} \\
-\tscodeinline{save\_html} & Keep a snapshot of each page's rendered HTML & \tscodeinline{false} \\
 \tscodeinline{embed\_documents} & Inline each page's body instead of \tscodeinline{\textbackslash{}input} & \tscodeinline{false} \\
 \bottomrule
 \end{tabularx}
@@ -149,9 +148,10 @@ so what the PDF was built from is always inspectable. The counters are seeded
 where the site's chain stood before the book's first page, so \tscodeinline{FW-\allowbreak{}10} is
 \tscodeinline{FW-\allowbreak{}10} on both media.
 
-A page whose front matter says \tscodeinline{press: \{reader: html\}} is read from its
-rendered HTML instead --- the escape hatch for a page whose content is produced
-by another MkDocs plugin.
+A book is not the plugin's own work: \tscodeinline{texsmith.site.book} builds it, and the
+plugin is the adapter that hands it MkDocs' navigation. The same builder runs
+under \hyperref[the-book-is-a-command]{\tscodeinline{texsmith site build}}, which is how a
+generator with no \tscodeinline{on\_post\_build} gets the same PDF.
 \section{Serve}
 Under \tscodeinline{mkdocs serve} the plugin lowers the pages and reports diagnostics but
 builds no book: the PDF is a \tscodeinline{mkdocs build} matter.
@@ -165,4 +165,133 @@ builds no book: the PDF is a \tscodeinline{mkdocs build} matter.
 \end{tscode}
 A complete example lives in \tscodeinline{examples/mkdocs} (\tscodeinline{make -\allowbreak{}C examples/mkdocs} builds
 the site and the PDF).
+\section{Zensical}
+\href{https://zensical.org}{Zensical} reads the same \tscodeinline{mkdocs.yml}, but it has no
+plugin hooks at all: the only thing it calls Python for is rendering Markdown.
+The web lowering is therefore also a Python-Markdown extension,
+\tscodeinline{texsmith.site.web}, driving the same code as the plugin:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{markdown\PYZus{}extensions}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{texsmith.site.web}
+\PY{n+nt}{extra\PYZus{}css}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{assets/texsmith/texsmith.css}
+\end{Verbatim}
+\end{tscode}
+Listing the extension under MkDocs is harmless --- it acts only when Zensical's
+rendering context is on the \tscodeinline{Markdown} instance, and under MkDocs the plugin
+does the work through its hooks. Keep the \tscodeinline{texsmith:} block under \tscodeinline{plugins:}:
+Zensical ignores the plugins it does not know, and the extension reads the
+options from the configuration file, since Zensical drops them from its own
+view of it.
+
+Two settings have to suit both generators. \tscodeinline{pymdownx.snippets}' \tscodeinline{base\_path}
+cannot carry the \tscodeinline{!relative} tag, which Zensical's loader does not know, so it
+is a plain \tscodeinline{base\_path: .} --- the directory every documented command runs from.
+And \tscodeinline{extra\_css} must name the stylesheet: Zensical reads that list before
+Python runs, so the extension cannot add it the way the plugin does.
+
+Per page the extension does what the plugin does: the pre-pass over every page
+in navigation order, and the lowering. It runs once per page --- mkdocstrings
+renders each docstring through a \tscodeinline{Markdown} instance of its own, and only the
+page's own instance is lowered.
+\subsection{The generated files come first}
+What the extension cannot do is leave a file behind for the build to publish.
+Zensical empties the site directory when a build starts, and it caches every
+rendered page: a second build finds the cache warm, replays the HTML and never
+calls Python at all. A stylesheet or a preview written while a page rendered is
+therefore deleted by the next build and never written again --- the page keeps
+linking to a file nobody makes any more.
+
+The generated files are sources instead. \tscodeinline{texsmith site assets} writes them
+under \tscodeinline{docs\_dir}, before Zensical runs, and the build copies them like any
+hand-written image:
+\begin{tscode}[lang=console, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gp}{\PYZdl{} }texsmith\PY{+w}{ }site\PY{+w}{ }assets\PY{+w}{ }mkdocs.yml
+\PY{g+gp}{\PYZdl{} }zensical\PY{+w}{ }build\PY{+w}{ }\PYZhy{}f\PY{+w}{ }mkdocs.yml
+\end{Verbatim}
+\end{tscode}
+The command reads the same configuration file the extension reads --- pass a
+path, or let it find \tscodeinline{mkdocs.yml}, \tscodeinline{mkdocs.yaml} or \tscodeinline{zensical.toml} in the
+current directory. It resolves the navigation, walks every page for \tscodeinline{.snippet}
+fences and \tscodeinline{.drawio} images, renders each fence's preview into
+\tscodeinline{docs/assets/snippets/}, exports each diagram to \tscodeinline{docs/assets/drawio/} as an
+SVG under the diagram's own relative path, writes
+\tscodeinline{docs/assets/texsmith/texsmith.css}, and deletes from both directories what no
+page asks for any more. A preview is named after the digest of its fence and a
+diagram is exported through the converter's digest cache, so the second run
+rebuilds nothing; an asset that will not build is reported with the name of its
+page, and the others are made anyway. All three directories are generated:
+keep them out of version control.
+
+The SVG is what Zensical shows of a diagram: it has no draw.io plugin, so the
+extension rewrites \tscodeinline{<img src="x.drawio">} to the export beside it --- and leaves
+the tag alone, with a warning naming this command, when the export is not
+there. The \tscodeinline{.drawio} file stays where it is: MkDocs' plugin still reads it, and
+the PDF export still turns it into a vector PDF.
+
+\tscodeinline{make docs-\allowbreak{}zensical} and \tscodeinline{make serve-\allowbreak{}zensical} run the command first.
+\begin{tscode}[lang=console, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gp}{\PYZdl{} }zensical\PY{+w}{ }serve\PY{+w}{ }\PYZhy{}f\PY{+w}{ }mkdocs.yml
+\end{Verbatim}
+\end{tscode}
+Under \tscodeinline{zensical serve} an edited page invalidates the pre-pass, which is redone
+for the whole site; the pages Zensical does not re-render keep the numbers of
+the previous build until the next one. A snippet added or edited between two
+runs of \tscodeinline{texsmith site assets} is not lost either: rendering the page writes
+the missing preview under \tscodeinline{docs\_dir}, which is a directory Zensical watches, so
+the file appearing there triggers the rebuild that publishes it. That rebuild
+finds the cache warm and writes nothing, so it stops there.
+\subsection{The search index comes last}
+Zensical writes \tscodeinline{search.json} in Rust once Python is done, so nothing a page
+renders can reach it. The index entries a page declares (\tscodeinline{\#[term]}) are put
+there afterwards, by a second command:
+\begin{tscode}[lang=console, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gp}{\PYZdl{} }zensical\PY{+w}{ }build\PY{+w}{ }\PYZhy{}f\PY{+w}{ }mkdocs.yml
+\PY{g+gp}{\PYZdl{} }texsmith\PY{+w}{ }site\PY{+w}{ }search\PY{+w}{ }mkdocs.yml
+\end{Verbatim}
+\end{tscode}
+It walks the built site for the \tscodeinline{ts-\allowbreak{}index} markers the lowering left in the
+pages, keys them by page and by section heading the way the index does, and
+adds them to the entries that match. Both index formats are understood: the
+\tscodeinline{tags} field of MkDocs' \tscodeinline{search/search\_index.json}, which Material searches and
+boosts, and the \tscodeinline{text} of Zensical's \tscodeinline{search.json} --- the field its query reads,
+since \tscodeinline{tags} there are the filter chips, an aggregation of exact values rather
+than something a reader types. \tscodeinline{make docs-\allowbreak{}zensical} runs the command after the
+build.
+\subsection{The book is a command}
+\label{the-book-is-a-command}
+A book hangs off \tscodeinline{on\_post\_build} under MkDocs, a hook Zensical has not got, so
+it is a command of its own --- and the same builder, \tscodeinline{texsmith.site.book}, is
+behind both:
+\begin{tscode}[lang=console, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gp}{\PYZdl{} }texsmith\PY{+w}{ }site\PY{+w}{ }build\PY{+w}{ }mkdocs.yml
+\end{Verbatim}
+\end{tscode}
+It reads the \tscodeinline{books:} of the \tscodeinline{texsmith:} block exactly as the plugin does,
+resolves the navigation the way the pre-pass does, pre-passes every page so the
+book's counters and cross-page references carry the numbers the site gives
+them, writes the bundle under \tscodeinline{build\_dir} (\tscodeinline{press/} by default) and compiles
+the PDF, printing where it landed. \tscodeinline{-\allowbreak{}-\allowbreak{}build-\allowbreak{}dir DIR} puts the bundle elsewhere,
+\tscodeinline{-\allowbreak{}-\allowbreak{}book TITLE} builds one book of several, \tscodeinline{-\allowbreak{}-\allowbreak{}no-\allowbreak{}pdf} stops at the \tscodeinline{.tex}, and
+\tscodeinline{-\allowbreak{}-\allowbreak{}strict} and \tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json} behave as they do on the root command: the
+strict check runs once the \tscodeinline{.tex} is written and before the engine, so the
+output is there to read. \tscodeinline{mkdocs} is not imported anywhere on its path.
+
+The \tscodeinline{.tex} it writes is the \tscodeinline{.tex} \tscodeinline{TEXSMITH\_BUILD=1 mkdocs build} writes, byte
+for byte. \tscodeinline{make docs-\allowbreak{}zensical} runs it after the site.
+
+What does not carry over yet:
+\begin{itemize}
+\item \textbf{\tscodeinline{mike}.} Versioning is not supported: there is no version selector.
+\item \textbf{\tscodeinline{exclude\_docs}.} Zensical builds the pages MkDocs excludes, so a file
+under \tscodeinline{docs/} that only exists to be included somewhere else becomes a page
+of its own; nothing on the TeXSmith side can prevent that. They are lowered
+like any other page, after the ones the navigation reaches, and the numbering
+of the site is unaffected.
+\end{itemize}
 \end{document}
