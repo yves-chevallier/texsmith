@@ -61,9 +61,9 @@ dependencies = [
     "pyxindy>=0.0.7",
     "requests>=2.32.5",
     # The TMark core (parser, IR, printer, registries, writers): the PyPI
-    # project `tmark-core`, import name `tmark`. Until its first release it is
-    # built from the sibling checkout, see [tool.uv.sources].
-    "tmark-core",
+    # project `tmark-core`, import name `tmark`. The IR models TeXSmith reads
+    # ship in the wheel, so the minor version is part of the contract.
+    "tmark-core>=0.1,<0.2",
 ]
 [project.optional-dependencies]
 typst = ["typst>=0.15"]
@@ -135,15 +135,11 @@ members = [
 
 [tool.uv.sources]
 mkdocs-texsmith = { workspace = true }
-tmark-core = { path = "vendor/tmark/crates/tmark-py", editable = true }
 
 [tool.pytest.ini_options]
 addopts = []
-# `vendor/tmark` is a checkout of the tmark repository (the wheel is built
-# from it); its own Python tests carry their own fixtures and must not be
-# collected here.
 testpaths = ["tests", "packages"]
-norecursedirs = ["vendor", "build*", ".claude", "examples"]
+norecursedirs = ["build*", ".claude", "examples"]
 
 [tool.ruff]
 line-length = 100

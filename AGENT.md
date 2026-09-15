@@ -76,10 +76,14 @@ Always adhere to these principles:
 
 ## The TMark core
 
-TeXSmith sits on the `tmark` Rust core (`vendor/tmark`, a checkout of
-`~/tmark`): parser, IR, printer, registries, writers. The design notes are under
-`specs/migration/`; `specs/tmark-migration.md` is the plan the migration
-followed.
+TeXSmith sits on the `tmark` Rust core: parser, IR, printer, registries,
+writers. It ships as the PyPI distribution `tmark-core` (import name `tmark`,
+repository `yves-chevallier/tmark-core`) and is pinned to a minor version,
+because the IR models TeXSmith reads ship in the wheel. To work against an
+unreleased core, add a `[tool.uv.sources]` override pointing at a local
+checkout of `crates/tmark-py` and keep it out of the commit. The design notes
+are under `specs/migration/`; `specs/tmark-migration.md` is the plan the
+migration followed.
 
 - The Python-Markdown pipeline is gone: no Markdown extensions, no Python
   writers, no hand-written IR, no Jinja partials. New syntax goes through the

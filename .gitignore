@@ -63,7 +63,7 @@ snippet-dump/
 # Stray Codex/editor artifact
 .codex
 
-# The tmark checkout used to build the wheel (a symlink locally, a checkout in CI)
+# A local checkout of the tmark core, when working against an unreleased one
 vendor/tmark
 
 # Agent worktrees

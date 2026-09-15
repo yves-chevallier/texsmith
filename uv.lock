@@ -1966,7 +1966,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },
-    { name = "tmark-core", editable = "vendor/tmark/crates/tmark-py" },
+    { name = "tmark-core", specifier = ">=0.1,<0.2" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
     { name = "typst", marker = "extra == 'typst'", specifier = ">=0.15" },
@@ -2015,7 +2015,15 @@ wheels = [
 
 [[package]]
 name = "tmark-core"
-source = { editable = "vendor/tmark/crates/tmark-py" }
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/83/652fdbd74bed2c1a7b81a4d446f8c0b745ff102e5b43d99d8ac52c71b2fe/tmark_core-0.1.0.tar.gz", hash = "sha256:cf17c952a2c4f23e23033d00ce40c75950767c368ee35102eba2fd62800f4447", size = 735847, upload-time = "2026-09-15T08:06:05.906Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/51/2bf0bac8ae437e23ee12873d1fed2103d99a40776bb85a22003965bbff97/tmark_core-0.1.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:f6d35c5e29d62e9db5d0952bf9c461bf31d9321806e52ac455b28d70a76c31d1", size = 4952307, upload-time = "2026-09-15T08:05:59.212Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/a8/aa44d62c68ab3c4d7d0975126fec7760f968d87a5442488279fa6e28283d/tmark_core-0.1.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:9533ed1f756cdbfee66239d7250e1fe3e9aece410e58e44c48ca00bcdb4b738c", size = 2729972, upload-time = "2026-09-15T08:06:01.225Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/3b/078bd2f2abedac5f07dbd7ea4eed477d21d2495ce57adc03ba4f48bb2a08/tmark_core-0.1.0-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:8401e3753e862effba57ec19ce438dd116694bb126fbc4557adb5436cdb54eee", size = 2729198, upload-time = "2026-09-15T08:06:02.909Z" },
+    { url = "https://files.pythonhosted.org/packages/db/50/c4ee50af221ce5775fc116bc17308a977702b773aee5b362fbe49e49f332/tmark_core-0.1.0-cp310-abi3-win_amd64.whl", hash = "sha256:daea3cad9ed0a7f7e8da491b6b50d65e91aad822f3a226bc1cd20ad5b7c06aec", size = 2481339, upload-time = "2026-09-15T08:06:04.437Z" },
+]
 
 [[package]]
 name = "tomli"
