@@ -36,3 +36,9 @@ the printer, the writers, the bindings and finally TeXSmith.
 `refactoring/status.md` is the standing note of the SOLID / DRY / SSOT / KISS
 pass that follows it: what it decided, what shipped, what is left, and the
 traps it fell into. Read it before continuing that work.
+
+[`zensical.md`](zensical.md)
+: What Zensical is, what it does not offer a plugin, and the strategy for
+  keeping one source for the site and the PDF when MkDocs is no longer the
+  generator. Recorded against Zensical 0.0.60 before the TMark migration, with
+  a preamble on what the migration changed under it.
