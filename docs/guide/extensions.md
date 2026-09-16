@@ -67,12 +67,18 @@ def run(document: Document, ctx: PassContext) -> Document:
 ```
 
 Declare a template's passes in its manifest so they apply only while that
-template renders:
+template renders (`[typst.template]` reads the same key):
 
 ```toml
 [latex.template]
 passes = ["my_exam_pkg.questions:run"]
 ```
+
+The entry names a `PassSpec`, a callable registered by `@spec(...)` — its
+registered spec is reused — or a plain callable, and a typo fails when the
+template loads, with a `TemplateError` naming the template and the entry. The
+pass reads the template's attributes from its context:
+`ctx.attribute("solution", False)` is `True` under `-a solution=true`.
 
 The full contract — ordering, diagnostics, the rules a pass must not break — is
 in [IR passes and fragment contracts](../api/handlers.md).

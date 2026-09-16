@@ -402,10 +402,12 @@ def render_ir_document(
     # alike; the ``--numbering`` mode travels in the template overrides.
     language = tmark_language(context.language) or processed_lang(document)
     mode = numbering_mode(context.template_overrides, request.template_options)
+    # The template's own passes (``[latex.template] passes``) join the bundled
+    # ones for this render only, placed by their ``after`` constraints.
     processed = run_pipeline(
         document,
         ctx,
-        build_pipeline(),
+        build_pipeline(extra=binding.pass_specs() if binding is not None else ()),
         resolve=resolve_pass(chain, lang=language, numbering=mode),
     )
     assert processed.ir is not None

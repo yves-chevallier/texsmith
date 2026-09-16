@@ -13,7 +13,11 @@ so the ``Resolved`` of the whole document stays valid — decision X1).
 :data:`DEFAULT_PIPELINE` is the explicit order; a template or plugin
 registers a :class:`PassSpec` with ``after=`` and :func:`build_pipeline`
 performs a stable topological sort, raising :class:`PassOrderError` on a
-cycle.
+cycle. A template declares its own passes in its manifest
+(``[latex.template] passes = ["pkg.module:run"]``, and the same under
+``[typst.template]``); they are resolved when the manifest loads and handed
+to :func:`build_pipeline` as ``extra`` while that template renders — never
+globally.
 
 Ids and spans. Three passes cite "span rule 1" and "span rule 2" in their
 docstrings; here is what they are citing, written down at last.
@@ -177,7 +181,14 @@ class PassContext:
     #: filesystem path, as it does for a standalone conversion.
     root_dir: Path | None = None
     request: ConversionRequest | None = None
-    #: Mustache contexts, first match wins (template overrides, front matter, defaults).
+    #: Mustache contexts, first match wins (template overrides, front matter,
+    #: defaults). The first mapping holds the template attribute overrides: the
+    #: document's front matter merged with the CLI's ``-a key=value`` pairs, so
+    #: ``-a solution=true`` reads back as ``ctx.attribute("solution")`` being
+    #: ``True`` (``true``/``false`` become booleans, numbers become ``int`` or
+    #: ``float``, and ``-a press.foo=1`` nests under ``press``). The attribute
+    #: *defaults* a manifest declares are resolved by the template renderer and
+    #: are not part of the contexts: a pass supplies its own default.
     contexts: tuple[Mapping[str, Any], ...] = ()
     #: Events only; findings go through ``diagnostics``.
     emitter: DiagnosticEmitter = field(default_factory=NullEmitter)
@@ -207,6 +218,22 @@ class PassContext:
     #: ``emoji`` pass resolved. Also where a test injects a helper (a fake
     #: ``script_detector``).
     values: dict[str, Any] = field(default_factory=dict)
+
+    def attribute(self, name: str, default: Any = None) -> Any:
+        """The template attribute ``name`` as the conversion resolved it, else ``default``.
+
+        The lookup walks :attr:`contexts` in order — template overrides (front
+        matter merged with the CLI's ``-a key=value``), then the front matter,
+        then the mustache defaults — and a dotted ``name`` reaches into a nested
+        mapping (``ctx.attribute("press.title")``). A template pass reads its
+        options here: ``ctx.attribute("solution", False)`` is ``True`` under
+        ``-a solution=true`` and falls back to the pass's own default when
+        nothing overrides it, since manifest defaults never reach the contexts.
+        """
+        from texsmith.passes.var import MISSING, lookup
+
+        value = lookup(name.split("."), self.contexts)
+        return default if value is MISSING else value
 
 
 # Registry and pipeline

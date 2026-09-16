@@ -46,8 +46,11 @@ Two stages surround the one Rust step in the middle:
     per-body options, so that the `Resolved` of the whole document stays valid.
 
 ```python
+from dataclasses import replace
+
+from tmark.ir import model
+
 from texsmith.core.documents import Document
-from texsmith.ir import model
 from texsmith.passes import PassContext, spec
 
 
@@ -56,10 +59,10 @@ def run(document: Document, ctx: PassContext) -> Document:
     ir = document.ir
     if ir is None:
         return document
-    blocks = tuple(_number(block) for block in ir.blocks)
+    blocks = tuple(_number(block, solution=ctx.attribute("solution", False)) for block in ir.blocks)
     if blocks == ir.blocks:
         return document          # nothing to do: hand back the same object
-    return document.evolve(ir=ir.model_copy(update={"blocks": blocks}))
+    return document.evolve(ir=replace(ir, blocks=blocks))
 ```
 
 Order is declared, never implicit: a `PassSpec` names the passes it must run
@@ -80,6 +83,24 @@ They are resolved with the same import machinery as attribute normalisers and
 fragment entrypoints, so a typo fails early with an actionable `TemplateError`,
 and they apply **only while the declaring template renders** — exam-style rules
 would corrupt unrelated documents, so there is no global entry point.
+`[typst.template]` reads the same key, and a template that declares both
+sections lists its passes in both.
+
+Each entry names an attribute of a module (`"package.module:attribute"`). It
+may be a `PassSpec`, used as declared; a callable registered by `@spec(...)`,
+whose registered spec is reused, so the `name`, `stage` and `after` of the
+decorator hold; or a plain `(Document, PassContext) -> Document` callable,
+wrapped in a `pre` pass named after the reference. An `after` naming a bundled
+pass orders the template's pass among them, and a `stage="post"` pass runs
+after `tmark.resolve` with the bundled `post` ones.
+
+A template pass reads its options from the `PassContext`:
+`ctx.attribute("solution", False)` walks `ctx.contexts` — the template
+overrides first (the document's front matter merged with the CLI's
+`-a key=value`, so `-a solution=true` is `True` here), then the front matter —
+and a dotted name reaches into a nested mapping (`ctx.attribute("press.title")`).
+The attribute *defaults* declared in the manifest are resolved by the template
+renderer and never reach the contexts, so the pass supplies its own default.
 
 Keep passes semantic and backend-neutral: a pass rewrites IR nodes and their
 attributes, never LaTeX strings. The one exception is deliberate and narrow —

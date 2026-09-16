@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 import warnings
 
+from texsmith.passes import PassSpec
+
 from .base import WrappableTemplate
 from .languages import _BABEL_LANGUAGE_ALIASES
 from .loader import load_template
@@ -44,6 +46,16 @@ class TemplateBinding:
     slots: dict[str, TemplateSlot]
     default_slot: str
     base_level: int | None
+
+    def pass_specs(self) -> tuple[PassSpec, ...]:
+        """The IR passes the bound template declares (``[latex.template] passes``).
+
+        Empty without a template: the passes of a template apply only while
+        that template renders, never globally.
+        """
+        if self.instance is None:
+            return ()
+        return self.instance.info.pass_specs()
 
     def slot_levels(self, *, offset: int = 0) -> dict[str, int]:
         """Return the resolved base level for each slot."""

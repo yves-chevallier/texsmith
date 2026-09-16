@@ -106,13 +106,19 @@ network service, execute a fence --- is a pass: a pure function
 \end{Verbatim}
 \end{tscode}
 Declare a template's passes in its manifest so they apply only while that
-template renders:
+template renders (\tscodeinline{[typst.template]} reads the same key):
 \begin{tscode}[lang=toml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
 \PY{n}{passes}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.questions:run}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
 \end{Verbatim}
 \end{tscode}
+The entry names a \tscodeinline{PassSpec}, a callable registered by \tscodeinline{@spec(...)} --- its
+registered spec is reused --- or a plain callable, and a typo fails when the
+template loads, with a \tscodeinline{TemplateError} naming the template and the entry. The
+pass reads the template's attributes from its context:
+\tscodeinline{ctx.attribute("solution", False)} is \tscodeinline{True} under \tscodeinline{-\allowbreak{}a solution=true}.
+
 The full contract --- ordering, diagnostics, the rules a pass must not break --- is
 in IR passes and fragment contracts.
 \section{Fragments and contract macros}

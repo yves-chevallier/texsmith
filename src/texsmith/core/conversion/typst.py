@@ -404,10 +404,12 @@ def _run_document(
     # ``lang`` and the ``--numbering`` mode from the template overrides.
     language = tmark_language(context.language) or processed_lang(document)
     mode = numbering_mode(context.template_overrides)
+    # As on the LaTeX path: ``[typst.template] passes`` run for this render only.
+    template_passes = typst_template.info.pass_specs() if typst_template is not None else ()
     processed = run_pipeline(
         document,
         ctx,
-        build_pipeline(),
+        build_pipeline(extra=template_passes),
         resolve=resolve_pass(chain, lang=language, numbering=mode),
     )
     assert processed.ir is not None

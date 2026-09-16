@@ -84,8 +84,11 @@ per-body options, so that the \tscodeinline{Resolved} of the whole document stay
 \end{description}
 \begin{tscode}[lang=python, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{dataclasses}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{replace}
+
+\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{tmark}\PY{n+nn}{.}\PY{n+nn}{ir}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{model}
+
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{core}\PY{n+nn}{.}\PY{n+nn}{documents}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{Document}
-\PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{ir}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{model}
 \PY{k+kn}{from}\PY{+w}{ }\PY{n+nn}{texsmith}\PY{n+nn}{.}\PY{n+nn}{passes}\PY{+w}{ }\PY{k+kn}{import} \PY{n}{PassContext}\PY{p}{,} \PY{n}{spec}
 
 \PY{n+nd}{@spec}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{exam\PYZhy{}questions}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{stage}\PY{o}{=}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{pre}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{after}\PY{o}{=}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{include}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{p}{)}\PY{p}{)}
@@ -93,10 +96,10 @@ per-body options, so that the \tscodeinline{Resolved} of the whole document stay
     \PY{n}{ir} \PY{o}{=} \PY{n}{document}\PY{o}{.}\PY{n}{ir}
     \PY{k}{if} \PY{n}{ir} \PY{o+ow}{is} \PY{k+kc}{None}\PY{p}{:}
         \PY{k}{return} \PY{n}{document}
-    \PY{n}{blocks} \PY{o}{=} \PY{n+nb}{tuple}\PY{p}{(}\PY{n}{\PYZus{}number}\PY{p}{(}\PY{n}{block}\PY{p}{)} \PY{k}{for} \PY{n}{block} \PY{o+ow}{in} \PY{n}{ir}\PY{o}{.}\PY{n}{blocks}\PY{p}{)}
+    \PY{n}{blocks} \PY{o}{=} \PY{n+nb}{tuple}\PY{p}{(}\PY{n}{\PYZus{}number}\PY{p}{(}\PY{n}{block}\PY{p}{,} \PY{n}{solution}\PY{o}{=}\PY{n}{ctx}\PY{o}{.}\PY{n}{attribute}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{solution}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{k+kc}{False}\PY{p}{)}\PY{p}{)} \PY{k}{for} \PY{n}{block} \PY{o+ow}{in} \PY{n}{ir}\PY{o}{.}\PY{n}{blocks}\PY{p}{)}
     \PY{k}{if} \PY{n}{blocks} \PY{o}{==} \PY{n}{ir}\PY{o}{.}\PY{n}{blocks}\PY{p}{:}
         \PY{k}{return} \PY{n}{document}          \PY{c+c1}{\PYZsh{} nothing to do: hand back the same object}
-    \PY{k}{return} \PY{n}{document}\PY{o}{.}\PY{n}{evolve}\PY{p}{(}\PY{n}{ir}\PY{o}{=}\PY{n}{ir}\PY{o}{.}\PY{n}{model\PYZus{}copy}\PY{p}{(}\PY{n}{update}\PY{o}{=}\PY{p}{\PYZob{}}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{blocks}\PY{l+s+s2}{\PYZdq{}}\PY{p}{:} \PY{n}{blocks}\PY{p}{\PYZcb{}}\PY{p}{)}\PY{p}{)}
+    \PY{k}{return} \PY{n}{document}\PY{o}{.}\PY{n}{evolve}\PY{p}{(}\PY{n}{ir}\PY{o}{=}\PY{n}{replace}\PY{p}{(}\PY{n}{ir}\PY{p}{,} \PY{n}{blocks}\PY{o}{=}\PY{n}{blocks}\PY{p}{)}\PY{p}{)}
 \end{Verbatim}
 \end{tscode}
 Order is declared, never implicit: a \tscodeinline{PassSpec} names the passes it must run
@@ -117,6 +120,24 @@ They are resolved with the same import machinery as attribute normalisers and
 fragment entrypoints, so a typo fails early with an actionable \tscodeinline{TemplateError},
 and they apply \textbf{only while the declaring template renders} --- exam-style rules
 would corrupt unrelated documents, so there is no global entry point.
+\tscodeinline{[typst.template]} reads the same key, and a template that declares both
+sections lists its passes in both.
+
+Each entry names an attribute of a module (\tscodeinline{"package.module:attribute"}). It
+may be a \tscodeinline{PassSpec}, used as declared; a callable registered by \tscodeinline{@spec(...)},
+whose registered spec is reused, so the \tscodeinline{name}, \tscodeinline{stage} and \tscodeinline{after} of the
+decorator hold; or a plain \tscodeinline{(Document, PassContext) -\allowbreak{}> Document} callable,
+wrapped in a \tscodeinline{pre} pass named after the reference. An \tscodeinline{after} naming a bundled
+pass orders the template's pass among them, and a \tscodeinline{stage="post"} pass runs
+after \tscodeinline{tmark.resolve} with the bundled \tscodeinline{post} ones.
+
+A template pass reads its options from the \tscodeinline{PassContext}:
+\tscodeinline{ctx.attribute("solution", False)} walks \tscodeinline{ctx.contexts} --- the template
+overrides first (the document's front matter merged with the CLI's
+\tscodeinline{-\allowbreak{}a key=value}, so \tscodeinline{-\allowbreak{}a solution=true} is \tscodeinline{True} here), then the front matter ---
+and a dotted name reaches into a nested mapping (\tscodeinline{ctx.attribute("press.title")}).
+The attribute \emph{defaults} declared in the manifest are resolved by the template
+renderer and never reach the contexts, so the pass supplies its own default.
 
 Keep passes semantic and backend-neutral: a pass rewrites IR nodes and their
 attributes, never \LaTeX{} strings. The one exception is deliberate and narrow ---

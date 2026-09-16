@@ -31,6 +31,7 @@ from texsmith.core.code_options import normalise_inline_options
 from texsmith.core.exceptions import LatexRenderingError
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.templates.languages import _map_babel_language, _map_bcp47_language
+from texsmith.passes import DEFAULT_PIPELINE, REGISTRY, PassSpec
 
 
 class TemplateError(LatexRenderingError):
@@ -306,6 +307,36 @@ def _resolve_attribute_normaliser(
     if ":" in name or "." in name:
         return _import_normaliser_callable(name)
     raise TemplateError(f"Unknown attribute normaliser '{name}'.")
+
+
+@cache
+def _resolve_template_pass(reference: str) -> PassSpec:
+    """Resolve one ``passes`` entry of a template section into a :class:`PassSpec`.
+
+    The reference names an attribute of a module — ``"package.module:attribute"``,
+    the dotted ``"package.module.attribute"`` form is accepted too — and is
+    imported with the machinery attribute normalisers use, so a typo fails here
+    rather than mid-render. The attribute may be
+
+    * a :class:`~texsmith.passes.PassSpec`, used as declared;
+    * a callable registered by the ``@spec(...)`` decorator, whose registered
+      spec is reused so its ``name``, ``stage`` and ``after`` constraints hold;
+    * a plain ``(Document, PassContext) -> Document`` callable, wrapped in a
+      ``pre`` spec named after the reference.
+    """
+    obj = _import_object(reference, allow_dotted=True)
+    if isinstance(obj, PassSpec):
+        return obj
+    if not callable(obj):
+        raise TemplateError(
+            f"Template pass '{reference}' resolved to a non-callable object of type "
+            f"'{type(obj).__name__}'. Expected a PassSpec or a "
+            "(Document, PassContext) -> Document callable."
+        )
+    for registered in REGISTRY.values():
+        if registered.run is obj:
+            return registered
+    return PassSpec(name=reference, run=obj, stage="pre")
 
 
 @_register_attribute_normaliser("paper_option")
@@ -793,10 +824,15 @@ class TemplateInfo(BaseModel):
     assets: dict[str, TemplateAsset] = Field(default_factory=dict)
     slots: dict[str, TemplateSlot] = Field(default_factory=dict)
     emit: dict[str, Any] = Field(default_factory=dict)
+    #: IR passes the template brings along, as ``"package.module:attribute"``
+    #: references resolved at load time; they run only while this template
+    #: renders (:meth:`pass_specs`).
+    passes: list[str] = Field(default_factory=list)
 
     _attribute_resolver: TemplateAttributeResolver = PrivateAttr()
     _attribute_defaults: dict[str, Any] = PrivateAttr(default_factory=dict)
     _attribute_owners: dict[str, str] = PrivateAttr(default_factory=dict)
+    _pass_specs: tuple[PassSpec, ...] = PrivateAttr(default=())
 
     @model_validator(mode="before")
     @classmethod
@@ -854,6 +890,50 @@ class TemplateInfo(BaseModel):
         self._attribute_resolver = TemplateAttributeResolver(self.attributes)
         self._attribute_defaults = self._attribute_resolver.defaults()
         return self
+
+    @model_validator(mode="after")
+    def _resolve_declared_passes(self) -> TemplateInfo:
+        specs: list[PassSpec] = []
+        declared: dict[str, str] = {}
+        for reference in self.passes:
+            candidate = reference.strip()
+            if not candidate:
+                raise TemplateError(
+                    f"Template '{self.name}' declares an empty pass reference; "
+                    "expected 'package.module:attribute'."
+                )
+            try:
+                resolved = _resolve_template_pass(candidate)
+            except TemplateError as exc:
+                raise TemplateError(
+                    f"Template '{self.name}' declares an invalid pass '{reference}': {exc}"
+                ) from exc
+            # The pipeline is keyed by name: a clash would only surface as a
+            # ``PassOrderError`` mid-render, so it is an error here instead.
+            if resolved.name in DEFAULT_PIPELINE:
+                raise TemplateError(
+                    f"Template '{self.name}' declares the pass '{reference}' under the name "
+                    f"'{resolved.name}', which is a bundled pass. Register it under a name "
+                    "of its own."
+                )
+            if resolved.name in declared:
+                raise TemplateError(
+                    f"Template '{self.name}' declares the pass '{resolved.name}' twice: "
+                    f"'{declared[resolved.name]}' and '{reference}'."
+                )
+            declared[resolved.name] = reference
+            specs.append(resolved)
+        self._pass_specs = tuple(specs)
+        return self
+
+    def pass_specs(self) -> tuple[PassSpec, ...]:
+        """The IR passes declared by ``passes``, resolved when the manifest loaded.
+
+        ``build_pipeline(extra=info.pass_specs())`` places them among the
+        bundled passes by their ``after`` constraints, for the duration of this
+        template's render only.
+        """
+        return self._pass_specs
 
     def resolve_slots(self) -> tuple[dict[str, TemplateSlot], str]:
         """Return declared slots ensuring a single default sink exists."""
