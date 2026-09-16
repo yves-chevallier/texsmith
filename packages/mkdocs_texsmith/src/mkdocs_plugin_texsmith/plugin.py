@@ -52,14 +52,11 @@ from texsmith.site.book import (
     load_book_settings,
 )
 from texsmith.site.config import (
-    language_from_mapping,
-    site_declarations,
     snippet_auto_append_from_extensions,
     snippet_base_paths_from_extensions,
-    web_options,
 )
 from texsmith.site.html import unescape_table_pipes
-from texsmith.site.index import SiteIndex, SitePage
+from texsmith.site.index import SiteIndex, SitePage, site_index
 from texsmith.site.nav import (
     Navigation as SiteNavigation,
     NavItem,
@@ -205,19 +202,31 @@ class LatexPlugin(BasePlugin):
         if not site_language and callable(config_get):
             site_language = config_get("site_language")
 
-        language = self.config.get("language") or language_from_mapping(
-            getattr(config, "theme", None), site_language
-        )
-
         snippet_paths = snippet_base_paths_from_extensions(
             getattr(config, "mdx_configs", None), self._project_dir
+        )
+        self._diagnostic_emitter = _MkdocsEmitter(
+            logger_obj=log,
+            debug_enabled=self._is_serve,
+        )
+
+        # The site on tmark.
+        self._search.clear()
+        self._site = site_index(
+            self.config,
+            project_dir=self._project_dir,
+            theme=getattr(config, "theme", None),
+            site_language=site_language,
+            include_paths=snippet_paths,
+            logger=log,
+            emitter=self._diagnostic_emitter,
         )
         try:
             self._settings = load_book_settings(
                 self.config,
                 project_dir=self._project_dir,
                 build_dir=book_build_root(self.config, self._project_dir),
-                language=language,
+                language=self._site.lang,
                 snippet_base_paths=snippet_paths,
                 snippet_auto_append=snippet_auto_append_from_extensions(
                     getattr(config, "mdx_configs", None), snippet_paths
@@ -227,22 +236,6 @@ class LatexPlugin(BasePlugin):
             )
         except BookError as exc:
             raise PluginError(str(exc)) from exc
-        self._diagnostic_emitter = _MkdocsEmitter(
-            logger_obj=log,
-            debug_enabled=self._is_serve,
-        )
-
-        # The site on tmark.
-        self._search.clear()
-        self._site = SiteIndex(
-            declare=site_declarations(self.config, logger=log),
-            lang=language,
-            web_options=web_options(self.config, logger=log),
-            project_dir=self._project_dir,
-            include_paths=self._settings.snippet_base_paths,
-            logger=log,
-            emitter=self._diagnostic_emitter,
-        )
         if self.config.get("inject_markdown_extensions", True):
             self._inject_markdown_extensions(config)
         if self.config.get("css", True):

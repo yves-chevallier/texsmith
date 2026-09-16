@@ -56,6 +56,7 @@ from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import Diagnostic, LoggingEmitter, SinkEmitter, from_tmark
 from texsmith.passes.epigraph import epigraph_of, insertion_index, splice_web
 from texsmith.readers.loader import SearchPathLoader, TexsmithLoader
+from texsmith.site.config import language_from_mapping, site_declarations, web_options
 
 
 __all__ = [
@@ -69,6 +70,7 @@ __all__ = [
     "merge_declarations",
     "page_declarations",
     "shift_spans",
+    "site_index",
     "split_page",
 ]
 
@@ -261,6 +263,38 @@ def front_matter_text(meta: Mapping[str, Any], *, logger: logging.Logger) -> str
         logger.warning("texsmith: cannot re-serialise the page metadata: %s", exc)
         return ""
     return f"---\n{body}---\n"
+
+
+def site_index(
+    options: Mapping[str, Any],
+    *,
+    project_dir: Path,
+    theme: Any = None,
+    site_language: Any = None,
+    include_paths: Sequence[Path] = (),
+    logger: logging.Logger | None = None,
+    emitter: SinkEmitter | None = None,
+) -> SiteIndex:
+    """The index of a site, built from the ``texsmith`` options of its generator.
+
+    The three integrations read those options from three places — MkDocs'
+    validated plugin configuration, the ``texsmith:`` block of the file the
+    Zensical extension reads, the same block ``texsmith site build`` reads —
+    and ask the same three things of them: the site-wide declarations, the
+    ``web:`` settings of the lowering, and the language, which is the
+    plugin's own option before the site's (:func:`language_from_mapping`).
+    One statement of that, so the media cannot answer it differently.
+    """
+    log = logger or logging.getLogger("texsmith.site")
+    return SiteIndex(
+        declare=site_declarations(options, logger=log),
+        lang=options.get("language") or language_from_mapping(theme, site_language),
+        web_options=web_options(options, logger=log),
+        project_dir=project_dir,
+        include_paths=include_paths,
+        logger=log,
+        emitter=emitter,
+    )
 
 
 class SiteIndex:

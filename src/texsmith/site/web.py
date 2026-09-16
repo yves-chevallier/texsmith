@@ -67,16 +67,9 @@ from markdown.preprocessors import Preprocessor
 from texsmith.adapters.plugins import snippet
 from texsmith.diagnostics import LoggingEmitter
 from texsmith.site import assets
-from texsmith.site.config import (
-    config_file_in,
-    language_from_mapping,
-    load_site_config,
-    site_declarations,
-    web_options,
-    web_tags,
-)
+from texsmith.site.config import config_file_in, load_site_config, web_tags
 from texsmith.site.html import unescape_table_pipes
-from texsmith.site.index import SiteIndex, SitePage
+from texsmith.site.index import SiteIndex, SitePage, site_index
 from texsmith.site.nav import resolve_navigation
 from texsmith.site.search import index_terms
 
@@ -410,11 +403,11 @@ def _build_state() -> SiteState | None:
     _show_diagnostics()
 
     state = SiteState(
-        index=SiteIndex(
-            declare=site_declarations(plugin, logger=_log),
-            lang=plugin.get("language") or language_from_mapping(config.get("theme")),
-            web_options=web_options(plugin, logger=_log),
+        index=site_index(
+            plugin,
             project_dir=project_dir,
+            theme=config.get("theme"),
+            site_language=config.get("site_language"),
             include_paths=snippet_base_paths,
             logger=_log,
             emitter=LoggingEmitter(logger_obj=_log),

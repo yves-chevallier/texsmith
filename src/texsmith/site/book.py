@@ -62,13 +62,14 @@ from texsmith.core.templates import (
 )
 from texsmith.diagnostics import LoggingEmitter, SinkEmitter
 from texsmith.site.assets import snippet_dir
-from texsmith.site.config import SiteConfig, option, site_declarations, web_options
+from texsmith.site.config import SiteConfig, option
 from texsmith.site.index import (
     HEADING_PREFIXES,
     PageRecord,
     SiteIndex,
     SitePage,
     front_matter_text,
+    site_index,
 )
 from texsmith.site.nav import (
     Navigation,
@@ -1286,14 +1287,23 @@ def build_books(
     if not options.get("enabled", True):
         raise BookError(f"The 'texsmith' options are disabled in {config.config_path}.")
 
-    language = options.get("language") or config.language
+    index = site_index(
+        options,
+        project_dir=config.project_dir,
+        theme=config.data.get("theme"),
+        site_language=config.data.get("site_language"),
+        include_paths=config.snippet_base_paths,
+        logger=log,
+        emitter=emitter,
+    )
+
     settings = load_book_settings(
         options,
         project_dir=config.project_dir,
         build_dir=build_dir.resolve()
         if build_dir
         else book_build_root(options, config.project_dir),
-        language=language,
+        language=index.lang,
         snippet_base_paths=config.snippet_base_paths,
         snippet_auto_append=config.snippet_auto_append,
         docs_dir=config.docs_dir,
@@ -1302,15 +1312,6 @@ def build_books(
 
     navigation = resolve_navigation(
         config.docs_dir, config.nav or None, exclude_docs=config.exclude_docs
-    )
-    index = SiteIndex(
-        declare=site_declarations(options, logger=log),
-        lang=language,
-        web_options=web_options(options, logger=log),
-        project_dir=config.project_dir,
-        include_paths=config.snippet_base_paths,
-        logger=log,
-        emitter=emitter,
     )
     index.prepass(
         SitePage(src_uri=page.src_uri, abs_src_path=page.abs_path)
