@@ -236,14 +236,31 @@
 
 \definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
 
+\BLOCK{ if preamble|trim }
+% The author's own preamble (``press.preamble``), last so it can load a
+% package, redefine a contract macro or override anything above.
+\VAR{preamble}
+\BLOCK{ endif }
+
 \BLOCK{ if glossary }\input{glossary}\BLOCK{ endif }
 
 \begin{document}
 \hypersetup{pageanchor=false}
 \frontmatter
+\BLOCK{ if titlepage|trim }
+% The author's own title page (``press.titlepage``).
+\VAR{titlepage}
+\BLOCK{ else }
 \maketitle
 \thispagestyle{empty}
-\BLOCK{ if imprint_thanks|trim or imprint_license|trim or imprint_copyright|trim }
+\BLOCK{ endif }
+\BLOCK{ if imprint|trim }
+% The author's own imprint page (``press.imprint`` naming a file).
+\cleardoublepage
+\thispagestyle{plain}
+\phantomsection
+\VAR{imprint}
+\BLOCK{ elif imprint_thanks|trim or imprint_license|trim or imprint_copyright|trim }
 \cleardoublepage
 \thispagestyle{plain}
 \phantomsection

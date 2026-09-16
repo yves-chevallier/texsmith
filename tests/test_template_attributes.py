@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import importlib
 from pathlib import Path
+import re
 import sys
 import types
+
+import pytest
 
 
 if "bs4" not in sys.modules:
@@ -45,7 +48,9 @@ book_module = importlib.import_module("texsmith.templates.book")
 BookTemplate = book_module.Template
 letter_module = importlib.import_module("texsmith.templates.letter")
 LetterTemplate = letter_module.Template
-TemplateManifest = importlib.import_module("texsmith.core.templates.manifest").TemplateManifest
+manifest_module = importlib.import_module("texsmith.core.templates.manifest")
+TemplateManifest = manifest_module.TemplateManifest
+TemplateError = manifest_module.TemplateError
 from texsmith.core.fragments import inject_fragment_attributes  # noqa: E402
 
 
@@ -273,3 +278,57 @@ def test_parse_template_attributes_supports_nested_keys() -> None:
     assert isinstance(result["geometry"], dict)
     assert result["geometry"]["paperheight"] == "4cm"
     assert result["geometry"]["showframe"] is True
+
+
+def test_book_template_inlines_a_title_page_an_imprint_and_a_preamble(tmp_path: Path) -> None:
+    """``format = "file"`` attributes: the author's own LaTeX, read and inlined."""
+    (tmp_path / "tex").mkdir()
+    (tmp_path / "tex" / "cover.tex").write_text("\\begin{titlingpage}Cover\\end{titlingpage}")
+    (tmp_path / "tex" / "imprint.tex").write_text("Printed nowhere.")
+    template = BookTemplate()
+    overrides = {
+        "_source_dir": str(tmp_path),
+        "press": {
+            "titlepage": "tex/cover.tex",
+            "imprint": "tex/imprint.tex",
+            "preamble": "\\usepackage{heiglogo}",
+        },
+    }
+
+    context = template.prepare_context("Body", overrides=overrides)
+    inject_geometry_context(context, overrides)
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    assert "\\begin{titlingpage}Cover\\end{titlingpage}" in rendered
+    assert "Printed nowhere." in rendered
+    # The template's own title page steps aside for the author's.
+    assert "\\maketitle" not in rendered
+    # The preamble lands before the document body, verbatim.
+    preamble, _, body = rendered.partition("\\begin{document}")
+    assert "\\usepackage{heiglogo}" in preamble
+    assert "Cover" in body
+
+
+def test_a_file_attribute_that_names_no_file_is_an_error(tmp_path: Path) -> None:
+    template = BookTemplate()
+    overrides = {"_source_dir": str(tmp_path), "press": {"titlepage": "tex/missing.tex"}}
+
+    with pytest.raises(TemplateError, match=re.escape("tex/missing.tex")):
+        template.prepare_context("Body", overrides=overrides)
+
+
+def test_the_imprint_mapping_still_builds_the_generated_page(tmp_path: Path) -> None:
+    """``press.imprint`` is a path *or* the mapping the template renders itself."""
+    template = BookTemplate()
+    overrides = {
+        "_source_dir": str(tmp_path),
+        "press": {"imprint": {"thanks": "To the reader.", "license": "CC BY-SA."}},
+    }
+
+    context = template.prepare_context("Body", overrides=overrides)
+    inject_geometry_context(context, overrides)
+    rendered = template.wrap_document("Body", overrides=overrides, context=context)
+
+    assert context["imprint"] == ""
+    assert "To the reader." in rendered
+    assert "CC BY-SA." in rendered

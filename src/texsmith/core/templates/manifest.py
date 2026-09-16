@@ -100,7 +100,7 @@ class TemplateSlot(BaseModel):
 
 
 AttributePrimitiveType = Literal["any", "string", "integer", "float", "boolean", "list", "mapping"]
-AttributeFormatType = Literal["markdown", "raw"]
+AttributeFormatType = Literal["markdown", "raw", "file"]
 AttributeBackend = Literal["latex", "typst"]
 AttributeEscapeMode = Literal["latex"]
 
@@ -154,6 +154,42 @@ def _render_attribute_markdown(value: str, backend: AttributeBackend = "latex") 
 
     payload = parse_payload(value, name="<template attribute>")
     return str(tmark.write(payload, backend, {}).get("text") or "").strip()
+
+
+#: Where a ``format = "file"`` attribute's relative path starts from. The
+#: conversion service writes the converted document's directory under
+#: ``_source_dir``; a site book writes its project directory there, so a path
+#: in ``mkdocs.yml`` resolves like the book's ``copy_files`` patterns do.
+_SOURCE_DIR_KEYS = ("_source_dir", "source_dir")
+
+
+def _attribute_base_dir(overrides: Mapping[str, Any]) -> Path:
+    """The directory a ``format = "file"`` path resolves against."""
+    for key in _SOURCE_DIR_KEYS:
+        value = overrides.get(key)
+        if isinstance(value, (str, Path)) and str(value):
+            return Path(value)
+    return Path.cwd()
+
+
+def _read_attribute_file(value: str, spec: TemplateAttributeSpec, base_dir: Path) -> str:
+    """The text of the file a ``format = "file"`` attribute names.
+
+    The file is inlined verbatim: it is the author's LaTeX (a title page, an
+    imprint), not prose to escape or Markdown to render. A path that names no
+    file is a :class:`TemplateError` — a silently missing title page would
+    print the template's own instead.
+    """
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        candidate = base_dir / candidate
+    try:
+        return candidate.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise TemplateError(
+            f"Attribute '{spec.name}' names the file '{value}', which cannot be read "
+            f"from '{base_dir}': {exc}"
+        ) from exc
 
 
 _ATTRIBUTE_NORMALISERS: dict[str, Callable[[Any, TemplateAttributeSpec, Any], Any]] = {}
@@ -503,7 +539,14 @@ _BUILTIN_NORMALISER_NAMES = frozenset(_ATTRIBUTE_NORMALISERS)
 
 
 class TemplateAttributeSpec(BaseModel):
-    """Typed attribute definition used to build template defaults."""
+    """Typed attribute definition used to build template defaults.
+
+    ``format`` says what the value *is*: ``markdown`` (the default) a line or
+    two of prose rendered through the writer, ``raw`` a value the template
+    emits as it stands, and ``file`` the path of a file whose text the
+    template inlines verbatim — a title page, an imprint, a preamble the
+    author keeps in their own ``.tex``.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -540,6 +583,11 @@ class TemplateAttributeSpec(BaseModel):
 
     @model_validator(mode="after")
     def _finalise(self) -> TemplateAttributeSpec:
+        if self.format == "file" and self.escape is not None:
+            raise TemplateError(
+                f"Attribute '{self.name or '<unnamed>'}' is a file path: it is inlined "
+                "verbatim, so it cannot also be escaped."
+            )
         self._default_cache = self._coerce_value(
             self.default,
             from_override=False,
@@ -703,7 +751,29 @@ class TemplateAttributeResolver:
             coerced = spec.coerce_value(value, from_override=from_override)
             resolved[name] = coerced
 
+        self._read_files(resolved, override_payload)
         return resolved
+
+    def _read_files(
+        self, resolved: dict[str, Any], override_payload: Mapping[str, Any]
+    ) -> None:
+        """Replace every ``format = "file"`` path by the text of the file.
+
+        The raw override decides, not the coerced value: a key whose value is
+        not a path (``press.imprint`` written as the ``thanks``/``license``
+        mapping the template renders itself) names no file and keeps the
+        attribute's default.
+        """
+        specs = [spec for spec in self._specs.values() if spec.format == "file"]
+        if not specs:
+            return
+        base_dir = _attribute_base_dir(override_payload)
+        for spec in specs:
+            raw, found = spec.fetch_override(override_payload)
+            path = raw.strip() if found and isinstance(raw, str) else ""
+            resolved[spec.name] = (
+                _read_attribute_file(path, spec, base_dir) if path else spec.default_value()
+            )
 
 
 class TemplateInfo(BaseModel):

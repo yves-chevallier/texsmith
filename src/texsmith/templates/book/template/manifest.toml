@@ -112,6 +112,30 @@ allow_empty = true
 sources = ["publisher"]
 description = "Publisher string rendered in imprint."
 
+[latex.template.attributes.preamble]
+default = ""
+type = "string"
+allow_empty = true
+format = "raw"
+sources = ["preamble"]
+description = "LaTeX inserted at the end of the preamble, after the fragments."
+
+[latex.template.attributes.titlepage]
+default = ""
+type = "string"
+format = "file"
+allow_empty = true
+sources = ["titlepage"]
+description = "Path to a LaTeX file typeset in place of the template's title page."
+
+[latex.template.attributes.imprint]
+default = ""
+type = "string"
+format = "file"
+allow_empty = true
+sources = ["imprint"]
+description = "Path to a LaTeX file typeset in place of the generated imprint page."
+
 [latex.template.attributes.imprint_thanks]
 default = ""
 type = "string"

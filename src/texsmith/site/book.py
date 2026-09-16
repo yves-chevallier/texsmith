@@ -779,6 +779,13 @@ class BookBuilder:
             overrides.get("fragments") or template_runtime.extras.get("fragments") or []
         )
 
+        # The pages are converted; what is left is the book's own wrapping. Its
+        # options come from the site's configuration file, so a path they carry
+        # — a title page, an imprint, a local fragment — starts at the project
+        # directory, where ``copy_files`` starts too. A page's own conversion
+        # kept its own directory: this is set once the loop above is over.
+        overrides["_source_dir"] = str(self.settings.project_dir)
+
         folder = book.config.folder
         stem = folder.name if isinstance(folder, Path) else folder if folder else "index"
 

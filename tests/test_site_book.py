@@ -322,6 +322,30 @@ def test_an_anchor_of_another_page_is_a_reference_style_link_target(site: Path) 
     assert "but cheese and span and [?nowhere]" in page_tex
 
 
+def test_a_book_reads_its_cover_and_imprint_from_the_project(site: Path) -> None:
+    """A path in ``mkdocs.yml`` starts where ``copy_files`` starts: the project."""
+    tex = site / "tex"
+    tex.mkdir()
+    (tex / "cover.tex").write_text(
+        "\\begin{titlingpage}HEIG-VD\\end{titlingpage}", encoding="utf-8"
+    )
+    (tex / "imprint.tex").write_text("Imprime en Suisse.", encoding="utf-8")
+    config = load_site_config(site / "mkdocs.yml")
+    config.plugin["books"][0]["press"] = {
+        "titlepage": "tex/cover.tex",
+        "imprint": "tex/imprint.tex",
+        "preamble": "\\usepackage{heiglogo}",
+    }
+
+    (result,) = build_books(config, compile_pdf=False)
+
+    body = result.tex_path.read_text(encoding="utf-8")
+    assert "\\begin{titlingpage}HEIG-VD\\end{titlingpage}" in body
+    assert "Imprime en Suisse." in body
+    assert "\\usepackage{heiglogo}" in body
+    assert "\\maketitle" not in body
+
+
 def test_the_build_directory_can_be_moved_and_one_book_named(site: Path) -> None:
     config = load_site_config(site / "mkdocs.yml")
     elsewhere = site / "build" / "books"

@@ -89,6 +89,25 @@ See Contract macros for every macro and its keys, and for the
 two heavier levels: restyling through the `pgfkeys` family, and replacing the
 fragment outright.
 
+= Keep your own cover and imprint
+
+Do not fork a template to change its front matter. The `book` template reads a
+title page and an imprint page from files of yours, and a preamble inline:
+
+```yaml
+---
+press:
+  titlepage: tex/titlepage.tex
+  imprint: tex/imprint.tex
+  preamble: \usepackage{acmelogo}
+---
+```
+
+The paths start at the document's directory (at the project directory for a
+book built from `mkdocs.yml`), and the files are inlined verbatim, so they can
+use `\booktitle`, `\bookauthor`, `\bookdate` and your own `.sty`. See
+#link("index.md#a-cover-an-imprint-and-a-preamble-of-your-own")[A cover, an imprint and a preamble of your own].
+
 = Inject custom assets
 
 Add extra files (preamble snippets, latexmk config, fonts) through the `[latex.template.assets]` table:

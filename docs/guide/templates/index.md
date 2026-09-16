@@ -196,6 +196,7 @@ Each attribute table accepts the following keys:
 - `required`: when `true`, a missing override raises a `TemplateError`.
 - `choices`: restricts string/integer values to the provided list.
 - `escape`: currently supports `latex` to automatically escape special characters coming from user input.
+- `format`: what the value *is*. `markdown` (the default) renders the value — a line or two of prose — through the writer; `raw` emits it as it stands; `file` reads the value as the **path of a file** and inlines its text verbatim. A `file` attribute cannot also be escaped, its default is the empty string, and a value that is not a string (a mapping the template reads through other attributes) leaves it at that default. Relative paths start at the converted document's directory, and at the project directory for a book built from a site's configuration file — where `copy_files` starts too. A path that names no file is a `TemplateError`, so a missing title page never silently falls back to the template's own.
 - `normaliser`: a built-in normaliser name **or** a `"module:callable"` import reference pointing at your own callable that post-processes the value (see below).
 
 Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning template classes only need to handle presentation-specific tweaks (for example, combining authors, building option strings, or removing temporary keys).
@@ -326,6 +327,66 @@ the three levels of override.
     deprecated in 0.7.0 and are removed in 0.8.0: the manifest no longer reads
     them. [Contract macros](partials.md#former-partials) maps every former
     partial to its replacement macro.
+
+### A cover, an imprint and a preamble of your own
+
+The `book` template takes three attributes so a project can keep its own front
+matter without forking the template:
+
+| Attribute | Value | Where it lands |
+| --------- | ----- | -------------- |
+| `press.preamble` | LaTeX, inline | the end of the preamble, after the fragments — load a package, redefine a contract macro, override anything above |
+| `press.titlepage` | a path | in place of `\maketitle`, inside `\frontmatter` |
+| `press.imprint` | a path | in place of the imprint page built from `press.imprint.thanks` / `.license` / `.copyright` |
+
+`press.imprint` is therefore either a path — your own page — or the mapping the
+template renders itself; it is never both.
+
+```yaml
+---
+press:
+  titlepage: tex/titlepage.tex
+  imprint: tex/imprint.tex
+  preamble: |
+    \usepackage{acmelogo}
+---
+```
+
+The files are the author's LaTeX and are inlined verbatim, so they can use the
+macros the template defines — `\booktitle`, `\booksubtitle`, `\bookauthor`,
+`\bookemail`, `\bookpublisher`, `\bookedition`, `\bookdate` — and anything a
+`.sty` of yours provides:
+
+```latex
+\begin{titlingpage}
+  \acmelogo
+  \begin{center}
+    {\huge\bfseries \booktitle}\\[1.5cm]
+    {\Large \bookauthor}\\[5pt]
+    \bookemail\\
+    \vfill
+    \bookdate
+  \end{center}
+\end{titlingpage}
+```
+
+A `.sty` the preamble loads has to reach the bundle: ship it as a template
+asset (`[latex.template.assets]`), or, for a book built from a site, list it
+under the book's `copy_files`, which copies it next to the generated `.tex`
+where the engine looks:
+
+```yaml
+plugins:
+  - texsmith:
+      books:
+        - title: The Book
+          press:
+            titlepage: tex/titlepage.tex
+            imprint: tex/imprint.tex
+            preamble: \usepackage{acmelogo}
+          copy_files:
+            tex/*.sty: .
+```
 
 ### Slot strategies
 
