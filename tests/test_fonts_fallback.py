@@ -366,3 +366,56 @@ def test_capital_greek_survives_math_alphabets() -> None:
         declaration = rendered.index(r"\DeclareMathSymbol{\Omega}")
         hook = rendered.rindex(r"\AtBeginDocument{%", 0, declaration)
         assert r"\@ifundefined{symlegacymaths}" in rendered[hook:declaration]
+
+
+def test_a_drawing_block_is_taken_from_a_monospace_face(tmp_path, monkeypatch) -> None:
+    """Coverage names a CJK family for U+2500; its glyphs are full-width."""
+    fonts_dir = tmp_path / "fonts"
+    fonts_dir.mkdir()
+    for name in ("NotoSansMono-Regular.otf", "NotoSansMono-Bold.otf"):
+        (fonts_dir / name).write_bytes(b"0")
+
+    monkeypatch.setattr(
+        "texsmith.fonts.provisioning.NotoFontDownloader.ensure",
+        lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
+    )
+
+    context = {
+        "fonts": {
+            "fallback_summary": [
+                {
+                    "group": "Symbols",
+                    "class": "BoxDrawing",
+                    "font": {
+                        "name": "NotoSansJP",
+                        "styles": ["regular", "bold"],
+                        "extension": ".otf",
+                        "dir": "NotoSansJP",
+                    },
+                    "count": 12,
+                }
+            ],
+            "script_usage": [
+                {
+                    "group": "Symbols",
+                    "slug": "symbols",
+                    "font_name": "NotoSansJP",
+                    "font_command": "symbolsfont",
+                    "text_command": "textsymbols",
+                    "count": 12,
+                }
+            ],
+        }
+    }
+
+    result = _prepare_fallback_context(context, output_dir=tmp_path)
+
+    entry = next(item for item in result["entries"] if item["class"] == "BoxDrawing")
+    assert entry["font_name"] == "NotoSansMono"
+    assert entry["monospace"] is True
+    # Its own command, so the proportional face still serves the rest of the
+    # ``Symbols`` group.
+    assert entry["font_command"] == "boxdrawingfont"
+    assert result["transitions"] == [
+        r"\setTransitionsFor{BoxDrawing}{\boxdrawingfont}{\texsmithFallbackFamily}"
+    ]

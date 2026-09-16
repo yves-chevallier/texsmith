@@ -274,6 +274,32 @@
   \BLOCK{- if fallback and fallback.get("entries") }
   % Fallback script fonts
   \makeatletter
+  % A drawing block is set at the *advance* of the monospace column it sits
+  % in, where every other fallback is set at the x-height
+  % ``Scale = MatchLowercase`` gives it: a run of U+2500 has to be exactly as
+  % wide as the run of characters above it, or a tree's stems and a table's
+  % rules come out of line with the listing. The ratio cannot be computed
+  % here — the document's monospace face is whichever the font set chose —
+  % so the family is declared unscaled and measured against ``\ttfamily``
+  % once the preamble is over.
+  % The measurement is taken with the transition rules off: a rule fires on
+  % the boundary of the box as well, and ``\setDefaultTransitions`` would
+  % put the *text* family back before the ``M`` is ever set in the font
+  % being measured.
+  \providecommand{\tsNoTransitions}{}
+  \ifdefined\XeTeXinterchartokenstate
+    \renewcommand{\tsNoTransitions}{\XeTeXinterchartokenstate=0\relax}
+  \fi
+  \ExplSyntaxOn
+  \cs_new_protected:Npn \tsMatchMonoAdvance #1#2
+    {
+      \hbox_set:Nn \l_tmpa_box { \tsNoTransitions \ttfamily M }
+      \hbox_set:Nn \l_tmpb_box { \tsNoTransitions #1 M }
+      \dim_compare:nNnTF { \box_wd:N \l_tmpb_box } > { 0pt }
+        { \tl_gset:Nx #2 { \fp_eval:n { \box_wd:N \l_tmpa_box / \box_wd:N \l_tmpb_box } } }
+        { \tl_gset:Nn #2 { 1 } }
+    }
+  \ExplSyntaxOff
   \BLOCK{ for entry in fallback.entries }
   \BLOCK{ set font_cmd = '\\' + entry.font_command }
   \BLOCK{ set text_cmd = '\\' + entry.text_command }
@@ -288,7 +314,7 @@
 \BLOCK{ else }
         FakeBold = 2,
 \BLOCK{ endif }
-        Scale = MatchLowercase
+        Scale = \VAR{ '1' if entry.monospace else 'MatchLowercase' }
       ]{\VAR{entry.font_name}}%
     }{%
       \renewfontfamily\VAR{font_cmd}[
@@ -300,9 +326,26 @@
 \BLOCK{ else }
         FakeBold = 2,
 \BLOCK{ endif }
-        Scale = MatchLowercase
+        Scale = \VAR{ '1' if entry.monospace else 'MatchLowercase' }
       ]{\VAR{entry.font_name}}%
     }%
+\BLOCK{ if entry.monospace }
+    \providecommand\VAR{'\\' + entry.font_command + 'scale'}{1}%
+    \AtBeginDocument{%
+      \tsMatchMonoAdvance\VAR{font_cmd}\VAR{'\\' + entry.font_command + 'scale'}%
+      \renewfontfamily\VAR{font_cmd}[
+        Path = fonts/,
+        Extension = \VAR{entry.extension},
+        UprightFont = \VAR{entry.upright},
+\BLOCK{ if entry.has_bold }
+        BoldFont = \VAR{entry.bold},
+\BLOCK{ else }
+        FakeBold = 2,
+\BLOCK{ endif }
+        Scale = \VAR{'\\' + entry.font_command + 'scale'}
+      ]{\VAR{entry.font_name}}%
+    }%
+\BLOCK{ endif }
     \@ifundefined{\VAR{entry.text_command}}{%
       \DeclareRobustCommand\VAR{text_cmd}[1]{{\VAR{font_cmd}#1}}%
     }{%

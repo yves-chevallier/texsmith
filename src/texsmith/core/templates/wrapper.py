@@ -9,8 +9,6 @@ import re
 from typing import Any
 
 from texsmith.core.callouts import DEFAULT_CALLOUTS, merge_callouts, normalise_callouts
-from texsmith.diagnostics import ensure_emitter
-from texsmith.diagnostics import DiagnosticEmitter
 from texsmith.core.fragments import (
     inject_fragment_attributes,
     render_fragments,
@@ -19,6 +17,9 @@ from texsmith.core.fragments.activation import REQUIRED_FRAGMENTS_KEY
 from texsmith.core.fragments.resolution import inject_requires
 from texsmith.core.templates import TemplateRuntime
 from texsmith.core.templates.manifest import TemplateError
+from texsmith.diagnostics import DiagnosticEmitter, ensure_emitter
+from texsmith.fonts.fallback import merge_fallback_summaries
+from texsmith.fonts.scripts import merge_script_usage
 
 from ..context import DocumentState
 from .base import WrappableTemplate, _detect_index_engine
@@ -36,6 +37,35 @@ class TemplateWrapResult:
     asset_paths: list[Path] = field(default_factory=list)
     asset_pairs: list[tuple[Path, Path]] = field(default_factory=list)
     rendered_fragments: list[str] = field(default_factory=list)
+
+
+def _apply_font_scan(document_state: DocumentState, template_context: dict[str, Any]) -> None:
+    """Give ``ts-fonts`` the font scan of every document of the run.
+
+    The ``scripts`` pass hands what it scanned to two places at once: the
+    ``DocumentState``, which is threaded from one document to the next, and
+    the *converted document's* own template overrides. The second is enough
+    for one document, whose overrides are the ones the wrapper is handed —
+    and it is nothing at all for a book, which converts a hundred documents
+    against one set of overrides built from the site's configuration and
+    never written back to. So a book declared no fallback font, every
+    ``\tsscript`` of it was the identity, and the handbook's C book printed
+    7831 missing characters where its listings drew a tree. The state is
+    where the scan accumulates, so that is where the wrapper reads it: it is
+    a superset of any one document's, which is why it replaces rather than
+    merges.
+    """
+    usage = list(getattr(document_state, "script_usage", None) or [])
+    fallback = list(getattr(document_state, "fallback_summary", None) or [])
+    if not usage and not fallback:
+        return
+    section = template_context.get("fonts")
+    fonts = dict(section) if isinstance(section, Mapping) else {}
+    if usage:
+        fonts["script_usage"] = merge_script_usage([], usage)
+    if fallback:
+        fonts["fallback_summary"] = merge_fallback_summaries([], fallback)
+    template_context["fonts"] = fonts
 
 
 def wrap_template_document(
@@ -142,6 +172,14 @@ def wrap_template_document(
     template_context["acronym_entry_groups"] = dict(document_state.acronym_entry_groups)
     template_context["citations"] = list(document_state.citations)
     template_context["bibliography_entries"] = document_state.bibliography
+    _apply_font_scan(document_state, template_context)
+    # Where a fragment provisions the files it names: the directory this
+    # wrapper writes the document into. ``conversion.execution`` sets the
+    # same key on every converted document's overrides; a book's overrides
+    # are the site's, which carry none, so the Noto font its ``ts-fonts``
+    # copied landed under ``build/fonts`` of the working directory while the
+    # ``.sty`` beside the ``.tex`` asked for ``fonts/``.
+    template_context.setdefault("output_dir", str(output_dir))
     # IR path: the contracts and packages the bodies named (empty on the HTML
     # path, where the fragments keep sniffing the rendered LaTeX).
     template_context[REQUIRED_FRAGMENTS_KEY] = sorted(document_state.required_fragments)

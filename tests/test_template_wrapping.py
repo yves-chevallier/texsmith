@@ -410,3 +410,58 @@ def test_article_switches_to_lualatex_for_non_latin_scripts(
     latex_output = result.latex_output
     assert "\\usepackage{ts-glossary}" not in latex_output
     assert "\\usepackage[T1]{fontenc}" not in latex_output
+
+
+def test_the_font_scan_of_the_run_reaches_the_fragments(
+    article_template: WrappableTemplate,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A book's overrides carry no scan; the state it threaded does."""
+    monkeypatch.setattr(
+        "texsmith.fonts.provisioning.NotoFontDownloader.ensure",
+        lambda self, *, font_name, styles, extension, dir_base=None: None,  # noqa: ARG005
+    )
+    fonts_dir = tmp_path / "fonts"
+    fonts_dir.mkdir()
+    for name in ("NotoSansMono-Regular.otf", "NotoSansMono-Bold.otf"):
+        (fonts_dir / name).write_bytes(b"0")
+
+    state = DocumentState()
+    state.fallback_summary = [
+        {
+            "group": "Symbols",
+            "class": "BoxDrawing",
+            "font": {"name": "NotoSansJP", "styles": ["regular", "bold"], "extension": ".otf"},
+            "count": 3,
+        }
+    ]
+    state.script_usage = [
+        {
+            "group": "Symbols",
+            "slug": "symbols",
+            "font_name": "NotoSansJP",
+            "font_command": "symbolsfont",
+            "text_command": "textsymbols",
+            "count": 3,
+        }
+    ]
+
+    result = wrap_template_document(
+        template=article_template,
+        default_slot="mainmatter",
+        slot_outputs={"mainmatter": ""},
+        document_state=state,
+        template_overrides=None,
+        output_dir=tmp_path,
+        copy_assets=False,
+    )
+
+    context = result.template_context
+    assert context["fonts"]["fallback_summary"] == state.fallback_summary
+    # And the fragments provision into the directory the wrapper writes to,
+    # which is what the generated ``\newfontfamily``'s ``Path = fonts/`` means.
+    assert Path(context["output_dir"]) == tmp_path
+    assert "\\newfontfamily\\boxdrawingfont" in (tmp_path / "ts-fonts.sty").read_text(
+        encoding="utf-8"
+    )

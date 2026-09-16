@@ -1,0 +1,68 @@
+\documentclass[a4paper,twoside]{article}
+
+\usepackage{morewrites}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+\usepackage{graphicx}
+\usepackage{texsmith-lists}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{ts-fonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+
+\usepackage{lastpage}
+\usepackage{refcount}
+\makeatletter
+\def\ps@plain{
+\let\@oddhead\@empty
+\let\@evenhead\@empty
+\def\@oddfoot{
+\hfil
+\ifnum\getpagerefnumber{LastPage}>1\relax
+\thepage
+\fi
+\hfil}
+\let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\title{Box Drawing\\[0.5em]\large Tree diagrams inside a listing}
+\author{TeXSmith}\date{}
+\begin{document}
+\maketitle
+\section{Diagrams drawn in a listing}
+A listing that draws a tree uses the Unicode \emph{Box Drawing} block, and a
+progress bar the \emph{Block Elements} one. No text font carries either, so the
+document takes them from a monospace fallback --- at the advance width of the
+column they sit in, which is what keeps a tree's stems under one another.
+\begin{tscode}[lang=text, stretch=0.5, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+project
+├── src
+│   ├── main.c
+│   └── util.c
+└── tests
+    └── main\PYZus{}test.c
+
+┌───┬───┐
+│ a │ b │
+├───┼───┤
+│ c │ d │
+└───┴───┘
+
+[████████░░░░] 66\PYZpc{}
+\end{Verbatim}
+\end{tscode}
+A Greek letter in a listing comes from the same machinery: \tscodeinline{eps = ε} is the
+epsilon of \tscodeinline{if (fabs(x) < ε)}, and it is a fallback away from the monospace
+face too.
+\begin{tscode}[lang=c, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k+kt}{double}\PY{+w}{ }\PY{n}{eps}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+m+mf}{1e\PYZhy{}9}\PY{p}{;}\PY{+w}{ }\PY{c+cm}{/* ε */}
+\end{Verbatim}
+\end{tscode}
+\end{document}

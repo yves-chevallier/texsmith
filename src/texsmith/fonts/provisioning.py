@@ -107,6 +107,23 @@ _FALLBACK_ALIASES: dict[str, dict[str, object]] = {
     "chinese": {"name": "NotoSansSC", "styles": ["regular", "bold"], "extension": ".otf"},
 }
 
+#: The ucharclasses blocks a listing draws with: the box-drawing characters
+#: of a tree diagram and the shaded blocks of a progress bar. Coverage picks
+#: the first Noto family that carries them, which is a CJK one (Noto Sans JP
+#: for U+2500), and its glyphs are full-width: a tree drawn inside a code
+#: block would be twice as wide as the monospace column it sits in, column by
+#: column out of line with the text above it. Noto Sans Mono covers both
+#: blocks at the monospace advance, so these two are named by *class* — their
+#: group, ``Symbols``, holds blocks the proportional face is right for.
+_MONOSPACE_BLOCKS = frozenset({"BoxDrawing", "BlockElements"})
+
+#: The font those blocks are taken from, in the shape the loop below reads.
+_MONOSPACE_FONT: dict[str, Any] = {
+    "name": "NotoSansMono",
+    "styles": ["regular", "bold"],
+    "extension": ".otf",
+}
+
 
 def _resolve_emoji_mode(context: Mapping[str, Any]) -> str:
     """Infer requested emoji mode from template or press settings."""
@@ -525,7 +542,17 @@ def _prepare_fallback_context(
         # Prefer the slug recorded in script usage to keep commands aligned with detectors.
         if slug_class != slug_base and (slug_base in usage_index or group_lower in usage_index):
             slug = slug_base
-        usage = usage_index.get(slug) or usage_index.get(slug_base) or usage_index.get(group_lower)
+        monospace = isinstance(class_name, str) and class_name in _MONOSPACE_BLOCKS
+        if monospace:
+            # Its own command and its own transition rule, under the class
+            # rather than the group: the monospace face serves a diagram in a
+            # listing and would be wrong for the rest of ``Symbols``.
+            slug = slug_class
+        usage = (
+            None
+            if monospace
+            else usage_index.get(slug) or usage_index.get(slug_base) or usage_index.get(group_lower)
+        )
         font_command = ""
         text_command = ""
         font_name = None
@@ -551,6 +578,12 @@ def _prepare_fallback_context(
         count = entry.get("count")
         ext = font_meta.get("extension") if isinstance(font_meta, Mapping) else ".otf"
         ext = ext if isinstance(ext, str) and ext.startswith(".") else ".otf"
+        font_dir = font_meta.get("dir") if isinstance(font_meta, Mapping) else None
+        if monospace:
+            font_name = str(_MONOSPACE_FONT["name"])
+            styles = list(_MONOSPACE_FONT["styles"])
+            ext = str(_MONOSPACE_FONT["extension"])
+            font_dir = None
         # Resolve emoji font preferences separately because they are not part of the Noto OTF set.
         emoji_path: Path | None = None
         if "emoji" in font_name.lower():
@@ -593,7 +626,7 @@ def _prepare_fallback_context(
                 font_name=font_name,
                 styles=styles or ["regular", "bold"],
                 extension=ext,
-                dir_base=font_meta.get("dir") if isinstance(font_meta, Mapping) else None,
+                dir_base=str(font_dir) if isinstance(font_dir, str) else None,
             )
 
         destination_root = (output_dir / "fonts").resolve()
@@ -698,6 +731,9 @@ def _prepare_fallback_context(
             "font_name": font_name,
             "count": count if isinstance(count, (int, float)) else None,
             "has_bold": bool(dest_bold),
+            # A drawing block is scaled to the monospace advance rather than
+            # to the x-height every other fallback matches.
+            "monospace": monospace,
             "upright": dest_upright.stem,
             "bold": dest_bold.stem if dest_bold else None,
             "extension": ext,

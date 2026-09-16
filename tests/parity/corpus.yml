@@ -337,6 +337,12 @@ examples:
     backend: typst
     requires: [typst]
 
+  # examples/box-drawing: box-drawing and block-element glyphs in a listing
+  - id: box-drawing
+    cwd: examples/box-drawing
+    args: [box-drawing.md, -tarticle]
+    backend: latex
+
   # ---- examples/nested-lists (six list levels; LaTeX alone stops at four) --
   - id: nested-lists
     cwd: examples/nested-lists

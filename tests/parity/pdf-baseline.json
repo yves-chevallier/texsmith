@@ -142,6 +142,16 @@
         "text": ""
       }
     ],
+    "box-drawing/box-drawing.pdf": [
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.01849,
+        "text": "Box Drawing Tree diagrams inside a listing TeXSmith 1 Diagrams drawn in a listing A listing that draws a tree uses the Unicode Box Drawing block, and a progress bar the Block Elements one. No text font carries either, so the document takes them from a monospace fallback \u2014 at the advance width of the column they sit in, which is what keeps a tree\u2019s stems under one another. project \u251c\u2500\u2500src \u2502 \u251c\u2500\u2500main.c \u2502 \u2514\u2500\u2500util.c \u2514\u2500\u2500tests \u2514\u2500\u2500main_test.c \u250c\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2510 \u2502a \u2502b \u2502 \u251c\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2524 \u2502c \u2502d \u2502 \u2514\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2518 [\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591\u2591] 66% A Greek letter in a listing comes from the same machinery: eps = \u03b5 is the epsilon of if (fabs(x) < \u03b5), and it is a fallback away from the monospace face too. double eps = 1e-9; /* \u03b5 */"
+      }
+    ],
     "counters/counters.pdf": [
       {
         "size": [

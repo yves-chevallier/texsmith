@@ -1257,6 +1257,7 @@ def _ink(image: Any) -> Any:
 PDF_BASELINE_ENTRIES = (
     "abbr",
     "book-fr",
+    "box-drawing",
     "counters",
     "index",
     "marginnote",

@@ -5,6 +5,7 @@ EXAMPLES := \
 	abbr \
 	admonition \
 	booby \
+	box-drawing \
 	book \
 	book-fr \
 	code \
