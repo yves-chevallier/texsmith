@@ -12,9 +12,10 @@ from pathlib import Path
 import pytest
 import tmark
 
+from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import LoggingEmitter
 from texsmith.site import SiteIndex, SitePage
-from texsmith.site.index import SPAN_FIELDS, merge_declarations, split_page
+from texsmith.site.index import SPAN_FIELDS, PageRecord, merge_declarations
 
 
 log = logging.getLogger("texsmith.site.tests")
@@ -28,39 +29,50 @@ def _index(tmp_path: Path, **kwargs: object) -> SiteIndex:
     return SiteIndex(project_dir=tmp_path, emitter=LoggingEmitter(logger_obj=log), **kwargs)  # type: ignore[arg-type]
 
 
-def test_split_page_counts_the_lines_the_front_matter_occupied() -> None:
-    """``padding`` is the number of lines before the body, read off the file."""
-    text = "---\ntitle: Demo\nlang: fr\n---\n# Heading\n"
-    meta, body, padding = split_page(text)
+def _record(text: str) -> tuple[PageRecord, str]:
+    """The record of a page written as ``text``, and the body it holds."""
+    meta, body = split_front_matter(text)
+    return (
+        PageRecord(src_uri="p.md", abs_src_path=Path("p.md"), meta=meta, lines=text.count("\n")),
+        body,
+    )
 
-    assert meta == {"title": "Demo", "lang": "fr"}
+
+def test_the_padding_puts_the_body_back_on_the_file_s_lines() -> None:
+    """``padding`` is what the front matter took, measured against the body."""
+    record, body = _record("---\ntitle: Demo\nlang: fr\n---\n# Heading\n")
+
+    assert record.meta == {"title": "Demo", "lang": "fr"}
     assert body == "# Heading\n"
     # Four lines of front matter (``---``, two keys, ``---``): the body starts
     # on line 5, and padding + body puts it back there.
-    assert padding == 4
-    assert ("\n" * padding + body).splitlines()[4] == "# Heading"
+    assert record.padding(body) == 4
+    assert ("\n" * record.padding(body) + body).splitlines()[4] == "# Heading"
 
 
-def test_split_page_handles_the_shapes_the_splitters_disagree_on() -> None:
+def test_the_padding_handles_the_shapes_the_splitters_disagree_on() -> None:
     """Blank lines after the close, an empty front matter, CRLF, no header."""
     # MkDocs' ``get_data`` eats the blank lines after ``---``; ours keeps them.
-    # Either way the body lands on the line the file put it on.
-    meta, body, padding = split_page("---\na: 1\n---\n\n\n# T\n")
-    assert meta == {"a": 1}
-    assert ("\n" * padding + body).splitlines()[5] == "# T"
+    # The padding is measured against the body at hand, so either one lands on
+    # the line the file put it on.
+    record, body = _record("---\na: 1\n---\n\n\n# T\n")
+    assert record.meta == {"a": 1}
+    assert ("\n" * record.padding(body) + body).splitlines()[5] == "# T"
+    eaten = body.lstrip("\n")
+    assert ("\n" * record.padding(eaten) + eaten).splitlines()[5] == "# T"
 
     # ``---\n---`` parses to no metadata at all, yet took two lines.
-    meta, body, padding = split_page("---\n---\n# T\n")
-    assert meta == {}
-    assert padding == 2
-    assert ("\n" * padding + body).splitlines()[2] == "# T"
+    record, body = _record("---\n---\n# T\n")
+    assert record.meta == {}
+    assert record.padding(body) == 2
+    assert ("\n" * record.padding(body) + body).splitlines()[2] == "# T"
 
-    meta, _body, padding = split_page("---\r\na: 1\r\n---\r\n# T\r\n")
-    assert meta == {"a": 1}
-    assert padding == 3
+    record, body = _record("---\r\na: 1\r\n---\r\n# T\r\n")
+    assert record.meta == {"a": 1}
+    assert record.padding(body) == 3
 
-    meta, body, padding = split_page("# T\n\nBody.\n")
-    assert (meta, body, padding) == ({}, "# T\n\nBody.\n", 0)
+    record, body = _record("# T\n\nBody.\n")
+    assert (record.meta, body, record.padding(body)) == ({}, "# T\n\nBody.\n", 0)
 
 
 def test_a_diagnostic_on_a_padded_body_reports_the_file_s_line(
@@ -81,9 +93,9 @@ def test_a_diagnostic_on_a_padded_body_reports_the_file_s_line(
 
     index = _index(tmp_path)
     page = _page(page_path, "docs/intro.md")
-    _meta, body, padding = split_page(page_path.read_text(encoding="utf-8"))
+    record, body = _record(page_path.read_text(encoding="utf-8"))
     # Four lines of front matter; the blank line after it belongs to the body.
-    assert padding == 4
+    assert record.padding(body) == 4
 
     with caplog.at_level(logging.WARNING):
         lowered = index.lower(page, body)
@@ -227,7 +239,7 @@ def test_a_page_declaring_a_container_kind_lowers_it_to_a_callout(tmp_path: Path
         ":::\n",
         encoding="utf-8",
     )
-    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
 
     lowered = _index(tmp_path).lower(_page(path, "docs/ex.md"), body)
 
@@ -267,7 +279,7 @@ def test_a_diagnostic_keeps_the_file_s_line_under_a_site_declaration(
         "---\ntitle: Intro\nlang: en\n---\n\n# Intro\n\nSee @fw:nothing.\n",
         encoding="utf-8",
     )
-    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
 
     index = _index(
         tmp_path,
@@ -419,7 +431,7 @@ def test_the_front_matter_epigraph_is_set_under_the_page_s_heading(tmp_path: Pat
         "Le chapitre.\n",
         encoding="utf-8",
     )
-    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
 
     lowered = _index(tmp_path).lower(_page(path, "docs/syntax.md"), body)
 
@@ -448,7 +460,7 @@ def test_the_epigraph_clears_the_underline_of_a_setext_heading(tmp_path: Path) -
         "---\nepigraph:\n  quote: Sous le titre.\n---\n\nSyntaxe\n=======\n\nLe chapitre.\n",
         encoding="utf-8",
     )
-    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
 
     lowered = _index(tmp_path).lower(_page(path, "docs/setext.md"), body)
 
@@ -472,7 +484,7 @@ def test_a_page_with_no_heading_takes_its_epigraph_at_the_top(tmp_path: Path) ->
         "---\nepigraph:\n  quote: Sans titre.\n---\n\nDu texte.\n",
         encoding="utf-8",
     )
-    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
 
     lowered = _index(tmp_path).lower(_page(path, "docs/note.md"), body)
 
@@ -520,7 +532,7 @@ def test_a_callout_inside_a_numbered_one_is_lowered_to_html(tmp_path: Path) -> N
         ":::\n",
         encoding="utf-8",
     )
-    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
 
     lowered = _index(tmp_path).lower(_page(path, "docs/ex.md"), body)
 

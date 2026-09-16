@@ -27,12 +27,22 @@ ahead of the body and the whole thing is parsed at once
 That header is not what the rest of the pipeline speaks of: the text handed
 to ``lower_web``, registered in the file table and named in every diagnostic
 is the body padded with as many newlines as the front matter occupied in the
-file, so a diagnostic reports the file's own line. :func:`shift_spans` moves
-every span of the parsed document from the one to the other — by the padding
-minus the header, in bytes — and collapses the synthetic front matter to the
-empty span at the top of the file. tmark builds the typed keys itself, from
-the same YAML the page carried, so the deprecated spellings (a top-level
-``counters:``) keep working.
+file, so a diagnostic reports the file's own line. :func:`move_spans` moves
+every span of the parsed document from the one to the other and collapses
+the synthetic front matter to the empty span at the top of the file. tmark
+builds the typed keys itself, from the same YAML the page carried, so the
+deprecated spellings (a top-level ``counters:``) keep working.
+
+:class:`PageSource` and :func:`parse_page` are that reading, and they are
+the *only* one: the book of :mod:`texsmith.site.book` parses its pages
+through them too, rather than writing a merged copy somewhere and parsing
+that. A page therefore reaches both media under its own path — a diagnostic
+names the file the author edits, and an asset a page names relatively is
+looked up from the page's own directory. What a book adds to a page, the
+site's ``pymdownx.snippets`` ``auto_append`` and the abbreviation lines a
+front-matter glossary declares, is an :class:`Appendix`: its bytes carry the
+file that holds them, so a diagnostic in an appended definition names that
+file and not a line past the end of the page.
 
 Nothing here imports a site generator: :class:`SitePage` is all the index
 asks of one, and a generator's own page object is converted at the call
@@ -41,7 +51,7 @@ site.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 import copy
 from dataclasses import dataclass, field
 import logging
@@ -52,26 +62,40 @@ from typing import Any
 import tmark
 import yaml
 
+from texsmith.core.documents import append_front_matter_abbreviations
 from texsmith.core.front_matter import split_front_matter
-from texsmith.diagnostics import Diagnostic, LoggingEmitter, SinkEmitter, from_tmark
+from texsmith.diagnostics import (
+    Diagnostic,
+    DiagnosticEmitter,
+    FileTable,
+    LoggingEmitter,
+    NullEmitter,
+    SinkEmitter,
+    from_tmark,
+)
 from texsmith.passes.epigraph import epigraph_of, insertion_index, splice_web
 from texsmith.readers.loader import SearchPathLoader, TexsmithLoader
+from texsmith.readers.tmark import parse_payload
 from texsmith.site.config import language_from_mapping, site_declarations, web_options
 
 
 __all__ = [
     "HEADING_PREFIXES",
     "SPAN_FIELDS",
+    "Appendix",
     "LoweredPage",
     "PageRecord",
+    "PageSource",
     "SiteIndex",
     "SitePage",
+    "appendices_of",
     "front_matter_text",
     "merge_declarations",
+    "move_spans",
     "page_declarations",
-    "shift_spans",
+    "page_source",
+    "parse_page",
     "site_index",
-    "split_page",
 ]
 
 #: The predeclared series whose labels live on headings: a sibling link to
@@ -102,12 +126,9 @@ class PageRecord:
     abs_src_path: Path
     #: The page metadata (the YAML front matter).
     meta: dict[str, Any]
-    #: The Markdown body: the file's at the pre-pass, the text the generator
-    #: handed the extension (macros expanded) once the page was lowered.
-    body: str
-    #: Lines the front matter occupied in the file, so a padded body keeps
-    #: the file's line numbers.
-    padding: int
+    #: Newlines the file holds, front matter included: what :meth:`padding`
+    #: measures a body against.
+    lines: int
     #: ``prefix -> first value`` this page was resolved with (the chain).
     start: dict[str, int] = field(default_factory=dict)
     #: ``prefix -> first free value`` after this page.
@@ -116,6 +137,20 @@ class PageRecord:
     labels: list[dict[str, Any]] = field(default_factory=list)
     #: The counters the page declares itself (either spelling).
     page_counters: dict[str, Any] = field(default_factory=dict)
+
+    def padding(self, body: str) -> int:
+        """Newlines to put ahead of ``body`` so it sits on the file's own lines.
+
+        Measured against the body at hand rather than off the file's own
+        split, because the two are not the same text: the splitters disagree
+        on where a body starts (MkDocs' ``get_data`` eats the blank lines
+        after the closing ``---``, :func:`split_front_matter` keeps them),
+        and a generator's other plugins rewrite the Markdown besides.
+        Counting the newlines that are missing is exact under either rule,
+        and under an empty front matter (``---\\n---\\n``), which parses to no
+        metadata at all yet still occupies two lines of the file.
+        """
+        return max(self.lines - body.count("\n"), 0)
 
 
 @dataclass(slots=True)
@@ -134,67 +169,227 @@ class LoweredPage:
 SPAN_FIELDS = frozenset({"span", "id_span", "key_span"})
 
 
-def _shift_span(span: Any, delta: int, empty_file: int) -> Any:
-    """One ``[file, start, end]`` moved by ``delta``; the header collapses to nothing."""
+#: What a span becomes: ``(start, end)`` in the parse input, ``[file, start,
+#: end]`` in the files an author edits.
+SpanLocator = Callable[[int, int], list[int]]
+
+
+def _move_span(span: Any, locate: SpanLocator) -> Any:
+    """One ``[file, start, end]`` moved onto the file its bytes came from."""
     if not (isinstance(span, list) and len(span) == 3):
         return span
-    file_id, start, end = span
+    _file_id, start, end = span
     if not isinstance(start, int) or not isinstance(end, int):
         return span
-    if start + delta < 0:
-        # The span sits in the synthetic header, which is in no file: the
-        # empty span at the top of the page is where its front matter is.
-        return [empty_file, 0, 0]
-    return [file_id, start + delta, end + delta]
+    return locate(start, end)
 
 
-def shift_spans(value: Any, delta: int, *, empty_file: int = 0) -> Any:
-    """A parsed document with every span moved by ``delta`` bytes.
+def move_spans(value: Any, locate: SpanLocator) -> Any:
+    """A parsed document with every span moved onto the file its bytes came from.
 
-    The document is parsed from a synthetic header followed by the page
-    body, and every consumer downstream — ``tmark.lower_web``, the file
-    table, the diagnostics — speaks of the padded body instead. One shift
-    puts the whole tree in that second text's coordinates; a span that would
-    land before its start belongs to the header and collapses to the empty
-    span at the top of ``empty_file``.
+    The document is parsed from one text — a synthetic header, the page body,
+    whatever the site appends to every page — and every consumer downstream
+    (``tmark.lower_web``, the file table, the diagnostics) speaks of the
+    files instead. ``locate`` answers, for a stretch of the parse input,
+    which file holds those bytes and where; :meth:`PageSource.locate` is the
+    one this module builds.
     """
-    if delta == 0:
-        return value
     if isinstance(value, Mapping):
-        shifted: dict[str, Any] = {}
+        moved: dict[str, Any] = {}
         for key, item in value.items():
             if key in SPAN_FIELDS:
-                shifted[key] = _shift_span(item, delta, empty_file)
+                moved[key] = _move_span(item, locate)
             elif key == "related" and isinstance(item, list):
-                shifted[key] = [
-                    [_shift_span(pair[0], delta, empty_file), *pair[1:]]
+                moved[key] = [
+                    [_move_span(pair[0], locate), *pair[1:]]
                     if isinstance(pair, list) and pair
                     else pair
                     for pair in item
                 ]
             else:
-                shifted[key] = shift_spans(item, delta, empty_file=empty_file)
-        return shifted
+                moved[key] = move_spans(item, locate)
+        return moved
     if isinstance(value, list):
-        return [shift_spans(item, delta, empty_file=empty_file) for item in value]
+        return [move_spans(item, locate) for item in value]
     return value
 
 
-def split_page(text: str) -> tuple[dict[str, Any], str, int]:
-    """The page's front matter, its body, and the lines the front matter took.
+@dataclass(frozen=True, slots=True)
+class Appendix:
+    """Text added to the end of a page's source, and the file that holds it.
 
-    The padding is read off the *original* text — the newlines it holds minus
-    the ones the body still holds — instead of measuring the prefix a splitter
-    returns, because the splitters disagree on what the prefix is:
-    :func:`~texsmith.core.front_matter.split_front_matter` keeps the blank
-    lines that follow the closing ``---`` and normalises CRLF, where MkDocs's
-    ``get_data`` strips those blank lines with the front matter. Counting the
-    newlines that are gone is exact under either rule, and under an empty
-    front matter (``---\\n---\\n``), which parses to no metadata at all yet
-    still occupies two lines of the file.
+    A site gives every page a shared block by naming it under
+    ``pymdownx.snippets``' ``auto_append`` — the acronym list, in practice —
+    and a page's own ``press.declare.glossary`` declares acronyms the
+    writers only print for a definition the document holds. Both land past
+    the end of the page, where no line of the file can name them, so each
+    stretch carries the file it belongs to: ``file`` is its id in the build's
+    table and ``origin`` the byte of that file :attr:`text` starts at.
+    ``origin`` is ``None`` for text no file holds — the lines a front-matter
+    glossary synthesises — and a span landing there names the page's front
+    matter instead.
     """
-    meta, body = split_front_matter(text)
-    return meta, body, text.count("\n") - body.count("\n")
+
+    #: What the parse input gains, its separator from the body included.
+    text: str
+    file: int
+    origin: int | None
+
+
+def appendices_of(
+    paths: Iterable[Path],
+    *,
+    files: FileTable,
+    display: Callable[[Path], str],
+    logger: logging.Logger,
+) -> tuple[Appendix, ...]:
+    """The ``auto_append`` files of a site, read once and registered.
+
+    Each file joins a page's source the way ``pymdownx.snippets`` appends it:
+    a blank line, the file stripped of its outer blank lines, a newline. The
+    file itself is what the table holds, under the name ``display`` gives it,
+    so a diagnostic in one of those lines names the file at the line it is
+    written on.
+    """
+    appendices: list[Appendix] = []
+    for path in paths:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            logger.warning("Could not read the appended snippet '%s': %s", path, exc)
+            continue
+        content = text.strip()
+        if not content:
+            continue
+        file_id = int(files.add(PurePosixPath(display(path)), text))
+        # ``text`` opens with the blank line that separates the appendix from
+        # the body, so the content starts two bytes into it.
+        lead = len(text.encode("utf-8")) - len(text.lstrip().encode("utf-8"))
+        appendices.append(Appendix(text=f"\n\n{content}\n", file=file_id, origin=lead - 2))
+    return tuple(appendices)
+
+
+@dataclass(frozen=True, slots=True)
+class _Island:
+    """A stretch of a parse input, from ``start`` up to the next island.
+
+    ``delta`` is what a byte offset of the parse input gains to land in
+    ``file``; ``None`` marks the stretches TeXSmith wrote itself — the
+    re-emitted front matter, the abbreviation lines a glossary synthesises —
+    which are in no file and collapse onto the page's own front matter.
+    """
+
+    start: int
+    file: int
+    delta: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class PageSource:
+    """A page as the parser reads it, and the files its bytes come from.
+
+    :attr:`text` is what ``tmark.parse`` is handed: the merged front matter
+    re-emitted as a YAML header, the page's body, then every
+    :class:`Appendix`. Nothing downstream speaks of that text — the file
+    table, the diagnostics and ``tmark.lower_web`` speak of the page itself
+    and of each appended file under its own name — so :meth:`locate` maps a
+    span of the one onto the others.
+
+    :attr:`page_text` is what the page is registered as: its body padded with
+    as many newlines as the front matter occupied in the file, so a span
+    keeps the line it has in the file the author edits.
+    """
+
+    text: str
+    page_text: str
+    page_file: int
+    islands: tuple[_Island, ...]
+
+    def locate(self, start: int, end: int) -> list[int]:
+        """Where the bytes ``[start, end)`` of :attr:`text` live in the files."""
+        for island in reversed(self.islands):
+            if start < island.start:
+                continue
+            if island.delta is None:
+                break
+            return [island.file, max(start + island.delta, 0), max(end + island.delta, 0)]
+        # The synthetic front matter, and whatever TeXSmith appended out of
+        # it: the empty span at the top of the page is where its metadata is.
+        return [self.page_file, 0, 0]
+
+
+def page_source(
+    *,
+    body: str,
+    padding: int,
+    meta: Mapping[str, Any],
+    page_file: int,
+    appendices: Sequence[Appendix] = (),
+    abbreviations: bool = False,
+    emitter: DiagnosticEmitter | None = None,
+    logger: logging.Logger,
+) -> PageSource:
+    """Assemble what the parser reads for one page, and where its bytes belong.
+
+    ``meta`` is the page's metadata with the site's declarations merged under
+    it (:meth:`SiteIndex.merged_meta`): the parser learns a page's
+    declarations from its front matter and from nowhere else — a container
+    kind it does not know is ``container-unknown`` and stays literal text —
+    so it is re-emitted as a header ahead of the body rather than attached to
+    the parsed document afterwards.
+
+    ``abbreviations`` synthesises the ``*[KEY]: description`` lines
+    ``press.declare.glossary`` declares, which is what a writer needs to
+    print an acronym and what the web, which shows the page's own bytes, must
+    not gain.
+    """
+    header = front_matter_text(meta, logger=logger)
+    header_bytes = len(header.encode("utf-8"))
+    body_bytes = len(body.encode("utf-8"))
+    islands = [
+        _Island(start=0, file=page_file, delta=None),
+        _Island(start=header_bytes, file=page_file, delta=padding - header_bytes),
+    ]
+    text = header + body
+    offset = header_bytes + body_bytes
+    for appendix in appendices:
+        islands.append(
+            _Island(
+                start=offset,
+                file=appendix.file,
+                delta=None if appendix.origin is None else appendix.origin - offset,
+            )
+        )
+        text += appendix.text
+        offset += len(appendix.text.encode("utf-8"))
+    if abbreviations:
+        grown = append_front_matter_abbreviations(text, meta, emitter=emitter or NullEmitter())
+        if grown != text:
+            islands.append(_Island(start=offset, file=page_file, delta=None))
+            text = grown
+    return PageSource(
+        text=text,
+        page_text="\n" * padding + body,
+        page_file=page_file,
+        islands=tuple(islands),
+    )
+
+
+def parse_page(source: PageSource, *, name: str) -> dict[str, Any]:
+    """``source`` parsed, with every span on the file its bytes came from.
+
+    The deprecation of a front-matter key the merge wrote is dropped: the
+    header is TeXSmith's spelling of the page's metadata, not the author's,
+    and no one can fix in the page a key the page does not carry.
+    """
+    payload = parse_payload(source.text, file_id=source.page_file, name=name)
+    payload = move_spans(payload, source.locate)
+    payload["diagnostics"] = [
+        item
+        for item in payload.get("diagnostics") or ()
+        if item.get("code") != "deprecated-frontmatter-key"
+    ]
+    return payload
 
 
 def page_declarations(meta: Mapping[str, Any]) -> dict[str, Any]:
@@ -380,18 +575,21 @@ class SiteIndex:
         except (OSError, UnicodeDecodeError) as exc:
             self._logger.warning("texsmith: could not pre-scan '%s': %s", page.src_uri, exc)
             return None
-        file_meta, body, padding = split_page(text)
+        file_meta, body = split_front_matter(text)
         meta = dict(page.meta) if page.meta is not None else file_meta
         record = PageRecord(
             src_uri=page.src_uri,
             abs_src_path=path,
             meta=meta,
-            body=body,
-            padding=padding,
+            lines=text.count("\n"),
             start=dict(self._chain),
             page_counters=_page_counter_declarations(meta),
         )
-        doc, _padded = self._parse_page(record, body, file=self._display_path(path), file_id=0)
+        # The pre-pass reads the resolution and nothing else — no diagnostic of
+        # it is reported — so the page is not registered in the file table
+        # here: the lowering registers it, once, under the name it prints.
+        source = self.page_source(record, body, page_file=0)
+        doc = parse_page(source, name=self.display_path(path))
         resolved = tmark.resolve(doc, None, self._resolve_options(record))
         record.next_start = {
             str(prefix): int(value)
@@ -440,7 +638,6 @@ class SiteIndex:
             record = self.scan(page)
             if record is None:
                 return None
-        record.body = markdown
 
         files = self.emitter.sink.files
         # ``src_uri`` is the generator's own path, always POSIX (unlike an
@@ -449,19 +646,19 @@ class SiteIndex:
         # display name ``str()`` of a native ``Path`` would otherwise mangle
         # back to backslashes on Windows.
         display = record.src_uri
-        padded = "\n" * record.padding + markdown
-        file_id = int(files.add(PurePosixPath(display), padded))
-        doc, padded = self._parse_page(record, markdown, file=display, file_id=file_id)
+        file_id = int(files.add(PurePosixPath(display), "\n" * record.padding(markdown) + markdown))
+        source = self.page_source(record, markdown, page_file=file_id)
+        doc = parse_page(source, name=display)
         options = self._resolve_options(record)
         options["book"] = self.book_for(record.src_uri)
         resolved = tmark.resolve(doc, None, options)
-        lowered = tmark.lower_web(padded, doc, resolved, self.loader, self.web_options)
+        lowered = tmark.lower_web(source.page_text, doc, resolved, self.loader, self.web_options)
 
+        # The padding the file table needed comes straight back off: a splice
+        # never starts inside it, so the newlines are still there.
         text = lowered["text"]
-        if text[: record.padding] == "\n" * record.padding:
-            text = text[record.padding :]
-        else:  # pragma: no cover - a splice never starts inside the padding
-            text = text.lstrip("\n")
+        padding = record.padding(markdown)
+        text = text[padding:] if text[:padding] == "\n" * padding else text.lstrip("\n")
         text = self._set_epigraph(text, doc)
 
         diagnostics = [
@@ -502,7 +699,8 @@ class SiteIndex:
 
     # Helpers.
 
-    def _display_path(self, path: Path) -> str:
+    def display_path(self, path: Path) -> str:
+        """``path`` as a diagnostic names it: relative to the project, in POSIX form."""
         if self.project_dir is not None:
             try:
                 return path.resolve().relative_to(self.project_dir.resolve()).as_posix()
@@ -525,28 +723,29 @@ class SiteIndex:
         """A page's metadata with the site's declarations merged under it."""
         return merge_declarations(self.declare, meta)
 
-    def _parse_page(
-        self, record: PageRecord, body: str, *, file: str, file_id: int
-    ) -> tuple[dict[str, Any], str]:
-        """``(doc, padded)``: the page parsed with its declarations in front of it.
+    def page_source(
+        self,
+        record: PageRecord,
+        body: str,
+        *,
+        page_file: int,
+        appendices: Sequence[Appendix] = (),
+        abbreviations: bool = False,
+    ) -> PageSource:
+        """What the parser reads for one page of this site.
 
-        The parser learns a page's declarations from its front matter and
-        from nowhere else — a container kind it does not know is
-        ``container-unknown`` and stays literal — so the merged metadata is
-        re-emitted as a header and parsed with the body. The document then
-        moves to the coordinates of ``padded``, the text every consumer
-        downstream reads, where the body sits on the file's own lines.
+        The site's declarations are merged under the page's own and re-emitted
+        ahead of ``body`` (:func:`page_source`); the book calls this too, with
+        the file's own body, the ``auto_append`` of the site and the
+        abbreviation lines the writers need.
         """
-        header = front_matter_text(self.merged_meta(record.meta), logger=self._logger)
-        padded = "\n" * record.padding + body
-        doc = tmark.parse(header + body, file=file, file_id=file_id)
-        doc = shift_spans(doc, record.padding - len(header.encode("utf-8")), empty_file=file_id)
-        # The header is TeXSmith's spelling of the page's metadata, not the
-        # author's: a deprecation it triggers names a key the merge wrote,
-        # which no one can fix in the page.
-        doc["diagnostics"] = [
-            item
-            for item in doc.get("diagnostics") or ()
-            if item.get("code") != "deprecated-frontmatter-key"
-        ]
-        return doc, padded
+        return page_source(
+            body=body,
+            padding=record.padding(body),
+            meta=self.merged_meta(record.meta),
+            page_file=page_file,
+            appendices=appendices,
+            abbreviations=abbreviations,
+            emitter=self.emitter,
+            logger=self._logger,
+        )

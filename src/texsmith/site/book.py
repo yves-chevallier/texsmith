@@ -53,6 +53,7 @@ from texsmith.core.exceptions import (
     LatexRenderingError,
     format_rendering_error,
 )
+from texsmith.core.front_matter import split_front_matter
 from texsmith.core.templates import (
     TemplateError,
     TemplateRuntime,
@@ -62,15 +63,18 @@ from texsmith.core.templates import (
     normalise_template_language,
     wrap_template_document,
 )
-from texsmith.diagnostics import LoggingEmitter, SinkEmitter
+from texsmith.diagnostics import FileTable, LoggingEmitter, SinkEmitter
 from texsmith.site.assets import snippet_dir
 from texsmith.site.config import SiteConfig, option
 from texsmith.site.index import (
     HEADING_PREFIXES,
+    Appendix,
     PageRecord,
+    PageSource,
     SiteIndex,
     SitePage,
-    front_matter_text,
+    appendices_of,
+    parse_page,
     site_index,
 )
 from texsmith.site.nav import (
@@ -648,8 +652,8 @@ class BookBuilder:
         #: Called once the bundle is written and before the engine runs, which
         #: is where ``--strict`` stops a run with the ``.tex`` there to read.
         self.on_written = on_written
-        #: The ``auto_append`` text, read on the first page and kept.
-        self._auto_append_text: str | None = None
+        #: The site's ``auto_append`` files, read on the first page and kept.
+        self._appendix_files: tuple[Appendix, ...] | None = None
 
     # Planning.
 
@@ -1044,54 +1048,59 @@ class BookBuilder:
         output_root: Path,
         emitter: SinkEmitter,
     ) -> Document:
-        """The :class:`Document` of a page for the book: its source through tmark.
+        """The :class:`Document` of a page for the book: its own file through tmark.
 
-        The source is the Markdown the page is written in, with the page
-        metadata and the site declarations back in front of it, written under
-        ``sources/`` of the book so the exact input of the PDF is inspectable.
+        The page is read from disk — the same bytes ``texsmith site build``
+        and ``mkdocs build`` read, whatever a Markdown plugin did to the copy
+        the site rendered — and parsed **under its own path**: the site's
+        declarations merged under the page's metadata are re-emitted ahead of
+        the body, the site's ``auto_append`` follows it, and every span moves
+        back onto the file (:func:`~texsmith.site.index.parse_page`). So a
+        diagnostic names the line the author edits, and a path the page names
+        an asset with resolves from the page's own directory.
         """
         assert entry.src_uri is not None
-        record = self.index.record(entry.src_uri)
-        meta: Mapping[str, Any] = record.meta if record is not None else {}
-        title_strategy = TitleStrategy.DROP if entry.drop_title else TitleStrategy.KEEP
+        try:
+            text = abs_src.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise BookError(f"'{abs_src}' could not be read: {exc}") from exc
+        meta, body = split_front_matter(text)
+        page = PageRecord(
+            src_uri=entry.src_uri,
+            abs_src_path=abs_src,
+            meta=meta,
+            lines=text.count("\n"),
+        )
+
+        files = emitter.sink.files
+        display = self.index.display_path(abs_src)
+        page_file = int(files.add(PurePosixPath(display), "\n" * page.padding(body) + body))
+        source = self.index.page_source(
+            page,
+            body,
+            page_file=page_file,
+            appendices=self._appendices(files),
+            abbreviations=True,
+        )
+        self._write_source(output_root, entry.src_uri, source)
+
         numbered = entry.numbered
         declared_numbered = meta.get("numbered")
         if isinstance(declared_numbered, bool):
             numbered = declared_numbered
-
-        source_path = (
-            self._persist_source(output_root, entry.src_uri, record)
-            if record is not None
-            else abs_src
-        )
-        document = Document.from_markdown(
-            source_path,
+        return Document.from_parsed(
+            parse_page(source, name=display),
+            path=abs_src,
+            front_matter=self.index.merged_meta(meta),
+            files=files,
             base_level=base_level,
-            title_strategy=title_strategy,
+            title_strategy=TitleStrategy.DROP if entry.drop_title else TitleStrategy.KEEP,
             numbered=numbered,
             emitter=emitter,
         )
-        if source_path != abs_src:
-            document = document.evolve(source_path=abs_src)
-        return document
 
-    def _persist_source(self, output_root: Path, src_uri: str, record: PageRecord) -> Path:
-        """Write the page's source as the PDF reads it: merged metadata, stored body.
-
-        The site's declarations are merged under the page's own exactly as
-        the web lowering merges them, so a container kind or a counter the
-        generator's configuration declares reaches the book's parser too, and
-        the text of ``pymdownx.snippets``' ``auto_append`` follows the body as
-        the extension appends it to every page of the site.
-        """
-        header = front_matter_text(self.index.merged_meta(record.meta), logger=self.logger)
-        target = output_root / "sources" / Path(src_uri)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(header + record.body + self._auto_append(), encoding="utf-8")
-        return target
-
-    def _auto_append(self) -> str:
-        """The text ``pymdownx.snippets`` appends to every page, read once.
+    def _appendices(self, files: FileTable) -> tuple[Appendix, ...]:
+        """The files ``pymdownx.snippets`` appends to every page, read once.
 
         An abbreviation reaches the glossary only through a definition in the
         page that uses it: the writer substitutes ``\\tsacr{KEY}`` for a
@@ -1103,15 +1112,27 @@ class BookBuilder:
         ``\\newacronym`` lines in the preamble whatever the page count, and
         only the ones a page actually uses.
         """
-        if self._auto_append_text is None:
-            parts: list[str] = []
-            for path in self.settings.snippet_auto_append:
-                try:
-                    parts.append(path.read_text(encoding="utf-8"))
-                except OSError as exc:
-                    self.logger.warning("Could not read the appended snippet '%s': %s", path, exc)
-            self._auto_append_text = "".join(f"\n\n{part.strip()}\n" for part in parts if part)
-        return self._auto_append_text
+        if self._appendix_files is None:
+            self._appendix_files = appendices_of(
+                self.settings.snippet_auto_append,
+                files=files,
+                display=self.index.display_path,
+                logger=self.logger,
+            )
+        return self._appendix_files
+
+    def _write_source(self, output_root: Path, src_uri: str, source: PageSource) -> Path:
+        """Write what the parser read for one page under ``sources/`` of the bundle.
+
+        A debugging artefact, and only that: the book parses the page itself,
+        under the page's own path, and this is the copy that says what the
+        parser was handed — the merged front matter, the body, the site's
+        ``auto_append`` and the abbreviation lines the glossary declares.
+        """
+        target = output_root / "sources" / Path(src_uri)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(source.text, encoding="utf-8")
+        return target
 
     # The bundle beside the ``.tex``.
 

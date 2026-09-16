@@ -254,12 +254,15 @@ def test_the_pre_pass_is_redone_when_a_page_changes(tmp_path: Path, monkeypatch)
     assert web.site_state() is first
 
     (tmp_path / "docs" / "a.md").write_text(
-        PAGE_A.replace("A figure", "Another figure"), encoding="utf-8"
+        PAGE_A.replace("![x](x.png)", "![x](x.png)\n\nFigure: One more. {#fig:two}"),
+        encoding="utf-8",
     )
     second = web.site_state()
 
     assert second is not first
-    assert second.index.record("a.md").body != first.index.record("a.md").body
+    assert [label["key"] for label in second.index.record("a.md").labels] != [
+        label["key"] for label in first.index.record("a.md").labels
+    ]
 
 
 def test_a_new_page_is_picked_up(tmp_path: Path, monkeypatch) -> None:
