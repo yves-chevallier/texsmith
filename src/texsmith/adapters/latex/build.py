@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from texsmith.adapters.latex.engines import (
+    EngineChoice,
+    EngineFeatures,
     EngineResult,
     build_engine_command,
     build_tex_env,
@@ -43,34 +45,40 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.conversion.renderer import TemplateRenderResult
 
 
-__all__ = ["build_pdf"]
+__all__ = ["build_pdf", "compile_tex"]
 
 
-def build_pdf(
-    render_result: TemplateRenderResult,
+def compile_tex(
+    main_tex_path: Path,
+    features: EngineFeatures,
     *,
     engine: str | None = "tectonic",
+    template_engine: str | None = None,
     classic_output: bool = False,
     isolate_cache: bool = False,
     env: Mapping[str, str] | None = None,
     console: Any | None = None,
     verbosity: int = 0,
     use_system_tectonic: bool = False,
+    prepare: Callable[[EngineChoice, EngineFeatures], None] | None = None,
     run_engine: Callable[..., EngineResult] = run_engine_command,
 ) -> EngineResult:
-    """Compile a rendered template into a PDF using the requested engine, selecting dependencies on demand.
+    """Run the engine over one ``.tex``: choose it, acquire what it needs, run it.
 
-    ``run_engine`` is the LaTeX-engine runner, injectable so callers (and
-    tests) can substitute the execution step without monkeypatching module
-    globals; it defaults to :func:`run_engine_command`.
+    One implementation for the two documents TeXSmith compiles — the single
+    document of ``texsmith doc.md --build`` and the book of a site — so the
+    auxiliary programs ``features`` calls for run for both. They are what
+    ``features`` is *for*: the runner is what turns `has_index` into a
+    ``makeindex``/``xindy`` pass between two engine runs, and the book used to
+    call it without ``features``, which is why a 270-entry index printed
+    nothing at all.
+
+    ``prepare`` is called with the resolved choice before the command is
+    built, for a caller that has a file to write first (the book's
+    ``.latexmkrc``). ``run_engine`` is the execution step, injectable so a
+    test substitutes it without monkeypatching module globals.
     """
-    features = compute_features(
-        requires_shell_escape=render_result.requires_shell_escape,
-        bibliography=render_result.has_bibliography,
-        document_state=render_result.document_state,
-        template_context=render_result.context,
-    )
-    choice = resolve_engine(engine, render_result.template_engine)
+    choice = resolve_engine(engine, template_engine)
     tectonic_binary: Path | None = None
     biber_binary: Path | None = None
     makeglossaries_binary: Path | None = None
@@ -103,23 +111,26 @@ def build_pdf(
     missing = missing_dependencies(
         choice,
         features,
-        use_system_tectonic=use_system_tectonic,
+        use_system_tectonic=use_system_tectonic and choice.backend == "tectonic",
         available_binaries=available_bins or None,
     )
     if missing:
-        formatted = ", ".join(sorted(missing))
+        formatted = ", ".join(sorted(set(missing)))
         raise ConversionError(f"Missing required LaTeX tools for '{choice.label}': {formatted}")
+
+    if prepare is not None:
+        prepare(choice, features)
 
     command_plan = ensure_command_paths(
         build_engine_command(
             choice,
             features,
-            main_tex_path=render_result.main_tex_path,
+            main_tex_path=main_tex_path,
             tectonic_binary=tectonic_binary,
         )
     )
     base_env = build_tex_env(
-        render_result.main_tex_path.parent,
+        main_tex_path.parent,
         isolate_cache=isolate_cache,
         extra_path=bundled_bin,
         biber_path=biber_binary,
@@ -131,15 +142,48 @@ def build_pdf(
     result = run_engine(
         command_plan,
         backend=choice.backend,
-        workdir=render_result.main_tex_path.parent,
+        workdir=main_tex_path.parent,
         env=merged_env,
         console=console,
         verbosity=verbosity,
         classic_output=classic_output,
         features=features,
     )
-    _attach_reference_pages(render_result.main_tex_path)
+    _attach_reference_pages(main_tex_path)
     return result
+
+
+def build_pdf(
+    render_result: TemplateRenderResult,
+    *,
+    engine: str | None = "tectonic",
+    classic_output: bool = False,
+    isolate_cache: bool = False,
+    env: Mapping[str, str] | None = None,
+    console: Any | None = None,
+    verbosity: int = 0,
+    use_system_tectonic: bool = False,
+    run_engine: Callable[..., EngineResult] = run_engine_command,
+) -> EngineResult:
+    """Compile a rendered template into a PDF: the features of one render, then :func:`compile_tex`."""
+    return compile_tex(
+        render_result.main_tex_path,
+        compute_features(
+            requires_shell_escape=render_result.requires_shell_escape,
+            bibliography=render_result.has_bibliography,
+            document_state=render_result.document_state,
+            template_context=render_result.context,
+        ),
+        engine=engine,
+        template_engine=render_result.template_engine,
+        classic_output=classic_output,
+        isolate_cache=isolate_cache,
+        env=env,
+        console=console,
+        verbosity=verbosity,
+        use_system_tectonic=use_system_tectonic,
+        run_engine=run_engine,
+    )
 
 
 def _attach_reference_pages(main_tex_path: Path) -> None:

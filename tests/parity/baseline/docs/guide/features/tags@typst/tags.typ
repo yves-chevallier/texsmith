@@ -36,6 +36,15 @@ final index file included near the end of the document. TeXSmith mirrors that
 workflow: it turns Markdown annotations into #ts-logo("LaTeX") `\index{...}` calls and
 triggers `makeindex`/`xindy` while building the PDF.
 
+That run is the build driver's, not `imakeidx`'s: the package can only call the
+index program through shell-escape, which TeXSmith does not enable. Between two
+engine passes the driver runs the program over every `.idx` the document wrote
+— its own and one per named registry — and the engine's next pass reads the
+`.ind` back. It picks `xindy` when one is installed — a printed index sorts
+accented terms by the document's language, which `makeindex` cannot — and
+`makeindex` otherwise. `texsmith doc.md –build` and `texsmith site build` run
+the same step, so a book's index is a book's index.
+
 The #ts-logo("LaTeX") form still looks familiar:
 
 ```latex

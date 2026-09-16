@@ -67,6 +67,10 @@ class EngineFeatures:
     has_index: bool
     has_glossary: bool
     index_engine: str | None = None
+    #: The named registries of ``\\makeindex[name=…]`` (``Requires.index``).
+    #: Each writes a ``<name>.idx`` of its own, which the index program has to
+    #: turn into a ``<name>.ind`` just like the document's main one.
+    index_registries: tuple[str, ...] = ()
 
 
 @dataclass(slots=True)
@@ -125,6 +129,11 @@ def compute_features(
     """Derive engine feature flags from render metadata."""
     has_index = bool(getattr(document_state, "has_index_entries", False))
     has_glossary = bool(getattr(document_state, "acronyms", {}))
+    registries = tuple(
+        str(name)
+        for name in getattr(document_state, "index_registries", ()) or ()
+        if isinstance(name, str) and name.strip()
+    )
 
     index_engine: str | None = None
     if template_context:
@@ -137,9 +146,10 @@ def compute_features(
     return EngineFeatures(
         requires_shell_escape=requires_shell_escape,
         bibliography=bibliography,
-        has_index=has_index,
+        has_index=has_index or bool(registries),
         has_glossary=has_glossary,
         index_engine=index_engine,
+        index_registries=registries,
     )
 
 
@@ -523,6 +533,7 @@ def _run_tectonic_build(
         if features.has_index and not ran_index and index_engine:
             ran, failure = _maybe_run_index(
                 job_stem,
+                registries=features.index_registries,
                 engine_name=index_engine,
                 workdir=workdir,
                 env=env,
@@ -627,26 +638,38 @@ def _maybe_run_biber(
 def _maybe_run_index(
     job_stem: str,
     *,
+    registries: Sequence[str] = (),
     engine_name: str,
     workdir: Path,
     env: Mapping[str, str],
     console: Console,
     command: EngineCommand,
 ) -> tuple[bool, EngineResult | None]:
-    index_path = workdir / f"{job_stem}.idx"
-    if not index_path.exists():
-        return False, None
-    argv = [*_index_command_tokens(engine_name), index_path.name]
-    run = _invoke_auxiliary_tool(
-        argv[0],
-        argv,
-        workdir=workdir,
-        env=env,
-        console=console,
-    )
-    if run.returncode != 0:
-        return True, _tool_failure_result(argv[0], run, command=command)
-    return True, None
+    """Turn every ``.idx`` the run wrote into the ``.ind`` ``\\printindex`` reads.
+
+    ``imakeidx`` runs the index program itself only under shell-escape, which
+    no engine here enables, so the run is made from the outside — the
+    document's own index and one per named registry
+    (``\\makeindex[name=…]``, whose file is ``<name>.idx``).
+    """
+    stems = [job_stem, *dict.fromkeys(registries)]
+    ran = False
+    for stem in stems:
+        index_path = workdir / f"{stem}.idx"
+        if not index_path.exists():
+            continue
+        argv = [*_index_command_tokens(engine_name), index_path.name]
+        run = _invoke_auxiliary_tool(
+            argv[0],
+            argv,
+            workdir=workdir,
+            env=env,
+            console=console,
+        )
+        ran = True
+        if run.returncode != 0:
+            return True, _tool_failure_result(argv[0], run, command=command)
+    return ran, None
 
 
 def _maybe_run_glossaries(
