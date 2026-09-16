@@ -226,11 +226,15 @@ class _Slots:
             },
         )
 
+    #: The parts a template may hold a slot of its own for; everything else
+    #: goes to the default slot, ``mainmatter`` included.
+    PARTS = ("frontmatter", "backmatter")
+
     def select(self, entry: NavEntry, *, logger: logging.Logger) -> str:
         """The slot ``entry`` is routed to: its own, its part's, or the default."""
         if entry.slot:
             target = entry.slot
-        elif entry.part in self.embed:
+        elif entry.part in self.PARTS and entry.part in self.embed:
             target = entry.part
         else:
             target = self.default
