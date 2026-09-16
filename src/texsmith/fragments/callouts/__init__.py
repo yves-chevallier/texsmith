@@ -9,6 +9,7 @@ from texsmith.core.fragments.activation import required_fragment
 from texsmith.core.fragments.base import BaseFragment, FragmentPiece
 from texsmith.core.fragments.resolution import contract_active
 from texsmith.core.templates.manifest import TemplateAttributeSpec
+from texsmith.fragments.callouts.words import callout_words_for
 
 
 @dataclass(frozen=True)
@@ -32,8 +33,27 @@ class CalloutsConfig:
         context["ts_callout_words"] = dict(self.words)
 
 
+def _declared_admonitions(context: Mapping[str, Any]) -> Mapping[str, Any]:
+    """``press.declare.admonitions`` of the document, ``{}`` when it declares none."""
+    press = context.get("press")
+    if not isinstance(press, Mapping):
+        return {}
+    declare = press.get("declare")
+    if not isinstance(declare, Mapping):
+        return {}
+    admonitions = declare.get("admonitions")
+    return admonitions if isinstance(admonitions, Mapping) else {}
+
+
 def _callout_words(context: Mapping[str, Any]) -> dict[str, str]:
-    """Default titles: the capitalised kind, tmark's admonition labels on top."""
+    """Default titles: the capitalised kind, then the labels, in the document's language.
+
+    Four layers, each overruling the one before: the capitalised kind for
+    every styled kind, tmark's English label for the standard ones, the
+    document language's word for those same ones, and the ``name`` of a kind
+    the document declares itself — which is written in the author's language,
+    so it is the last word on any kind, declared or standard.
+    """
     words: dict[str, str] = {}
     definitions = context.get("callouts_definitions")
     if isinstance(definitions, Mapping):
@@ -49,6 +69,14 @@ def _callout_words(context: Mapping[str, Any]) -> dict[str, str]:
     for row in rows:
         if isinstance(row, Mapping) and row.get("name") and row.get("label"):
             words[str(row["name"])] = str(row["label"])
+    language = context.get("language") or context.get("lang")
+    words.update(callout_words_for(language if isinstance(language, str) else None))
+    for name, declaration in _declared_admonitions(context).items():
+        if not isinstance(declaration, Mapping):
+            continue
+        title = declaration.get("name")
+        if isinstance(title, str) and title.strip():
+            words[str(name)] = title.strip()
     return words
 
 

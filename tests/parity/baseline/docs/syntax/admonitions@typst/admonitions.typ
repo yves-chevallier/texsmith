@@ -151,6 +151,28 @@ Apply the chain rule twice.
 Theorem environments are exactly this, with a counter attached — see
 #link("notes.md#theorems")[Theorems].
 
+= Default titles
+
+A callout with no `title=` is titled after its kind, in the document's
+`language`: `!!! tip` is _Astuce_ in a French document and _Tipp_ in a German
+one. French, German, Spanish, Italian, Portuguese and Dutch are translated;
+any other language keeps the English titles. On the web the titles are
+Material's, which has a translation of its own for every language its
+`theme.language` accepts.
+
+The `name` of a kind you declare yourself is its title, in whatever language
+you wrote it — which is also how to title a kind the table above does not
+know, or to overrule one it does:
+
+```yaml
+press:
+  language: fr
+  declare:
+    admonitions:
+      note: {name: Remarque}
+      exercise: {name: Exercice}
+```
+
 = Built-in Admonition Types
 
 The following types are built in:

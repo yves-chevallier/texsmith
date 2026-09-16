@@ -166,6 +166,27 @@ Apply the chain rule twice.
 \end{tscode}
 Theorem environments are exactly this, with a counter attached --- see
 \href{notes.md\#theorems}{Theorems}.
+\section{Default titles}
+A callout with no \tscodeinline{title=} is titled after its kind, in the document's
+\tscodeinline{language}: \tscodeinline{!!! tip} is \emph{Astuce} in a French document and \emph{Tipp} in a German
+one. French, German, Spanish, Italian, Portuguese and Dutch are translated;
+any other language keeps the English titles. On the web the titles are
+Material's, which has a translation of its own for every language its
+\tscodeinline{theme.language} accepts.
+
+The \tscodeinline{name} of a kind you declare yourself is its title, in whatever language
+you wrote it --- which is also how to title a kind the table above does not
+know, or to overrule one it does:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{press}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{language}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{fr}
+\PY{+w}{  }\PY{n+nt}{declare}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{admonitions}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{note}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Remarque}\PY{p+pIndicator}{\PYZcb{}}
+\PY{+w}{      }\PY{n+nt}{exercise}\PY{p}{:}\PY{+w}{ }\PY{p+pIndicator}{\PYZob{}}\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{n+nv}{Exercice}\PY{p+pIndicator}{\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
 \section{Built-in Admonition Types}
 The following types are built in:
 \begin{tscallout}[kind=note]

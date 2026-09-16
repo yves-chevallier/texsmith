@@ -160,13 +160,17 @@
   \def\ts@callout@class{}%
   \ts@callout@collapsedfalse
   \pgfkeys{/ts/callout/.cd,#1}%
-  \ifx\ts@callout@kind\ts@callout@seealso\def\ts@callout@kind{info}\fi
-  \pgfkeysifdefined{/tcb/callout \ts@callout@kind/.@cmd}{}{\def\ts@callout@kind{default}}%
+  % The word comes from the kind the writer named, before the two fallbacks
+  % below rewrite it for the *style*: a ``seealso`` is drawn as an ``info``
+  % and a kind with no style of its own as ``default``, but both keep their
+  % own title — and a declared kind has a word and no style by construction.
   \ifx\ts@callout@title\@empty
     \ifcsname ts@callout@word@\ts@callout@kind\endcsname
       \expandafter\let\expandafter\ts@callout@title\csname ts@callout@word@\ts@callout@kind\endcsname
     \fi
   \fi
+  \ifx\ts@callout@kind\ts@callout@seealso\def\ts@callout@kind{info}\fi
+  \pgfkeysifdefined{/tcb/callout \ts@callout@kind/.@cmd}{}{\def\ts@callout@kind{default}}%
   \edef\ts@callout@opts{callout \ts@callout@kind, /ts/callout}%
   \ifx\ts@callout@id\@empty\else
     \eappto\ts@callout@opts{, phantom={\noexpand\phantomsection\noexpand\label{\ts@callout@id}}}%
