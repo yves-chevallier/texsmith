@@ -342,8 +342,11 @@ press:
   `epigraph: {quote, source}` key. That key is metadata, not a construct: the
   `epigraph` pass builds the very same blockquote from it and sets it *under*
   the document's opening heading — between that heading and its content, or at
-  the top of the document when it opens with something else. `quote` and
-  `source` are plain text, not Markdown.
+  the top of the document when it opens with something else. The opening
+  heading is the first block that renders something, so a page that names a
+  target before its title (`[]{#id}` on its own line), or opens with a comment,
+  keeps the quote under the heading that follows. `quote` and `source` are
+  plain text, not Markdown.
 - **Lead-ins**: `{lead}[Boot sequence.] The device powers…` sets a run-in
   heading. A paragraph that opens with a short strong span is promoted to one
   automatically while the `paragraph.lead` feature is on.
