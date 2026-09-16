@@ -47,7 +47,8 @@ its ``tags`` metadata (:func:`_tag_page`), and Zensical turns those into the
 chips under the content, the entries of a tags listing and the ``tags`` of the
 page's search entries — its *Filters* panel. :mod:`texsmith.site.search` says
 why that is the whole of it. A page's metadata is part of its cached render,
-so changing ``web.tags`` calls for ``zensical build -c``.
+so changing ``web.tags`` calls for ``zensical build -c`` — and so does
+``web.typography``, whose spaces are part of that same cached HTML.
 """
 
 from __future__ import annotations
@@ -68,8 +69,13 @@ from markdown.preprocessors import Preprocessor
 from texsmith.adapters.plugins import snippet
 from texsmith.diagnostics import LoggingEmitter
 from texsmith.site import assets
-from texsmith.site.config import config_file_in, load_site_config, web_tags
-from texsmith.site.html import unescape_table_pipes
+from texsmith.site.config import (
+    config_file_in,
+    load_site_config,
+    web_tags,
+    web_typography,
+)
+from texsmith.site.html import french_typography, unescape_table_pipes
 from texsmith.site.index import SiteIndex, SitePage, site_index
 from texsmith.site.nav import MARKDOWN_SUFFIXES, resolve_navigation
 from texsmith.site.search import index_terms
@@ -99,6 +105,10 @@ DRAWIO_PRIORITY = 1
 #: later rewriting touches.
 TABLE_PIPE_PRIORITY = 2
 
+#: After every one of them: the typography spaces the text of the page as
+#: the page is published, snippet previews and rewritten images included.
+TYPOGRAPHY_PRIORITY = -1
+
 #: Matches one ``<img>`` tag and the ``src`` it carries.
 RE_IMG = re.compile(r"<img\b[^>]*?\bsrc=\"([^\"]+)\"[^>]*>", re.IGNORECASE)
 #: An image wrapped in a link, the shape glightbox gives a figure: the anchor
@@ -124,6 +134,9 @@ class SiteState:
     #: ``web.tags``: ``index`` derives a page's tags from its index entries,
     #: ``none`` leaves the page's own ``tags:`` alone.
     tags: str = "index"
+    #: ``web.typography``: ``"fr"`` spaces the rendered HTML the French way,
+    #: ``None`` leaves it alone. The site's language decides by default.
+    typography: str | None = None
 
 
 _lock = threading.Lock()
@@ -148,6 +161,9 @@ class TexsmithExtension(Extension):
         )
         md.postprocessors.register(DrawioPostprocessor(md), "texsmith_drawio", DRAWIO_PRIORITY)
         md.postprocessors.register(SnippetPostprocessor(md), "texsmith_snippets", SNIPPET_PRIORITY)
+        md.postprocessors.register(
+            TypographyPostprocessor(md), "texsmith_typography", TYPOGRAPHY_PRIORITY
+        )
 
 
 class LowerPreprocessor(Preprocessor):
@@ -311,6 +327,25 @@ class SnippetPostprocessor(Postprocessor):
             return text
 
 
+class TypographyPostprocessor(Postprocessor):
+    """Space the page's punctuation the way its language wants it.
+
+    :func:`texsmith.site.html.french_typography` says what the rules are;
+    this is the Zensical half, and the plugin's ``on_post_page`` the other.
+    It runs after everything else, so what it spaces is the text the page
+    publishes.
+    """
+
+    def run(self, text: str) -> str:
+        """Return the page's HTML with its typography corrected."""
+        if _page(self.md) is None:
+            return text
+        state = site_state()
+        if state is None or state.typography != "fr":
+            return text
+        return french_typography(text)
+
+
 def _page(md: Markdown) -> Any | None:
     """Zensical's page, or ``None`` when this instance must be left alone.
 
@@ -407,21 +442,23 @@ def _build_state() -> SiteState | None:
         return None
     _show_diagnostics()
 
+    index = site_index(
+        plugin,
+        project_dir=project_dir,
+        theme=config.get("theme"),
+        site_language=config.get("site_language"),
+        include_paths=snippet_base_paths,
+        logger=_log,
+        emitter=LoggingEmitter(logger_obj=_log),
+    )
     state = SiteState(
-        index=site_index(
-            plugin,
-            project_dir=project_dir,
-            theme=config.get("theme"),
-            site_language=config.get("site_language"),
-            include_paths=snippet_base_paths,
-            logger=_log,
-            emitter=LoggingEmitter(logger_obj=_log),
-        ),
+        index=index,
         docs_dir=docs_dir,
         use_directory_urls=bool(config.get("use_directory_urls", True)),
         config=config,
         mtimes=mtimes,
         tags=web_tags(plugin, logger=_log),
+        typography=web_typography(plugin, lang=index.lang, logger=_log),
     )
 
     navigation = resolve_navigation(docs_dir, nav or None, exclude_docs=config.get("exclude_docs"))

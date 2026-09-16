@@ -46,6 +46,7 @@ __all__ = [
     "CONFIG_NAMES",
     "WEB_TAGS_CHOICES",
     "WEB_TAGS_DEFAULT",
+    "WEB_TYPOGRAPHY_CHOICES",
     "SiteConfig",
     "config_file_in",
     "language_from_mapping",
@@ -57,6 +58,7 @@ __all__ = [
     "snippet_base_paths_from_extensions",
     "web_options",
     "web_tags",
+    "web_typography",
 ]
 
 _log = logging.getLogger("texsmith.site")
@@ -74,6 +76,11 @@ WEB_TAGS_CHOICES = frozenset({"index", "none"})
 
 #: A site with index entries browses by them unless it says otherwise.
 WEB_TAGS_DEFAULT = "index"
+
+#: What ``web.typography`` accepts: the French rules, or none at all. There
+#: is no default value — the option's absence means the site's language
+#: decides (:func:`web_typography`).
+WEB_TYPOGRAPHY_CHOICES = frozenset({"fr", "none"})
 
 
 def config_file_in(project_dir: Path) -> Path | None:
@@ -385,6 +392,42 @@ def web_tags(options: Mapping[str, Any], *, logger: logging.Logger | None = None
         WEB_TAGS_DEFAULT,
     )
     return WEB_TAGS_DEFAULT
+
+
+def web_typography(
+    options: Mapping[str, Any],
+    *,
+    lang: str | None = None,
+    logger: logging.Logger | None = None,
+) -> str | None:
+    """``web.typography``: the typographic rules a rendered page goes through.
+
+    ``fr`` spaces the punctuation the French way and turns the straight
+    quotes into guillemets, ``none`` leaves the HTML as Python-Markdown
+    wrote it. Unset — the usual case — the site's language decides: a
+    document declared ``fr`` on the web gets what ``babel-french`` already
+    gives it in the PDF, and every other language gets nothing. ``None`` is
+    the answer for "no rules", so a caller has one thing to test.
+
+    This is TeXSmith's own option, like ``web.tags``: the rules run over the
+    rendered HTML, long after ``tmark.lower_web`` has had its say, so
+    :func:`web_options` does not carry it.
+    """
+    log = logger or _log
+    raw = options.get("web") or {}
+    value = raw.get("typography") if isinstance(raw, Mapping) else None
+    if value is None:
+        return "fr" if (lang or "").lower().partition("-")[0] == "fr" else None
+    if isinstance(value, str) and value.strip() in WEB_TYPOGRAPHY_CHOICES:
+        choice = value.strip()
+        return None if choice == "none" else choice
+    log.warning(
+        "texsmith: 'web.typography' must be one of %s; ignoring %r and keeping "
+        "what the site language says.",
+        ", ".join(sorted(WEB_TYPOGRAPHY_CHOICES)),
+        value,
+    )
+    return web_typography({}, lang=lang, logger=log)
 
 
 @dataclass(frozen=True, slots=True)

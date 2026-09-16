@@ -17,6 +17,7 @@ import pytest
 
 from texsmith.adapters.plugins import snippet
 from texsmith.site import assets, web
+from texsmith.site.html import NNBSP
 from texsmith.site.index import SitePage
 
 
@@ -593,3 +594,80 @@ def test_web_tags_none_leaves_the_page_metadata_alone(tmp_path: Path, monkeypatc
     assert web._state is not None
     assert web._state.tags == "none"
     assert "tags" not in page.meta
+
+
+PAGE_FR = """\
+# Typographie
+
+Attention : voici "un test" ; vraiment ?
+
+    code : ici
+
+Et `du code : la` aussi.
+"""
+
+
+def _french_site(tmp_path: Path, monkeypatch, *, typography: str | None = None) -> dict[str, Any]:
+    """A French site, optionally with ``web.typography`` set in the file."""
+    config = make_site(tmp_path, {"a.md": PAGE_FR})
+    config["theme"]["language"] = "fr"
+    if typography is not None:
+        (tmp_path / "mkdocs.yml").write_text(
+            MKDOCS_YML.replace(
+                "  - texsmith:\n",
+                f"  - texsmith:\n      web:\n        typography: {typography}\n",
+            ),
+            encoding="utf-8",
+        )
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    return config
+
+
+def test_a_french_site_has_its_punctuation_spaced(tmp_path: Path, monkeypatch) -> None:
+    config = _french_site(tmp_path, monkeypatch)
+
+    html = render(config, "a.md", PAGE_FR)
+
+    assert web._state is not None and web._state.typography == "fr"
+    assert f"Attention{NNBSP}:" in html
+    assert f"\u00ab{NNBSP}un test{NNBSP}\u00bb" in html
+    assert f"{NNBSP};" in html and f"vraiment{NNBSP}?" in html
+    # The code block and the code span keep their spacing.
+    assert "code : ici" in html
+    assert "<code>du code : la</code>" in html
+
+
+def test_an_english_site_keeps_its_punctuation(tmp_path: Path, monkeypatch) -> None:
+    config = make_site(tmp_path, {"a.md": PAGE_FR})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    html = render(config, "a.md", PAGE_FR)
+
+    assert web._state is not None and web._state.typography is None
+    assert NNBSP not in html
+    assert "Attention :" in html
+
+
+def test_web_typography_none_turns_the_rules_off(tmp_path: Path, monkeypatch) -> None:
+    config = _french_site(tmp_path, monkeypatch, typography="none")
+
+    html = render(config, "a.md", PAGE_FR)
+
+    assert web._state is not None and web._state.typography is None
+    assert NNBSP not in html
+
+
+def test_web_typography_fr_turns_the_rules_on_for_any_language(tmp_path: Path, monkeypatch) -> None:
+    config = make_site(tmp_path, {"a.md": PAGE_FR})
+    (tmp_path / "mkdocs.yml").write_text(
+        MKDOCS_YML.replace(
+            "  - texsmith:\n", "  - texsmith:\n      web:\n        typography: fr\n"
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    html = render(config, "a.md", PAGE_FR)
+
+    assert web._state is not None and web._state.typography == "fr"
+    assert f"Attention{NNBSP}:" in html

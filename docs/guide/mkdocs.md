@@ -42,6 +42,41 @@ construct TeXSmith owns renders the same way it does in the PDF.
 Diagnostics are reported with the page path: `docs/findings.md:12:5: warning
 ref-unresolved: …`.
 
+## French typography
+
+A French page wants a narrow no-break space before `;`, `:`, `!` and `?`, and
+`« … »` where the keyboard typed `"…"`. `babel-french` does it for the PDF,
+where the engine spaces the punctuation itself; a browser does nothing of the
+sort, so the rendered page carries the characters. Once the site's language is
+`fr` — `theme.language`, `theme.locale`, `site_language` or the plugin's own
+`language` — the rendered HTML goes through those two rules:
+
+| Written | Published |
+| --- | --- |
+| `Attention : ceci` | `Attention` U+202F `: ceci` |
+| `Vraiment ?` | `Vraiment` U+202F `?` |
+| `il a dit "oui"` | `«` U+202F `oui` U+202F `»` |
+
+Only text is touched. A `<code>`, `<pre>`, `<script>` or `<style>` element,
+every attribute value, every character entity and every space the page already
+carries — `&nbsp;`, a narrow one — come out as they went in, and a mark that is
+part of a token rather than of a sentence (`https://`, `12:30`, `?page=2`) is
+left alone. Running the rules over a page twice changes nothing the second
+time.
+
+`web.typography` overrides the language: `none` turns the rules off on a French
+site, `fr` turns them on for a site that declares another language.
+
+```yaml
+plugins:
+  - texsmith:
+      web:
+        typography: fr # fr | none, the site language by default
+```
+
+Under Zensical the spaces are part of a page's cached render, so changing the
+option calls for `zensical build -c`.
+
 ## Site-wide declarations
 
 Whatever a page declares under `press.declare` in its front matter, the
@@ -79,7 +114,7 @@ and its fence stays literal text on the page.
 | `template` | Template used for the books | `book` |
 | `build_dir` | Where the `.tex`, the assets and the PDF land | `press` |
 | `declare` | Site-wide declarations (`declare.counters`, `declare.admonitions`, `declare.glossary`) | `{}` |
-| `web` | Web-only options: `sections` (`title` \| `number`), `citations` (`inline` \| `passthrough`), `css_prefix` and `tags` (`index` \| `none`) | `{}` |
+| `web` | Web-only options: `sections` (`title` \| `number`), `citations` (`inline` \| `passthrough`), `css_prefix`, `tags` (`index` \| `none`) and `typography` (`fr` \| `none`) | `{}` |
 | `inject_markdown_extensions` | Enable the extensions the lowering relies on | `true` |
 | `css` | Ship and register `texsmith.css` | `true` |
 | `language` | Document language, else the theme's | *theme* |

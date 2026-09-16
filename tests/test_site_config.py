@@ -20,6 +20,7 @@ from texsmith.site.config import (
     snippet_base_paths_from_extensions,
     web_options,
     web_tags,
+    web_typography,
 )
 
 
@@ -298,3 +299,24 @@ def test_an_unknown_web_tags_value_warns_and_keeps_the_default(
         assert web_tags({"web": {"tags": "everything"}}) == WEB_TAGS_DEFAULT
 
     assert "web.tags" in caplog.text
+
+
+def test_web_typography_follows_the_site_language() -> None:
+    assert web_typography({}, lang="fr") == "fr"
+    assert web_typography({"web": {}}, lang="fr-CH") == "fr"
+    assert web_typography({}, lang="en") is None
+    assert web_typography({}, lang=None) is None
+
+
+def test_web_typography_overrides_the_site_language() -> None:
+    assert web_typography({"web": {"typography": "none"}}, lang="fr") is None
+    assert web_typography({"web": {"typography": " fr "}}, lang="en") == "fr"
+
+
+def test_an_unknown_web_typography_value_warns_and_keeps_the_language(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with caplog.at_level("WARNING", logger="texsmith.site"):
+        assert web_typography({"web": {"typography": "de"}}, lang="fr") == "fr"
+
+    assert "web.typography" in caplog.text

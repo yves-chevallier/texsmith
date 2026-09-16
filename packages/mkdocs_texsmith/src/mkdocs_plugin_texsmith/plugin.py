@@ -54,8 +54,9 @@ from texsmith.site.book import (
 from texsmith.site.config import (
     snippet_auto_append_from_extensions,
     snippet_base_paths_from_extensions,
+    web_typography,
 )
-from texsmith.site.html import unescape_table_pipes
+from texsmith.site.html import french_typography, unescape_table_pipes
 from texsmith.site.index import SiteIndex, SitePage, site_index
 from texsmith.site.nav import (
     Navigation as SiteNavigation,
@@ -158,7 +159,9 @@ class LatexPlugin(BasePlugin):
         # in a page's front matter; every page sees them.
         ("declare", config_options.Type(dict, default={})),
         # ``tmark.lower_web`` options: ``sections`` (``title`` | ``number``),
-        # ``citations`` (``inline`` | ``passthrough``).
+        # ``citations`` (``inline`` | ``passthrough``); plus the plugin's own
+        # ``tags`` (``index`` | ``none``) and ``typography`` (``fr`` |
+        # ``none``, the site language by default).
         ("web", config_options.Type(dict, default={})),
         ("inject_markdown_extensions", config_options.Type(bool, default=True)),
         ("css", config_options.Type(bool, default=True)),
@@ -175,6 +178,9 @@ class LatexPlugin(BasePlugin):
         self._diagnostic_emitter: LoggingEmitter | None = None
         self._auto_build = False
         self._site: SiteIndex | None = None
+        #: ``web.typography``: ``"fr"`` or ``None``, resolved once the site
+        #: index knows the language (``on_config``).
+        self._typography: str | None = None
         self._search = SearchTags()
         self._css_content: str | None = None
 
@@ -221,6 +227,7 @@ class LatexPlugin(BasePlugin):
             logger=log,
             emitter=self._diagnostic_emitter,
         )
+        self._typography = web_typography(self.config, lang=self._site.lang, logger=log)
         try:
             self._settings = load_book_settings(
                 self.config,
@@ -326,7 +333,13 @@ class LatexPlugin(BasePlugin):
         )
         # The same Python-Markdown wart the Zensical extension corrects, and
         # the same correction: ``texsmith.site.html`` explains it.
-        return unescape_table_pipes(rewritten)
+        corrected = unescape_table_pipes(rewritten)
+        # And the same typography, over the whole page rather than over the
+        # content alone: this hook is handed the rendered template, so the
+        # navigation and the headings of a French site are spaced with it.
+        if self._typography == "fr":
+            corrected = french_typography(corrected)
+        return corrected
 
     @event_priority(-100)
     def on_post_build(self, config: MkDocsConfig) -> None:  # pragma: no cover - hook
