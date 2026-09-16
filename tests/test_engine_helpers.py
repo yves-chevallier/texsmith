@@ -1,9 +1,21 @@
+import io
 import os
 from pathlib import Path
 
 import pytest
+from rich.console import Console
 
 from texsmith.adapters.latex import engines as engine, pyxindy
+from texsmith.adapters.latex.build import compile_tex
+from texsmith.core.context import DocumentState
+from texsmith.site import book as book_module
+from texsmith.site.book import BookBuilder, load_book_settings
+from texsmith.site.index import SiteIndex
+
+
+def builder(tmp_path: Path) -> BookBuilder:
+    settings = load_book_settings({}, project_dir=tmp_path, build_dir=tmp_path / "press")
+    return BookBuilder(settings, index=SiteIndex())
 
 
 def test_build_tex_env_prefers_bundled_biber(tmp_path: Path) -> None:
@@ -255,3 +267,132 @@ def test_run_engine_command_enforces_rerun_limit(
     assert result.returncode == 1
     assert result.messages
     assert "did not resolve references" in result.messages[0].summary
+
+
+def test_compute_features_counts_the_named_index_registries() -> None:
+    """``\\makeindex[name=r]`` writes ``r.idx``: the index step has to know about it."""
+    state = DocumentState()
+    state.index_registries = ["glossary", "authors"]
+
+    features = engine.compute_features(
+        requires_shell_escape=False,
+        bibliography=False,
+        document_state=state,
+        template_context={},
+    )
+
+    assert features.has_index is True
+    assert features.index_registries == ("glossary", "authors")
+
+
+def test_the_index_program_runs_for_every_registry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One run per ``.idx`` the document wrote, the main one and each registry."""
+    command = engine.EngineCommand(
+        argv=["tectonic", "main.tex"],
+        log_path=tmp_path / "main.log",
+        pdf_path=tmp_path / "main.pdf",
+    )
+    for stem in ("main", "authors"):
+        (tmp_path / f"{stem}.idx").write_text("", encoding="utf-8")
+
+    calls: list[list[str]] = []
+
+    class _Result:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    monkeypatch.setattr(engine.subprocess, "run", lambda argv, **_: calls.append(argv) or _Result())
+
+    ran, failure = engine._maybe_run_index(
+        "main",
+        registries=("authors", "nothing"),
+        engine_name="makeindex",
+        workdir=tmp_path,
+        env={},
+        console=Console(file=io.StringIO()),
+        command=command,
+    )
+
+    assert (ran, failure) == (True, None)
+    assert [call[-1] for call in calls] == ["main.idx", "authors.idx"]
+
+
+def test_the_book_compiles_through_the_same_runner_as_a_document(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The book's compile hands the runner its ``features``, or nothing runs.
+
+    Without them ``run_engine_command`` takes the plain single-pass path:
+    biber, the index program and ``makeglossaries`` are never called, which is
+    how a book with 270 ``\\tsindex`` entries printed an empty index.
+    """
+    tex_path = tmp_path / "press" / "book" / "book.tex"
+    tex_path.parent.mkdir(parents=True)
+    tex_path.write_text("", encoding="utf-8")
+    state = DocumentState()
+    state.has_index_entries = True
+    state.acronyms = {"API": ("API", "Application Programming Interface")}
+    seen: list[engine.EngineFeatures] = []
+
+    def fake_compile(main_tex_path: Path, features: engine.EngineFeatures, **_: object):
+        seen.append(features)
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=["tectonic"],
+            log_path=main_tex_path.with_suffix(".log"),
+            pdf_path=main_tex_path.with_suffix(".pdf"),
+        )
+
+    monkeypatch.setattr(book_module, "compile_tex", fake_compile)
+
+    pdf = builder(tmp_path)._run_pdf_build(
+        output_root=tex_path.parent,
+        tex_path=tex_path,
+        template_context={"index_engine": "makeindex"},
+        document_state=state,
+        bibliography_present=False,
+    )
+
+    assert pdf == tex_path.with_suffix(".pdf")
+    assert len(seen) == 1
+    assert (seen[0].has_index, seen[0].has_glossary) == (True, True)
+    assert seen[0].index_engine == "makeindex"
+
+
+def test_compile_tex_hands_the_features_to_the_runner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``features`` reaches the runner: that is what makes it run the programs."""
+    tex_path = tmp_path / "main.tex"
+    tex_path.write_text("", encoding="utf-8")
+    features = engine.EngineFeatures(
+        requires_shell_escape=False, bibliography=False, has_index=True, has_glossary=False
+    )
+    seen: dict[str, object] = {}
+
+    def fake_run(command: engine.EngineCommand, **kwargs: object) -> engine.EngineResult:
+        seen.update(kwargs)
+        seen["argv"] = command.argv
+        return engine.EngineResult(
+            returncode=0,
+            messages=[],
+            command=command.argv,
+            log_path=command.log_path,
+            pdf_path=command.pdf_path,
+        )
+
+    monkeypatch.setattr(engine.shutil, "which", lambda name: f"/usr/bin/{name}")
+    result = compile_tex(
+        tex_path,
+        features,
+        engine="lualatex",
+        run_engine=fake_run,
+    )
+
+    assert result.returncode == 0
+    assert seen["features"] is features
+    assert seen["backend"] == "latexmk"

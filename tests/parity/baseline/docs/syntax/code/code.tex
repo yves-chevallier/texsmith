@@ -107,6 +107,12 @@ so a fence inside it is just text.
 \PY{l+s+sb}{```}
 \end{Verbatim}
 \end{tscode}
+The path is looked up in the document's own directory first, then along the
+include search path --- \tscodeinline{-\allowbreak{}-\allowbreak{}include-\allowbreak{}path}, \tscodeinline{press.include\_paths}, and on a site
+the \tscodeinline{base\_path} of \tscodeinline{pymdownx.snippets}, which is what a path written for
+\tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}} was written against. The order is the same on both media, so a fence
+that resolves in the PDF resolves on the web.
+
 To splice a whole Markdown file into the document instead, use the \tscodeinline{include}
 role on a line of its own:
 \begin{tscode}[lang=md, engine=pygments]

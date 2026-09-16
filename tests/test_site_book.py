@@ -33,7 +33,7 @@ from texsmith.site.book import (
     normalise_slot_requests,
 )
 from texsmith.site.config import load_site_config
-from texsmith.site.index import SiteIndex
+from texsmith.site.index import SiteIndex, SitePage
 from texsmith.site.nav import NavPage, NavSection
 
 
@@ -450,3 +450,55 @@ def test_the_bundle_says_how_to_compile_it_by_hand(
     message = caplog.records[-1].getMessage()
     assert "Press bundle ready" in message
     assert "latexmk -cd press/book/texsmith-docs.tex" in message
+
+
+def test_the_auto_appended_snippet_follows_every_page_s_body(tmp_path: Path) -> None:
+    """``pymdownx.snippets``' ``auto_append`` reaches the sources the PDF reads.
+
+    An abbreviation reaches the glossary only through a definition in the
+    page that uses it, so the site's shared list has to follow every body —
+    which is exactly what the extension does on the web.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    page = docs / "intro.md"
+    page.write_text("---\ntitle: Intro\n---\n\n# Intro\n\nA POSIX system.\n", encoding="utf-8")
+    appended = tmp_path / "abbreviations.md"
+    appended.write_text("*[POSIX]: Portable Operating System Interface\n", encoding="utf-8")
+
+    settings = load_book_settings(
+        {},
+        project_dir=tmp_path,
+        build_dir=tmp_path / "press",
+        snippet_auto_append=[appended],
+    )
+    index = SiteIndex(project_dir=tmp_path)
+    index.prepass([SitePage(src_uri="intro.md", abs_src_path=page)])
+    record = index.record("intro.md")
+    assert record is not None
+
+    written = BookBuilder(settings, index=index)._persist_source(
+        tmp_path / "press" / "book", "intro.md", record
+    )
+
+    source = written.read_text(encoding="utf-8")
+    assert source.startswith("---\ntitle: Intro\n")
+    assert "A POSIX system." in source
+    assert source.rstrip().endswith("*[POSIX]: Portable Operating System Interface")
+
+
+def test_a_page_source_carries_nothing_extra_without_auto_append(tmp_path: Path) -> None:
+    """A site with no ``auto_append`` writes the page's own body and no more."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    page = docs / "intro.md"
+    page.write_text("# Intro\n\nBody.\n", encoding="utf-8")
+
+    index = SiteIndex(project_dir=tmp_path)
+    index.prepass([SitePage(src_uri="intro.md", abs_src_path=page)])
+    record = index.record("intro.md")
+    assert record is not None
+
+    written = builder(tmp_path)._persist_source(tmp_path / "press" / "book", "intro.md", record)
+
+    assert written.read_text(encoding="utf-8") == "# Intro\n\nBody.\n"

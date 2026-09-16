@@ -48,7 +48,7 @@ from tmark.ir.model import Node, Record
 from tmark.ir.walk import map_tree
 
 from texsmith.passes import PassContext, highest_id, spec
-from texsmith.readers.loader import Loader, join, join_dir
+from texsmith.readers.loader import Loader, SearchPathLoader, join
 
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -152,18 +152,12 @@ def resolve_include(
 
     The pass calls this with ``ctx.include_paths``; ``texsmith site assets``
     calls it with the site's own, to read the file a ``.snippet`` fence
-    splices before it hashes the fence.
+    splices before it hashes the fence. The order is
+    :class:`~texsmith.readers.loader.SearchPathLoader`'s, which is also the
+    loader ``texsmith.site.index`` hands ``tmark.lower_web`` so a fence's
+    ``include=`` resolves on the web exactly as it does in the PDF.
     """
-    text = loader.load(from_path, rel)
-    if text is not None:
-        return join(from_path, rel), text
-    for directory in search:
-        target = join_dir(directory, rel)
-        # ``target`` is absolute: the loader's own join returns it as is.
-        text = loader.load(from_path, target)
-        if text is not None:
-            return target, text
-    return None
+    return SearchPathLoader(loader, search).locate(from_path, rel)
 
 
 class _Splicer:

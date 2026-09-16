@@ -54,6 +54,7 @@ from texsmith.site.book import (
 from texsmith.site.config import (
     language_from_mapping,
     site_declarations,
+    snippet_auto_append_from_extensions,
     snippet_base_paths_from_extensions,
     web_options,
 )
@@ -208,14 +209,18 @@ class LatexPlugin(BasePlugin):
             getattr(config, "theme", None), site_language
         )
 
+        snippet_paths = snippet_base_paths_from_extensions(
+            getattr(config, "mdx_configs", None), self._project_dir
+        )
         try:
             self._settings = load_book_settings(
                 self.config,
                 project_dir=self._project_dir,
                 build_dir=book_build_root(self.config, self._project_dir),
                 language=language,
-                snippet_base_paths=snippet_base_paths_from_extensions(
-                    getattr(config, "mdx_configs", None), self._project_dir
+                snippet_base_paths=snippet_paths,
+                snippet_auto_append=snippet_auto_append_from_extensions(
+                    getattr(config, "mdx_configs", None), snippet_paths
                 ),
                 docs_dir=Path(config["docs_dir"]),
                 logger=log,
@@ -234,6 +239,7 @@ class LatexPlugin(BasePlugin):
             lang=language,
             web_options=web_options(self.config, logger=log),
             project_dir=self._project_dir,
+            include_paths=self._settings.snippet_base_paths,
             logger=log,
             emitter=self._diagnostic_emitter,
         )

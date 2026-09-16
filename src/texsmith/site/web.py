@@ -350,6 +350,7 @@ def _build_state() -> SiteState | None:
 
     plugin: dict[str, Any] = {}
     nav: list[Any] | None = None
+    snippet_base_paths: list[Path] = []
     config_file = config_file_in(project_dir)
     if config_file is None:
         _log.warning(
@@ -361,6 +362,7 @@ def _build_state() -> SiteState | None:
         site_config = load_site_config(config_file)
         plugin = site_config.plugin
         nav = site_config.nav
+        snippet_base_paths = site_config.snippet_base_paths
 
     if not plugin.get("enabled", True):
         return None
@@ -372,6 +374,7 @@ def _build_state() -> SiteState | None:
             lang=plugin.get("language") or language_from_mapping(config.get("theme")),
             web_options=web_options(plugin, logger=_log),
             project_dir=project_dir,
+            include_paths=snippet_base_paths,
             logger=_log,
             emitter=LoggingEmitter(logger_obj=_log),
         ),

@@ -18,7 +18,8 @@ string — a configuration file is data, and reading it never executes code.
 The MkDocs plugin does not come through here: at build time the live
 ``MkDocsConfig`` is the generator's truth. What both paths share are the
 pure functions below — :func:`language_from_mapping`,
-:func:`snippet_base_paths_from_extensions`, :func:`site_declarations` and
+:func:`snippet_base_paths_from_extensions`,
+:func:`snippet_auto_append_from_extensions`, :func:`site_declarations` and
 :func:`web_options` — which read a theme mapping, an extension list and the
 ``texsmith`` options whatever produced them.
 """
@@ -50,6 +51,7 @@ __all__ = [
     "option",
     "plugin_options",
     "site_declarations",
+    "snippet_auto_append_from_extensions",
     "snippet_base_paths_from_extensions",
     "web_options",
 ]
@@ -99,6 +101,9 @@ class SiteConfig:
     plugin: dict[str, Any]
     #: ``pymdownx.snippets``' ``base_path``, resolved against ``project_dir``.
     snippet_base_paths: list[Path]
+    #: ``pymdownx.snippets``' ``auto_append``, resolved along ``base_path``:
+    #: the files the extension appends to every page of the site.
+    snippet_auto_append: list[Path]
     #: The raw ``exclude_docs`` block: gitignore-style patterns, one per line.
     exclude_docs: str | None
     #: The whole parsed mapping. For ``zensical.toml`` the site keys live one
@@ -223,6 +228,57 @@ def snippet_base_paths_from_extensions(markdown_extensions: Any, project_dir: Pa
         if resolved not in paths:
             paths.append(resolved)
     return paths
+
+
+def snippet_auto_append_from_extensions(
+    markdown_extensions: Any, base_paths: Sequence[Path]
+) -> list[Path]:
+    """The files ``pymdownx.snippets`` appends to every page, as real files.
+
+    ``auto_append`` is how a site gives every page a shared block without
+    writing it anywhere — the abbreviation list is what it is for — so the
+    book builder has to append the same thing or the acronyms of a whole site
+    reach no PDF. Each entry is resolved along ``base_path``, as the
+    extension resolves it; an entry no base path holds is dropped with a
+    warning, since a missing file is a site configuration error, not a page's.
+    """
+    section = _extension_options(markdown_extensions, SNIPPETS_EXTENSION)
+    raw = section.get("auto_append") if section is not None else None
+    if raw is None:
+        return []
+    candidates = raw if isinstance(raw, list | tuple) else [raw]
+    files: list[Path] = []
+    for candidate in candidates:
+        try:
+            entry = Path(os.fspath(candidate))
+        except TypeError:
+            _log.warning(
+                "Ignoring 'pymdownx.snippets.auto_append' entry %r: not a path.",
+                candidate,
+            )
+            continue
+        found = _first_existing(entry, base_paths)
+        if found is None:
+            _log.warning(
+                "texsmith: 'pymdownx.snippets.auto_append' names '%s', which no "
+                "'base_path' holds; the books will not carry it.",
+                entry,
+            )
+            continue
+        if found not in files:
+            files.append(found)
+    return files
+
+
+def _first_existing(entry: Path, base_paths: Sequence[Path]) -> Path | None:
+    """``entry`` itself when absolute, else the first base path that holds it."""
+    if entry.is_absolute():
+        return entry if entry.is_file() else None
+    for base in base_paths:
+        candidate = Path(os.path.normpath(base / entry))
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def plugin_options(plugins: Any, name: str) -> dict[str, Any]:
@@ -423,6 +479,7 @@ def load_site_config(path: Path) -> SiteConfig:
     else:
         raise ValueError(f"Unsupported site configuration file: {config_path}")
 
+    snippet_paths = snippet_base_paths_from_extensions(data.get("markdown_extensions"), project_dir)
     nav = data.get("nav")
     site_name = data.get("site_name")
     exclude_docs = data.get("exclude_docs")
@@ -435,8 +492,9 @@ def load_site_config(path: Path) -> SiteConfig:
         language=language_from_mapping(data.get("theme"), data.get("site_language")),
         nav=list(nav) if isinstance(nav, list) else None,
         plugin=plugin_options(data.get("plugins"), "texsmith"),
-        snippet_base_paths=snippet_base_paths_from_extensions(
-            data.get("markdown_extensions"), project_dir
+        snippet_base_paths=snippet_paths,
+        snippet_auto_append=snippet_auto_append_from_extensions(
+            data.get("markdown_extensions"), snippet_paths
         ),
         exclude_docs=str(exclude_docs) if exclude_docs is not None else None,
         raw=raw,

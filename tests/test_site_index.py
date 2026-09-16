@@ -10,7 +10,6 @@ import logging
 from pathlib import Path
 
 import pytest
-
 import tmark
 
 from texsmith.diagnostics import LoggingEmitter
@@ -321,3 +320,49 @@ def test_span_fields_covers_every_span_of_the_ir_schema() -> None:
         walk(tmark.schema(schema))
 
     assert found == set(SPAN_FIELDS)
+
+
+def test_a_fence_include_resolves_against_the_page_then_the_search_path(
+    tmp_path: Path,
+) -> None:
+    """Two directories, two spellings: the page's own, and the project's.
+
+    A site writes a fence's ``include=`` the way ``pymdownx.snippets``
+    resolves one — from the ``base_path``, the project directory by default —
+    while ``{include}(file)`` means the page's own directory. Both are read,
+    the page's first.
+    """
+    docs = tmp_path / "docs"
+    (docs / "guide").mkdir(parents=True)
+    (tmp_path / "assets").mkdir()
+    (docs / "guide" / "near.c").write_text("int near(void) { return 1; }\n", encoding="utf-8")
+    (tmp_path / "assets" / "far.c").write_text("int far(void) { return 2; }\n", encoding="utf-8")
+    page = docs / "guide" / "page.md"
+    page.write_text(
+        '# T\n\n```c include="near.c"\n```\n\n```c include="assets/far.c"\n```\n',
+        encoding="utf-8",
+    )
+
+    index = _index(tmp_path, include_paths=[tmp_path])
+    lowered = index.lower(_page(page, "guide/page.md"), page.read_text(encoding="utf-8"))
+
+    assert lowered is not None
+    assert [item.code for item in lowered.diagnostics] == []
+    assert "int near(void) { return 1; }" in lowered.text
+    assert "int far(void) { return 2; }" in lowered.text
+    # The attribute is consumed: it is not one Python-Markdown can parse.
+    assert "include=" not in lowered.text
+
+
+def test_a_fence_include_nothing_holds_is_reported(tmp_path: Path) -> None:
+    """A path no directory of the search path holds is ``include-missing``."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    page = docs / "page.md"
+    page.write_text('# T\n\n```c include="nowhere.c"\n```\n', encoding="utf-8")
+
+    index = _index(tmp_path, include_paths=[tmp_path])
+    lowered = index.lower(_page(page, "page.md"), page.read_text(encoding="utf-8"))
+
+    assert lowered is not None
+    assert [item.code for item in lowered.diagnostics] == ["include-missing"]

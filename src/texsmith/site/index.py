@@ -37,7 +37,7 @@ site.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 import copy
 from dataclasses import dataclass, field
 import logging
@@ -50,6 +50,7 @@ import yaml
 
 from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import Diagnostic, LoggingEmitter, SinkEmitter, from_tmark
+from texsmith.readers.loader import SearchPathLoader, TexsmithLoader
 
 
 __all__ = [
@@ -268,6 +269,7 @@ class SiteIndex:
         lang: str | None = None,
         web_options: Mapping[str, Any] | None = None,
         project_dir: Path | None = None,
+        include_paths: Sequence[Path] = (),
         logger: logging.Logger | None = None,
         emitter: SinkEmitter | None = None,
     ) -> None:
@@ -277,11 +279,21 @@ class SiteIndex:
         self.lang = lang
         self.web_options: dict[str, Any] = dict(web_options or {})
         self.project_dir = project_dir
+        #: Where a fence's ``include=`` is looked up when the page's own
+        #: directory does not hold it: the site's ``pymdownx.snippets`` base
+        #: path, which is what those paths are written against.
+        self.include_paths: tuple[Path, ...] = tuple(include_paths)
         self._logger = logger or logging.getLogger("texsmith.site")
         # One emitter for the build: its sink owns the file table every page
         # registers in, so a page's ``span.file`` identifies it among the
         # others instead of being 0 in a table of its own.
         self.emitter = emitter if emitter is not None else LoggingEmitter(logger_obj=self._logger)
+        # The lowering splices a fence's ``include=`` through this loader,
+        # from the page's own path, then along the search path — the order
+        # ``resolve_include`` follows for the PDF, through the same class.
+        self.loader = SearchPathLoader(
+            TexsmithLoader(self.emitter.sink.files, self.emitter.sink), self.include_paths
+        )
         self._records: dict[str, PageRecord] = {}
         self._chain: dict[str, int] = {}
 
@@ -389,7 +401,7 @@ class SiteIndex:
         options = self._resolve_options(record)
         options["book"] = self.book_for(record.src_uri)
         resolved = tmark.resolve(doc, None, options)
-        lowered = tmark.lower_web(padded, doc, resolved, None, self.web_options)
+        lowered = tmark.lower_web(padded, doc, resolved, self.loader, self.web_options)
 
         text = lowered["text"]
         if text[: record.padding] == "\n" * record.padding:

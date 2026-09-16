@@ -170,6 +170,21 @@ is a plain `base_path: .` — the directory every documented command runs from.
 And `extra_css` must name the stylesheet: Zensical reads that list before
 Python runs, so the extension cannot add it the way the plugin does.
 
+### Snippets and the books
+
+`pymdownx.snippets` renders the web; the books read the Markdown sources
+directly, so TeXSmith honours two of its settings itself:
+
+- `base_path` is where a fence's `include=`, and the deprecated `--8<--`, are
+  looked up when the page's own directory does not hold them — on the web and
+  in the PDF alike.
+- `auto_append` names files the extension appends to every page. The books
+  append them to every page's source too: a shared `includes/abbreviations.md`
+  is how a site gives every page the acronym definitions, and an acronym
+  reaches the PDF's glossary only through a definition in the page that uses
+  it. The book's glossary carries one `\newacronym` per acronym a page
+  actually writes, however many pages define it.
+
 A site whose navigation lives in `.nav.yml` files needs one more line. Zensical
 reads them only when `awesome-nav` is listed under `plugins:` — it arms its own
 reader on the plugin's presence, not on the files being there — so a site that

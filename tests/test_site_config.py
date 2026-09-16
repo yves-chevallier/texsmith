@@ -15,6 +15,7 @@ from texsmith.site import load_site_config
 from texsmith.site.config import (
     language_from_mapping,
     plugin_options,
+    snippet_auto_append_from_extensions,
     snippet_base_paths_from_extensions,
 )
 
@@ -246,3 +247,29 @@ def test_directory_urls_are_read_and_default_to_the_generators_own_default(
 
     config_path.write_text("site_name: Demo\nuse_directory_urls: false\n", encoding="utf-8")
     assert load_site_config(config_path).use_directory_urls is False
+
+
+def test_snippet_auto_append_resolves_along_the_base_paths(tmp_path: Path) -> None:
+    """``auto_append`` names a file relative to ``base_path``, as the extension does."""
+    (tmp_path / "includes").mkdir()
+    appended = tmp_path / "includes" / "abbreviations.md"
+    appended.write_text("*[POSIX]: Portable Operating System Interface\n", encoding="utf-8")
+
+    found = snippet_auto_append_from_extensions(
+        {"pymdownx.snippets": {"auto_append": ["includes/abbreviations.md"]}},
+        [tmp_path],
+    )
+
+    assert found == [appended]
+
+
+def test_snippet_auto_append_is_empty_without_the_option(tmp_path: Path) -> None:
+    """No option, no extension, or a file no base path holds: nothing to append."""
+    assert snippet_auto_append_from_extensions({"pymdownx.snippets": {}}, [tmp_path]) == []
+    assert snippet_auto_append_from_extensions(["abbr"], [tmp_path]) == []
+    assert (
+        snippet_auto_append_from_extensions(
+            {"pymdownx.snippets": {"auto_append": ["nowhere.md"]}}, [tmp_path]
+        )
+        == []
+    )

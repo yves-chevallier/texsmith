@@ -200,7 +200,20 @@ cannot carry the \tscodeinline{!relative} tag, which Zensical's loader does not 
 is a plain \tscodeinline{base\_path: .} --- the directory every documented command runs from.
 And \tscodeinline{extra\_css} must name the stylesheet: Zensical reads that list before
 Python runs, so the extension cannot add it the way the plugin does.
-
+\subsection{Snippets and the books}
+\tscodeinline{pymdownx.snippets} renders the web; the books read the Markdown sources
+directly, so TeXSmith honours two of its settings itself:
+\begin{itemize}
+\item \tscodeinline{base\_path} is where a fence's \tscodeinline{include=}, and the deprecated \tscodeinline{-\allowbreak{}-\allowbreak{}8<-\allowbreak{}-\allowbreak{}}, are
+looked up when the page's own directory does not hold them --- on the web and
+in the PDF alike.
+\item \tscodeinline{auto\_append} names files the extension appends to every page. The books
+append them to every page's source too: a shared \tscodeinline{includes/abbreviations.md}
+is how a site gives every page the acronym definitions, and an acronym
+reaches the PDF's glossary only through a definition in the page that uses
+it. The book's glossary carries one \tscodeinline{\textbackslash{}newacronym} per acronym a page
+actually writes, however many pages define it.
+\end{itemize}
 A site whose navigation lives in \tscodeinline{.nav.yml} files needs one more line. Zensical
 reads them only when \tscodeinline{awesome-\allowbreak{}nav} is listed under \tscodeinline{plugins:} --- it arms its own
 reader on the plugin's presence, not on the files being there --- so a site that

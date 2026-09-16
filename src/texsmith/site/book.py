@@ -31,27 +31,15 @@ from rich.console import Console
 from slugify import slugify
 import yaml
 
+from texsmith.adapters.latex.build import compile_tex
 from texsmith.adapters.latex.engines import (
+    EngineChoice,
     EngineFeatures,
     LatexMessage,
     LatexMessageSeverity,
-    build_engine_command,
-    build_tex_env,
     compute_features,
-    ensure_command_paths,
-    missing_dependencies,
-    resolve_engine,
-    run_engine_command,
 )
 from texsmith.adapters.latex.latexmk import build_latexmkrc_content
-from texsmith.adapters.latex.tectonic import (
-    BiberAcquisitionError,
-    MakeglossariesAcquisitionError,
-    TectonicAcquisitionError,
-    select_biber_binary,
-    select_makeglossaries,
-    select_tectonic_binary,
-)
 from texsmith.adapters.plugins import snippet
 from texsmith.core.bibliography import BibliographyCollection
 from texsmith.core.config import BookConfig, LaTeXConfig
@@ -60,7 +48,11 @@ from texsmith.core.conversion.core import convert_document
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.conversion.resolution import ResolutionChain, bibliography_paths
 from texsmith.core.documents import Document, TitleStrategy
-from texsmith.core.exceptions import LatexRenderingError, format_rendering_error
+from texsmith.core.exceptions import (
+    ConversionError,
+    LatexRenderingError,
+    format_rendering_error,
+)
 from texsmith.core.templates import (
     TemplateError,
     TemplateSlot,
@@ -246,6 +238,9 @@ class BookSettings:
     bibliography: list[Path] = field(default_factory=list)
     template_overrides: dict[str, Any] = field(default_factory=dict)
     snippet_base_paths: list[Path] = field(default_factory=list)
+    #: ``pymdownx.snippets``' ``auto_append``: the files the site appends to
+    #: every page, which the book appends to every page's source.
+    snippet_auto_append: list[Path] = field(default_factory=list)
     #: The site's ``docs_dir``: what a root-relative asset path (``/assets/…``)
     #: in a page resolves against, MkDocs' ``validation.absolute_links:
     #: relative_to_docs`` rule.
@@ -283,6 +278,7 @@ def load_book_settings(
     build_dir: Path,
     language: str | None = None,
     snippet_base_paths: Sequence[Path] = (),
+    snippet_auto_append: Sequence[Path] = (),
     docs_dir: Path | None = None,
     logger: logging.Logger | None = None,
 ) -> BookSettings:
@@ -320,6 +316,7 @@ def load_book_settings(
         bibliography=coerce_paths(options.get("bibliography") or [], relative_to=project_dir),
         template_overrides=dict(options.get("template_overrides") or {}),
         snippet_base_paths=list(snippet_base_paths),
+        snippet_auto_append=list(snippet_auto_append),
         docs_dir=docs_dir,
     )
 
@@ -543,6 +540,8 @@ class BookBuilder:
         #: Called once the bundle is written and before the engine runs, which
         #: is where ``--strict`` stops a run with the ``.tex`` there to read.
         self.on_written = on_written
+        #: The ``auto_append`` text, read on the first page and kept.
+        self._auto_append_text: str | None = None
 
     # Planning.
 
@@ -1011,13 +1010,38 @@ class BookBuilder:
 
         The site's declarations are merged under the page's own exactly as
         the web lowering merges them, so a container kind or a counter the
-        generator's configuration declares reaches the book's parser too.
+        generator's configuration declares reaches the book's parser too, and
+        the text of ``pymdownx.snippets``' ``auto_append`` follows the body as
+        the extension appends it to every page of the site.
         """
         header = front_matter_text(self.index.merged_meta(record.meta), logger=self.logger)
         target = output_root / "sources" / Path(src_uri)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(header + record.body, encoding="utf-8")
+        target.write_text(header + record.body + self._auto_append(), encoding="utf-8")
         return target
+
+    def _auto_append(self) -> str:
+        """The text ``pymdownx.snippets`` appends to every page, read once.
+
+        An abbreviation reaches the glossary only through a definition in the
+        page that uses it: the writer substitutes ``\\tsacr{KEY}`` for a
+        strict match of a key the *document* defines, and a
+        ``press.declare.glossary`` entry declares a term without making one.
+        So the definitions go after every page's body, exactly where the
+        extension puts them — and the book's one ``DocumentState`` keeps a
+        single entry per key, so a site's forty-four acronyms are forty-four
+        ``\\newacronym`` lines in the preamble whatever the page count, and
+        only the ones a page actually uses.
+        """
+        if self._auto_append_text is None:
+            parts: list[str] = []
+            for path in self.settings.snippet_auto_append:
+                try:
+                    parts.append(path.read_text(encoding="utf-8"))
+                except OSError as exc:
+                    self.logger.warning("Could not read the appended snippet '%s': %s", path, exc)
+            self._auto_append_text = "".join(f"\n\n{part.strip()}\n" for part in parts if part)
+        return self._auto_append_text
 
     # The bundle beside the ``.tex``.
 
@@ -1090,14 +1114,11 @@ class BookBuilder:
     ) -> Path:
         env_engine = os.environ.get("TEXSMITH_ENGINE")
         engine_preference = env_engine.strip() if env_engine else "tectonic"
-        use_system_tectonic = env_flag_enabled(os.environ.get("TEXSMITH_SYSTEM_TECTONIC"))
 
         template_engine = None
         raw_engine = template_context.get("latex_engine")
         if isinstance(raw_engine, str) and raw_engine.strip():
             template_engine = raw_engine.strip()
-
-        engine_choice = resolve_engine(engine_preference, template_engine)
 
         features = compute_features(
             requires_shell_escape=bool(template_context.get("requires_shell_escape", False)),
@@ -1105,90 +1126,36 @@ class BookBuilder:
             document_state=document_state,
             template_context=template_context,
         )
-
-        tectonic_binary: Path | None = None
-        biber_binary: Path | None = None
-        makeglossaries_binary: Path | None = None
-        bundled_bin: Path | None = None
-        if engine_choice.backend == "tectonic":
-            try:
-                selection = select_tectonic_binary(use_system_tectonic, console=None)
-                tectonic_binary = selection.path
-                if features.bibliography and not use_system_tectonic:
-                    biber_binary = select_biber_binary(console=None)
-                    bundled_bin = biber_binary.parent
-                if features.has_glossary:
-                    glossaries = select_makeglossaries(console=None)
-                    makeglossaries_binary = glossaries.path
-                    if glossaries.source == "bundled":
-                        bundled_bin = bundled_bin or glossaries.path.parent
-            except (
-                TectonicAcquisitionError,
-                BiberAcquisitionError,
-                MakeglossariesAcquisitionError,
-            ) as exc:
-                raise BookError(str(exc)) from exc
-
-        available_bins: dict[str, Path] = {}
-        if biber_binary:
-            available_bins["biber"] = biber_binary
-        if makeglossaries_binary:
-            available_bins["makeglossaries"] = makeglossaries_binary
-
-        missing = missing_dependencies(
-            engine_choice,
-            features,
-            use_system_tectonic=use_system_tectonic
-            if engine_choice.backend == "tectonic"
-            else False,
-            available_binaries=available_bins or None,
-        )
-        if missing:
-            readable = ", ".join(sorted(set(missing)))
-            raise BookError(
-                f"LaTeX build skipped for '{tex_path.name}': missing dependencies ({readable})."
-            )
-
-        if engine_choice.backend == "latexmk":
-            self._ensure_latexmkrc(
-                tex_path=tex_path, engine=engine_choice.latexmk_engine, features=features
-            )
-
-        command_plan = ensure_command_paths(
-            build_engine_command(
-                engine_choice,
-                features,
-                main_tex_path=tex_path,
-                tectonic_binary=tectonic_binary,
-            )
-        )
-
-        env = build_tex_env(
-            tex_path.parent,
-            isolate_cache=False,
-            extra_path=bundled_bin,
-            biber_path=biber_binary,
-        )
         console = Console(file=sys.stdout, force_terminal=False, color_system=None, no_color=True)
-
-        engine_label = (
-            engine_choice.latexmk_engine if engine_choice.backend == "latexmk" else "tectonic"
-        )
         bundle_label = relativise(self.settings.project_dir or output_root, tex_path.parent)
-        self.logger.info(
-            "TEXSMITH_BUILD enabled: building '%s' with %s.",
-            bundle_label.as_posix(),
-            engine_label,
-        )
 
-        result = run_engine_command(
-            command_plan,
-            backend=engine_choice.backend,
-            workdir=tex_path.parent,
-            env=env,
-            console=console,
-            verbosity=1,
-        )
+        def prepare(choice: EngineChoice, resolved: EngineFeatures) -> None:
+            self.logger.info(
+                "TEXSMITH_BUILD enabled: building '%s' with %s.",
+                bundle_label.as_posix(),
+                choice.label if choice.backend == "tectonic" else choice.latexmk_engine,
+            )
+            if choice.backend == "latexmk":
+                self._ensure_latexmkrc(
+                    tex_path=tex_path, engine=choice.latexmk_engine, features=resolved
+                )
+
+        # The same runner as ``texsmith doc.md --build``: ``features`` carries
+        # the bibliography, the index and the glossary, and the runner turns
+        # each into its program between two engine passes.
+        try:
+            result = compile_tex(
+                tex_path,
+                features,
+                engine=engine_preference,
+                template_engine=template_engine,
+                console=console,
+                verbosity=1,
+                use_system_tectonic=env_flag_enabled(os.environ.get("TEXSMITH_SYSTEM_TECTONIC")),
+                prepare=prepare,
+            )
+        except ConversionError as exc:
+            raise BookError(f"LaTeX build skipped for '{tex_path.name}': {exc}") from exc
 
         if result.messages:
             self._log_engine_messages(result.messages)
@@ -1328,6 +1295,7 @@ def build_books(
         else book_build_root(options, config.project_dir),
         language=language,
         snippet_base_paths=config.snippet_base_paths,
+        snippet_auto_append=config.snippet_auto_append,
         docs_dir=config.docs_dir,
         logger=log,
     )
@@ -1340,6 +1308,7 @@ def build_books(
         lang=language,
         web_options=web_options(options, logger=log),
         project_dir=config.project_dir,
+        include_paths=config.snippet_base_paths,
         logger=log,
         emitter=emitter,
     )

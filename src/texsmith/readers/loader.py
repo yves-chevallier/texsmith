@@ -9,18 +9,33 @@ it serves in the build's :class:`~texsmith.diagnostics.FileTable`, so a
 diagnostic emitted in an included file prints that file's name;
 :class:`MemoryLoader` serves a mapping for tests
 (``specs/migration/python-ir-and-passes.md`` §7).
+
+:class:`SearchPathLoader` wraps either one with the search path an include
+falls back to — ``--include-path``, ``press.include_paths`` and the site's
+``pymdownx.snippets`` base path — so the document's own directory decides
+first and a path written against the base path is still found. Every include
+of every backend goes through it: ``passes.include.resolve_include`` for the
+conversion, and the ``loader`` ``texsmith.site.index`` hands
+``tmark.lower_web`` for a fence's ``include=`` on the web.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path, PurePath
 from typing import Protocol
 
 from texsmith.diagnostics import NO_SPAN, DiagnosticSink, FileTable
 
 
-__all__ = ["Loader", "MemoryLoader", "TexsmithLoader", "join", "join_dir"]
+__all__ = [
+    "Loader",
+    "MemoryLoader",
+    "SearchPathLoader",
+    "TexsmithLoader",
+    "join",
+    "join_dir",
+]
 
 
 class Loader(Protocol):
@@ -132,3 +147,41 @@ class MemoryLoader:
         if target in self.files:
             return self.files[target]
         return self.files.get(rel)
+
+
+class SearchPathLoader:
+    """A loader that falls back to a search path when the relative lookup misses.
+
+    The including file's directory decides first — the spec's §Includes rule,
+    the only one ``{include}(file)`` ever needs. Only when that misses does
+    the search path get a turn, in order: the deprecated ``--8<-- "path"``
+    spelling and a fence's ``include=`` are written against the snippet base
+    path of the site, not against the page.
+    """
+
+    __slots__ = ("base", "search")
+
+    def __init__(self, base: Loader, search: Sequence[Path] = ()) -> None:
+        self.base = base
+        self.search = tuple(search)
+
+    def locate(self, from_path: str, rel: str) -> tuple[str, str] | None:
+        """``(path, text)`` of the file ``rel`` names, or ``None`` when nothing holds it.
+
+        The path returned is the file actually read, so the file table and
+        every diagnostic name a real one.
+        """
+        text = self.base.load(from_path, rel)
+        if text is not None:
+            return join(from_path, rel), text
+        for directory in self.search:
+            target = join_dir(directory, rel)
+            # ``target`` is absolute: the loader's own join returns it as is.
+            text = self.base.load(from_path, target)
+            if text is not None:
+                return target, text
+        return None
+
+    def load(self, from_path: str, rel: str) -> str | None:
+        found = self.locate(from_path, rel)
+        return None if found is None else found[1]

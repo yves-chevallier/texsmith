@@ -97,6 +97,12 @@ so a fence inside it is just text.
 ```
 ````
 
+The path is looked up in the document's own directory first, then along the
+include search path — `–include-path`, `press.include_paths`, and on a site
+the `base_path` of `pymdownx.snippets`, which is what a path written for
+`–8<–` was written against. The order is the same on both media, so a fence
+that resolves in the PDF resolves on the web.
+
 To splice a whole Markdown file into the document instead, use the `include`
 role on a line of its own:
 
