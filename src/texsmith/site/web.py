@@ -71,7 +71,7 @@ from texsmith.site import assets
 from texsmith.site.config import config_file_in, load_site_config, web_tags
 from texsmith.site.html import unescape_table_pipes
 from texsmith.site.index import SiteIndex, SitePage, site_index
-from texsmith.site.nav import resolve_navigation
+from texsmith.site.nav import MARKDOWN_SUFFIXES, resolve_navigation
 from texsmith.site.search import index_terms
 
 
@@ -376,12 +376,16 @@ def site_state() -> SiteState | None:
 
 
 def _build_state() -> SiteState | None:
-    """Pre-pass every page of the site and write the stylesheet."""
+    """Pre-pass every page of the site and check what the stylesheet needs."""
     from zensical.config import get_config
 
     config = get_config()
     project_dir = Path(config.get("root_dir") or ".").resolve()
     docs_dir = _directory(project_dir, config.get("docs_dir") or "docs")
+    # Read before the pre-pass reads the pages: a page written between the two
+    # is then seen as changed, where the other order would keep its new text
+    # under the old stamp until something else moved.
+    mtimes = _page_mtimes(docs_dir)
 
     plugin: dict[str, Any] = {}
     nav: list[Any] | None = None
@@ -416,7 +420,7 @@ def _build_state() -> SiteState | None:
         docs_dir=docs_dir,
         use_directory_urls=bool(config.get("use_directory_urls", True)),
         config=config,
-        mtimes=_page_mtimes(docs_dir),
+        mtimes=mtimes,
         tags=web_tags(plugin, logger=_log),
     )
 
@@ -457,13 +461,17 @@ def _check_stylesheet(docs_dir: Path, extra_css: Sequence[str]) -> None:
 def _page_mtimes(docs_dir: Path) -> dict[str, tuple[int, int]]:
     """Every Markdown source under ``docs_dir``, with when it last changed and its size.
 
-    The size is there because the modification time alone is only as precise
-    as the file system's clock: two writes inside one tick — a test, a script,
-    a fast editor save — carry the same stamp, and a pre-pass that trusted it
-    would keep numbering the site from the page it no longer holds.
+    "Markdown" is the navigation's own list of suffixes, so a page the
+    resolver reaches is a page an edit of which is noticed. The size is there
+    because the modification time alone is only as precise as the file
+    system's clock: two writes inside one tick — a test, a script, a fast
+    editor save — carry the same stamp, and a pre-pass that trusted it would
+    keep numbering the site from the page it no longer holds.
     """
     mtimes: dict[str, tuple[int, int]] = {}
-    for path in docs_dir.rglob("*.md"):
+    for path in docs_dir.rglob("*"):
+        if path.suffix not in MARKDOWN_SUFFIXES:
+            continue
         try:
             stat = path.stat()
         except OSError:  # pragma: no cover - the file went away mid-scan

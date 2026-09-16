@@ -271,6 +271,19 @@ def test_a_new_page_is_picked_up(tmp_path: Path, monkeypatch) -> None:
     assert "b.md" in web.site_state().index.records
 
 
+def test_a_page_written_with_another_markdown_suffix_is_watched(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The navigation reaches ``.markdown`` and the four others; so does the watch."""
+    config = make_site(tmp_path, {"a.md": PAGE_A})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    web.site_state()
+    (tmp_path / "docs" / "b.markdown").write_text(PAGE_B, encoding="utf-8")
+
+    assert "b.markdown" in web.site_state().index.records
+
+
 @pytest.mark.parametrize(
     ("url", "directory_urls", "dest_uri", "prefix"),
     [
