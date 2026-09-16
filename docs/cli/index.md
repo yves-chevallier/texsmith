@@ -13,7 +13,7 @@ Everything that is not a conversion sits in a command group of its own, reached 
 : Write the files a documentation site cannot produce while it renders — the stylesheet, one preview per `.snippet` fence and one SVG per `.drawio` image — under the site's `docs_dir`, where the generator copies them as sources. `CONFIG` defaults to the first of `mkdocs.yml`, `mkdocs.yaml` or `zensical.toml` in the current directory. Run it before `zensical build`; see [Zensical](../guide/mkdocs.md#zensical).
 
 `texsmith site search [CONFIG]`
-: Add the index entries of every page (`#[term]`) to the search index of the built site under `site_dir`, which Zensical writes in Rust once Python is done. Run it after `zensical build`; MkDocs needs nothing, the plugin does it from `on_post_build`.
+: Add the index entries of every page (`#[term]`) to the `tags` field of the lunr index under `site_dir` — MkDocs' `search/search_index.json`, which Material searches and boosts. The plugin does the same from `on_post_build`, so this is for an index written without it. A Zensical site is left alone: its search reads the terms as a page's `tags`, written while the page renders.
 
 `texsmith site build [CONFIG]`
 : Build the PDF books the site declares under its `texsmith:` options, the same way `mkdocs build` builds them from `on_post_build`: the navigation is resolved, every page is pre-passed so the book carries the site's numbers, and each book's bundle is written under `build_dir` and compiled. `--build-dir DIR`, `--book TITLE`, `--no-pdf`, and `--strict` / `--diagnostics-json` as on the root command. See [The book is a command](../guide/mkdocs.md#the-book-is-a-command).

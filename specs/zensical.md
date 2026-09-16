@@ -255,9 +255,33 @@ It is a *filter* sub-index instead (`pe({compiler:at, fields:[C("tags",
 a=>a.tags)], plugins:[se({handlers:[ie()]})]})`: a filter plugin over a term
 aggregation). Typing a word that exists only as a tag finds nothing; verified
 on a scratch site whose only occurrence of a word was a tag, the result list
-came back empty while the Filters panel listed the word with its count. So the
-two halves stay complementary: `text` for typing, `tags` for browsing, and
-TeXSmith writes both.
+came back empty while the Filters panel listed the word with its count.
+
+**Why the terms do not go into `text` anyway.** They did, for a while, in a
+`<span class="ts-index">` appended to every entry a term sat in, and it was
+wrong twice over. The excerpt of a result is built from `text` (`rp(e, t,
+r=320)` in `assets/javascripts/bundle.*.min.js`: a window of `[start-80,
+end+560]` around the first highlight, re-parsed with the tag allow-lists `Zu`
+and `Qu`, of which `span` is one). The span therefore survives with its class
+— and the dialog is rendered **inside a shadow root**, so the `.ts-index {
+display: none }` a site ships never reaches it. On the handbook, a query for
+a term showed `… en diminuant la précision de la mantisse. nombre subnormal`:
+a tail of index words under an excerpt they have nothing to do with. Hiding
+them from inside the root is not something a stylesheet can do, and a hidden
+one would leave a result whose match is invisible.
+
+And they buy very little. Measured over the handbook's 268 collected entries,
+the term is present word for word in the text of the very section that
+declares it 243 times (91%), and 257 times (96%) down to the word; the eleven
+left are one- and two-character tokens (`%`, `==`, `cc`, `ls`, `0x`, `if`)
+that are in the prose and in the code too. Of the 25 verbatim misses, 12 are
+*inverted* spellings — `Hanoï, tours de`, `Boole, George`, `EOL, fin de
+ligne` — whose natural order is in the prose and which nobody types inverted.
+And a term that is nowhere in a page's prose is still typable, because the
+tags listing page is a page of the site: a query for `subnormal` returns
+*Annexes / Index → nombre subnormal → Nombres* as its first result. So the
+division is `tags` for browsing and the prose for typing, and TeXSmith writes
+the tags only.
 
 **The extension point.** `render(content, path, url, metadata)` parses the
 front matter JSON into `meta`, hands the *same dict* to the `Page` it builds
@@ -265,7 +289,10 @@ for the context extension, and returns it to Rust after `md.convert` — so a
 key a Python-Markdown extension writes into `page.meta` is a key the build
 reads. That is the whole of what Python can still tell Rust about a page, and
 it is enough: `texsmith.site.web` derives a page's tags from its index entries
-there and Zensical does the rest. Two cautions. It works by construction, not
+there and Zensical does the rest. The derivation is the top level of each
+entry, and for an inverted spelling its head: an index files `Boole, George`
+under `Boole`, and `Boole` is the chip, where the whole reads in a facet as a
+mistake. Two cautions. It works by construction, not
 by contract — nothing upstream promises that the returned `meta` is the dict
 the page carries. And a preprocessor must do it, not a postprocessor: the `toc`
 extension replays the postprocessors over each heading and over the table of
@@ -282,10 +309,10 @@ system proposal (ZAP 007) rather than being an accident of the implementation.
 `tags` that is searchable but not aggregated — Material's lunr index has had
 exactly this for years (`tags` is both searched and boosted there), and its
 absence is the one behaviour a site loses when it migrates. *Three*, a hook
-after the search index is written: `texsmith site search` exists only because
-`search.json` is produced in Rust after Python is done, and a `post_build`
-entry point in the module system would make it a plugin again instead of a
-second command a `Makefile` has to remember.
+after the search index is written. It is no longer needed for the tags —
+nothing is patched into `search.json` any more — but a `post_build` entry
+point in the module system is what any later step of the kind would want,
+rather than a second command a `Makefile` has to remember.
 
 ## Sources
 

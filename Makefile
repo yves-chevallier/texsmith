@@ -18,12 +18,11 @@ docs: artifacts
 site-assets: artifacts
 	$(PRE_CMD) texsmith site assets mkdocs.yml
 
-# The search index is written in Rust once Python is done, so the index
-# entries of the pages are added to it after the build, not during it; the
-# book hangs off no hook either, so it is a command of its own.
+# The book hangs off no hook Zensical has, so it is a command of its own. The
+# search index needs nothing after the build: a page's index entries are its
+# tags, which the extension writes while the page renders.
 docs-zensical: site-assets
 	$(PRE_CMD) zensical build -f mkdocs.yml
-	$(PRE_CMD) texsmith site search mkdocs.yml
 	$(PRE_CMD) texsmith site build mkdocs.yml
 
 serve-zensical: site-assets

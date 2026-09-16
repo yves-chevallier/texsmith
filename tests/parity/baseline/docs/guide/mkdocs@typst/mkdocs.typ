@@ -298,40 +298,23 @@ the missing preview under `docs_dir`, which is a directory Zensical watches, so
 the file appearing there triggers the rebuild that publishes it. That rebuild
 finds the cache warm and writes nothing, so it stops there.
 
-== The search index comes last
-
-Zensical writes `search.json` in Rust once Python is done, so nothing a page
-renders can reach it. The index entries a page declares (`#[term]`) are put
-there afterwards, by a second command:
-
-```console
-$ zensical build -f mkdocs.yml
-$ texsmith site search mkdocs.yml
-```
-
-It walks the built site for the `ts-index` markers the lowering left in the
-pages, keys them by page and by section heading the way the index does, and
-adds them to the entries that match. Both index formats are understood: the
-`tags` field of MkDocs' `search/search_index.json`, which Material searches and
-boosts, and the `text` of Zensical's `search.json` — the field its query reads,
-since `tags` there are the filter chips, an aggregation of exact values rather
-than something a reader types. `make docs-zensical` runs the command after the
-build.
-
 == Index entries are the page's tags
 
-Typing is only half of a search. The other half is browsing, and Zensical
-already has it: the _Filters_ panel of the search dialog lists the `tags` of
-the matching entries, and clicking one narrows the results to the pages that
-carry it — with no query at all, it lists them. Those tags come from a page's
-`tags:` metadata, which Zensical also turns into the chips under the content
-and into the entries of a `<!– material/tags –>` listing page.
+Zensical writes `search.json` in Rust once Python is done, so nothing a page
+renders can reach it — and nothing needs to. The _Filters_ panel of the search
+dialog lists the `tags` of the matching entries, and clicking one narrows the
+results to the pages that carry it; with no query at all, it lists them. Those
+tags come from a page's `tags:` metadata, which Zensical also turns into the
+chips under the content and into the entries of a `<!– material/tags –>`
+listing page. Metadata is the one thing Python can still hand the build, so
+that is where a page's index entries go.
 
-So the lowering gives a page the tags its own index entries make. `#[pointeur]`
-puts `pointeur` in the page's `tags`, `#[mémoire][allocation]` puts `mémoire`
-and stops there — a sub-entry is the shape of a printed index, not of a chip —
-and the tags the page declares itself come first and stay. Set `web.tags` to
-`none` to leave a page's `tags:` exactly as it wrote them.
+`#[pointeur]` puts `pointeur` in the page's `tags`, `#[mémoire][allocation]`
+puts `mémoire` and stops there — a sub-entry is the shape of a printed index,
+not of a chip — and an inverted entry gives the head it files under, so
+`#[Boole, George]` is the chip `Boole` and `#[Hanoï, tours de]` the chip
+`Hanoï`. The tags the page declares itself come first and stay. Set `web.tags`
+to `none` to leave a page's `tags:` exactly as it wrote them.
 
 ```yaml
 plugins:
@@ -340,17 +323,27 @@ plugins:
         tags: index # index (default) | none
 ```
 
-The two halves are complementary and a site gets both: `text` finds a term by
-typing, down to the section it sits in, and `tags` browses by it, page by page.
 A page that would rather not show the chips says `hide: [tags]` in its front
 matter; the search filters are unaffected. And since a page's metadata is part
 of its cached render, changing `web.tags` calls for `zensical build -c`.
+
+Nothing is added to `search.json` itself. Its `tags` are a facet of exact
+values, not a searchable field, and the `text` beside them is what a result's
+excerpt is built from — inside a shadow root, where no stylesheet the site
+ships can reach. Terms written there showed under every excerpt as a tail of
+words with no relation to the match. They buy little: an index term is nearly
+always in the prose of the section that declares it (on this project's own
+corpus, 91% word for word), a term that is not is still typable through the
+tags listing page, which is a page of the site like any other, and the few
+that answer neither are _inverted_ spellings nobody types.
 
 This is Zensical only. Under MkDocs, Material's own `tags` plugin collects a
 page's tags from `on_page_markdown` at the same priority as this plugin and is
 declared before it, so it reads the metadata before the lowering writes it;
 index entries reach MkDocs' search through the `tags` field of
-`search_index.json` instead, which is where the hook this replaces put them.
+`search_index.json`, which lunr indexes and Material boosts, and which the
+plugin patches from `on_post_build`. `texsmith site search [CONFIG]` does the
+same to a site already built, for a lunr index written without the plugin.
 
 == The book is a command <the-book-is-a-command>
 
@@ -382,4 +375,11 @@ What does not carry over yet:
 under `docs/` that only exists to be included somewhere else becomes a page
 of its own; nothing on the TeXSmith side can prevent that. They are lowered
 like any other page, after the ones the navigation reaches, and the numbering
-of the site is unaffected.
+of the site is unaffected. Keeping one out of the search is Material's own
+front matter, which Zensical does honour:
+  ```yaml
+  ---
+  search:
+    exclude: true
+  ---
+  ```
