@@ -52,6 +52,7 @@ so changing ``web.tags`` calls for ``zensical build -c``.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 import logging
 from pathlib import Path
@@ -426,21 +427,31 @@ def _build_state() -> SiteState | None:
     )
 
     if plugin.get("css", True):
-        if not (docs_dir / assets.CSS_URI).is_file():
-            _log.warning(
-                "texsmith: '%s' is missing under '%s' — run 'texsmith site assets' "
-                "before the build; a file the rendering writes into the site "
-                "directory does not survive it.",
-                assets.CSS_URI,
-                docs_dir,
-            )
-        if assets.CSS_URI not in (config.get("extra_css") or []):
-            _log.warning(
-                "texsmith: add '%s' to 'extra_css' — Zensical reads that list "
-                "before Python runs, so the extension cannot add it itself.",
-                assets.CSS_URI,
-            )
+        _check_stylesheet(docs_dir, config.get("extra_css") or [])
     return state
+
+
+def _check_stylesheet(docs_dir: Path, extra_css: Sequence[str]) -> None:
+    """Say what is missing for the stylesheet to reach the pages.
+
+    The extension writes neither of the two things it needs — the file, which
+    a render cannot leave under the site directory, and the ``extra_css``
+    entry, which Zensical has read before Python runs.
+    """
+    if not (docs_dir / assets.CSS_URI).is_file():
+        _log.warning(
+            "texsmith: '%s' is missing under '%s' — run 'texsmith site assets' "
+            "before the build; a file the rendering writes into the site "
+            "directory does not survive it.",
+            assets.CSS_URI,
+            docs_dir,
+        )
+    if assets.CSS_URI not in extra_css:
+        _log.warning(
+            "texsmith: add '%s' to 'extra_css' — Zensical reads that list "
+            "before Python runs, so the extension cannot add it itself.",
+            assets.CSS_URI,
+        )
 
 
 def _page_mtimes(docs_dir: Path) -> dict[str, tuple[int, int]]:

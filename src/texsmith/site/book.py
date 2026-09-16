@@ -183,6 +183,107 @@ class NavEntry:
 
 
 @dataclass(slots=True)
+class _Slots:
+    """The buffers the pages of a book fill, and the level each slot sits at.
+
+    A slot holds its pages twice over: the LaTeX of each one, for a bundle
+    that embeds them, and the ``\\input`` line that stands for the same page,
+    for one that keeps them in files beside the ``.tex``. The rest is levels.
+    ``base`` is where the book's own numbering starts and ``bases`` where each
+    slot starts under it; ``template`` and ``template_bases`` are the same two
+    measured in the template, which is what a page's ``base_level`` counts
+    from.
+    """
+
+    #: The slot a page goes to when nothing else claims it.
+    default: str
+    #: The template's name, for the one warning this class emits.
+    template_name: str
+    base: int
+    template: int
+    embed: dict[str, list[str]]
+    link: dict[str, list[str]]
+    bases: dict[str, int]
+    template_bases: dict[str, int]
+    #: The slots already warned about, so a book says it once.
+    missing: set[str] = field(default_factory=set)
+
+    @classmethod
+    def of(cls, runtime: Any, *, base_level: int) -> _Slots:
+        """The empty buffers of a template's slots, its default slot included."""
+        names = (*runtime.slots, runtime.default_slot)
+        template = runtime.base_level or 0
+        return cls(
+            default=runtime.default_slot,
+            template_name=runtime.name,
+            base=base_level,
+            template=template,
+            embed={name: [] for name in names},
+            link={name: [] for name in names},
+            bases={name: slot.resolve_level(base_level) for name, slot in runtime.slots.items()},
+            template_bases={
+                name: slot.resolve_level(template) for name, slot in runtime.slots.items()
+            },
+        )
+
+    def select(self, entry: NavEntry, *, logger: logging.Logger) -> str:
+        """The slot ``entry`` is routed to: its own, its part's, or the default."""
+        if entry.slot:
+            target = entry.slot
+        elif entry.part in self.embed:
+            target = entry.part
+        else:
+            target = self.default
+        if target in self.embed:
+            return target
+        if target not in self.missing:
+            self.missing.add(target)
+            logger.warning(
+                "Requested slot '%s' is not defined by template '%s'; falling back to '%s'.",
+                target,
+                self.template_name,
+                self.default,
+            )
+        return self.default
+
+    def level(self, entry: NavEntry, slot: str) -> int:
+        """The heading level ``entry`` takes once its slot's own base applies."""
+        return self.bases.get(slot, self.base) + (entry.level - self.base)
+
+    def append(self, slot: str, embed: str, link: str | None = None) -> None:
+        """Add one page's LaTeX to a slot, and what stands for it when linked."""
+        self.embed[slot].append(embed)
+        self.link[slot].append(embed if link is None else link)
+
+    def outputs(self) -> tuple[dict[str, str], dict[str, str]]:
+        """The text of every slot: the pages embedded, and the pages linked."""
+        return (
+            {name: "\n\n".join(parts) for name, parts in self.embed.items()},
+            {name: "\n\n".join(parts) for name, parts in self.link.items()},
+        )
+
+
+@dataclass(slots=True)
+class _Converted:
+    """What converting the pages of a book leaves behind.
+
+    The bibliography travels with them: each page's context clones the
+    collection and adds the page's own inline entries, and the clone becomes
+    the next page's base, so what is here at the end holds every entry.
+    """
+
+    document_state: DocumentState | None = None
+    assets: dict[str, Path] = field(default_factory=dict)
+    bibliography: BibliographyCollection | None = None
+    bibliography_map: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    @property
+    def state(self) -> DocumentState:
+        """The document state of the book; an empty one when no page made any."""
+        return self.document_state or DocumentState(bibliography=dict(self.bibliography_map))
+
+
+@dataclass(slots=True)
 class Book:
     """One configured book, and the navigation entries it is made of."""
 
@@ -588,7 +689,6 @@ class BookBuilder:
         settings = self.settings
         output_root = self._output_root(book.config)
         output_root.mkdir(parents=True, exist_ok=True)
-        emitter = self.emitter
 
         template_name = book.extras.template or settings.template
         try:
@@ -598,199 +698,34 @@ class BookBuilder:
 
         self._resolve_base_level(book, template_runtime)
 
-        copy_assets = settings.copy_assets
-        bibliography_files = [*settings.bibliography, *book.extras.bibliography]
-        # The shared ``.bib`` files; each page's context clones it and adds
-        # the page's inline entries, and the clone becomes the next page's
-        # base, so the collection written at the end holds every entry.
-        bibliography_collection: BibliographyCollection | None = None
-        if bibliography_files:
-            bibliography_collection = BibliographyCollection()
-            bibliography_collection.load_files(bibliography_files)
-        bibliography_map: dict[str, dict[str, Any]] = (
-            bibliography_collection.to_dict() if bibliography_collection is not None else {}
-        )
-        seen_bibliography_issues: set[tuple[str, str | None, str | None]] = set()
-
-        document_state: DocumentState | None = None
-        assets_map: dict[str, Path] = {}
-
         raw_language = book.config.language or settings.latex.language
         language = normalise_template_language(raw_language)
-        runtime_language = language or raw_language
-
         overrides = self._template_overrides(book, language)
-        embed_documents = settings.embed_documents
 
-        slot_buffers_embed: dict[str, list[str]] = {name: [] for name in template_runtime.slots}
-        slot_buffers_embed.setdefault(template_runtime.default_slot, [])
-        slot_buffers_link: dict[str, list[str]] = {name: [] for name in template_runtime.slots}
-        slot_buffers_link.setdefault(template_runtime.default_slot, [])
-        default_base_level = book.config.base_level
-        if default_base_level is None:
-            default_base_level = 0
-        slot_base_levels = {
-            name: slot.resolve_level(default_base_level)
-            for name, slot in template_runtime.slots.items()
-        }
-        missing_slot_warnings: set[str] = set()
-
-        def select_slot(entry: NavEntry) -> str:
-            if entry.slot:
-                target = entry.slot
-            elif entry.part == "frontmatter" and "frontmatter" in slot_buffers_embed:
-                target = "frontmatter"
-            elif entry.part == "backmatter" and "backmatter" in slot_buffers_embed:
-                target = "backmatter"
-            else:
-                target = template_runtime.default_slot
-
-            if target not in slot_buffers_embed:
-                if target not in missing_slot_warnings:
-                    missing_slot_warnings.add(target)
-                    self.logger.warning(
-                        "Requested slot '%s' is not defined by template '%s'; "
-                        "falling back to '%s'.",
-                        target,
-                        template_runtime.name,
-                        template_runtime.default_slot,
-                    )
-                return template_runtime.default_slot
-            return target
-
-        # The tmark reader path (``web-profile.md`` step 4): one request for
-        # the book, one resolution chain seeded where the site's chain stood
-        # before the book's first page, so ``FW-10`` is ``FW-10`` on both media.
-        request = ConversionRequest(
-            bibliography_files=list(bibliography_files),
-            template=template_runtime.name,
-            copy_assets=copy_assets,
-            language=runtime_language,
-            default_include_paths=list(settings.snippet_base_paths),
-            root_dir=settings.docs_dir,
-            emitter=emitter,
+        bibliography_files = [*settings.bibliography, *book.extras.bibliography]
+        slots = _Slots.of(template_runtime, base_level=book.config.base_level or 0)
+        converted = self._convert_pages(
+            book,
+            slots,
+            template_runtime=template_runtime,
+            bibliography_files=bibliography_files,
+            overrides=overrides,
+            language=language or raw_language,
+            output_root=output_root,
         )
-        chain = ResolutionChain(
-            bibliography=bibliography_paths(bibliography_files),
-            start=self._book_start(book),
-            lang=runtime_language,
-        )
-        template_base = template_runtime.base_level or 0
-        template_slot_levels = {
-            name: slot.resolve_level(template_base) for name, slot in template_runtime.slots.items()
-        }
 
-        for page_index, entry in enumerate(book.entries):
-            target_slot = select_slot(entry)
-            slot_base = slot_base_levels.get(target_slot, default_base_level)
-            target_buffer_embed = slot_buffers_embed[target_slot]
-            target_buffer_link = slot_buffers_link[target_slot]
-            effective_level = entry.level
-            if slot_base is not None:
-                effective_level = slot_base + (entry.level - default_base_level)
-
-            if not entry.is_page:
-                if entry.title and effective_level >= slot_base:
-                    fragment = nav_heading(
-                        entry.title,
-                        level=effective_level,
-                        numbered=entry.numbered,
-                        lang=runtime_language,
-                    )
-                    target_buffer_embed.append(fragment)
-                    target_buffer_link.append(fragment)
-                continue
-
-            if not entry.src_uri:
-                self.logger.warning("Skipping page '%s': it has no source.", entry.title)
-                continue
-            if entry.abs_src_path is None:
-                self.logger.warning(
-                    "Cannot determine source path for page '%s'; skipping.", entry.title
-                )
-                continue
-
-            document = self._page_document(
-                entry,
-                abs_src=entry.abs_src_path,
-                base_level=effective_level - template_slot_levels.get(target_slot, template_base),
-                output_root=output_root,
-                emitter=emitter,
-            )
-
-            chain.book = self._book_labels(book, entry)
-            try:
-                result = convert_document(
-                    document,
-                    output_dir=output_root,
-                    request=request,
-                    slot_overrides=None,
-                    template_overrides=overrides,
-                    state=document_state,
-                    template_runtime=template_runtime,
-                    emitter=emitter,
-                    preloaded_bibliography=bibliography_collection,
-                    seen_bibliography_issues=seen_bibliography_issues,
-                    resolution=chain,
-                )
-            except Exception as exc:  # pragma: no cover - defensive
-                self.logger.exception("TeXSmith failed while rendering page '%s'.", entry.title)
-                detail = (
-                    format_rendering_error(exc)
-                    if isinstance(exc, LatexRenderingError)
-                    else str(exc)
-                )
-                raise BookError(
-                    f"LaTeX rendering failed for page '{entry.title}': {detail}"
-                ) from exc
-
-            document_state = result.document_state or document_state
-            if result.context is not None and result.context.bibliography_collection:
-                bibliography_collection = result.context.bibliography_collection
-                bibliography_map = dict(result.context.bibliography_map)
-
-            fragment = result.latex_output
-            page_rel_path = _page_fragment_path(entry, page_index)
-            page_abs_path = output_root / page_rel_path
-            page_abs_path.parent.mkdir(parents=True, exist_ok=True)
-            page_abs_path.write_text(fragment, encoding="utf-8")
-            target_buffer_embed.append(fragment)
-            target_buffer_link.append(f"\\input{{{page_rel_path.as_posix()}}}")
-            # A page's front matter may route parts of it to other slots.
-            for slot_name, slot_text in result.slot_outputs.items():
-                if slot_name == result.default_slot or not slot_text.strip():
-                    continue
-                if slot_name in slot_buffers_embed:
-                    slot_buffers_embed[slot_name].append(slot_text)
-                    slot_buffers_link[slot_name].append(slot_text)
-
-            assets_map.update(result.assets_map)
-
-        final_state = document_state or DocumentState(bibliography=dict(bibliography_map))
-
-        slot_outputs_embed = {
-            name: "\n\n".join(parts) for name, parts in slot_buffers_embed.items()
-        }
-        slot_outputs_link = {name: "\n\n".join(parts) for name, parts in slot_buffers_link.items()}
-
-        bibliography_output: Path | None = None
-        if bibliography_collection is not None and final_state.citations and bibliography_map:
-            bibliography_output = output_root / "texsmith-bibliography.bib"
-            bibliography_output.parent.mkdir(parents=True, exist_ok=True)
-            bibliography_collection.write_bibtex(bibliography_output, keys=final_state.citations)
-            overrides.setdefault("bibliography", bibliography_output.stem)
-            overrides.setdefault("bibliography_resource", bibliography_output.name)
-
-        fragment_names = (
-            overrides.get("fragments") or template_runtime.extras.get("fragments") or []
+        final_state = converted.state
+        slot_outputs_embed, slot_outputs_link = slots.outputs()
+        bibliography_output = self._write_bibliography(
+            converted, final_state, output_root=output_root, overrides=overrides
         )
 
         # The pages are converted; what is left is the book's own wrapping. Its
         # options come from the site's configuration file, so a path they carry
         # — a title page, an imprint, a local fragment — starts at the project
         # directory, where ``copy_files`` starts too. A page's own conversion
-        # kept its own directory: this is set once the loop above is over.
-        overrides["_source_dir"] = str(self.settings.project_dir)
+        # kept its own directory: this is set once the pages are done.
+        overrides["_source_dir"] = str(settings.project_dir)
 
         folder = book.config.folder
         stem = folder.name if isinstance(folder, Path) else folder if folder else "index"
@@ -800,43 +735,24 @@ class BookBuilder:
                 template=template_runtime.instance,
                 default_slot=template_runtime.default_slot,
                 slot_outputs=slot_outputs_embed,
-                slot_output_overrides=None if embed_documents else slot_outputs_link,
+                slot_output_overrides=None if settings.embed_documents else slot_outputs_link,
                 document_state=final_state,
                 template_overrides=overrides,
                 output_dir=output_root,
-                copy_assets=copy_assets,
+                copy_assets=settings.copy_assets,
                 output_name=f"{stem}.tex",
                 bibliography_path=bibliography_output,
-                emitter=emitter,
-                fragments=fragment_names,
+                emitter=self.emitter,
+                fragments=overrides.get("fragments")
+                or template_runtime.extras.get("fragments")
+                or [],
                 template_runtime=template_runtime,
             )
         except TemplateError as exc:
             raise BookError(f"Failed to wrap LaTeX document: {exc}") from exc
 
-        template_context = wrap_result.template_context or {}
-        tex_path = wrap_result.output_path or (output_root / f"{stem}.tex")
-        self.logger.info("TeXSmith wrote '%s'.", relativise(settings.build_dir, tex_path))
-        self._announce_latexmk_command(output_root, tex_path)
-
-        template_assets: list[Path] = list(wrap_result.asset_paths or [])
-        template_assets.extend(
-            Path(destination) for _, destination in getattr(wrap_result, "asset_pairs", [])
-        )
-
-        if assets_map:
-            self._write_assets_manifest(output_root, assets_map)
-
-        if settings.latex.clean_assets and copy_assets:
-            referenced_assets = [*assets_map.values(), *template_assets]
-            _prune_unused_assets(output_root, referenced_assets)
-
-        self._copy_extra_files(book.config, output_root)
-        self._publish_snippet_assets(output_root)
-        written = BookResult(
-            title=book.config.title or stem,
-            output_root=output_root,
-            tex_path=tex_path,
+        written = self._publish_bundle(
+            book, wrap_result, converted, output_root=output_root, stem=stem
         )
         if self.on_written is not None:
             self.on_written(written)
@@ -846,11 +762,165 @@ class BookBuilder:
             written,
             pdf_path=self._run_pdf_build(
                 output_root=output_root,
-                tex_path=tex_path,
-                template_context=template_context,
+                tex_path=written.tex_path,
+                template_context=wrap_result.template_context or {},
                 document_state=final_state,
                 bibliography_present=bool(bibliography_output),
             ),
+        )
+
+    def _convert_pages(
+        self,
+        book: Book,
+        slots: _Slots,
+        *,
+        template_runtime: Any,
+        bibliography_files: Sequence[Path],
+        overrides: Mapping[str, Any],
+        language: str | None,
+        output_root: Path,
+    ) -> _Converted:
+        """Convert every entry of a book into the slot it belongs to.
+
+        A section of the navigation is a heading and a page is a document:
+        both land in the same buffers, at the level the entry's slot gives
+        them. One request for the book and one resolution chain seeded where
+        the site's chain stood before its first page (``web-profile.md`` step
+        4), so ``FW-10`` is ``FW-10`` on both media.
+        """
+        emitter = self.emitter
+        converted = _Converted()
+        if bibliography_files:
+            # The shared ``.bib`` files, which each page's context clones.
+            converted.bibliography = BibliographyCollection()
+            converted.bibliography.load_files(bibliography_files)
+            converted.bibliography_map = converted.bibliography.to_dict()
+        seen_bibliography_issues: set[tuple[str, str | None, str | None]] = set()
+
+        request = ConversionRequest(
+            bibliography_files=list(bibliography_files),
+            template=template_runtime.name,
+            copy_assets=self.settings.copy_assets,
+            language=language,
+            default_include_paths=list(self.settings.snippet_base_paths),
+            root_dir=self.settings.docs_dir,
+            emitter=emitter,
+        )
+        chain = ResolutionChain(
+            bibliography=bibliography_paths(bibliography_files),
+            start=self._book_start(book),
+            lang=language,
+        )
+
+        for page_index, entry in enumerate(book.entries):
+            slot = slots.select(entry, logger=self.logger)
+            level = slots.level(entry, slot)
+
+            if not entry.is_page:
+                if entry.title and level >= slots.bases.get(slot, slots.base):
+                    slots.append(
+                        slot,
+                        nav_heading(
+                            entry.title, level=level, numbered=entry.numbered, lang=language
+                        ),
+                    )
+                continue
+            if not entry.src_uri or entry.abs_src_path is None:
+                self.logger.warning("Skipping page '%s': it has no source.", entry.title)
+                continue
+
+            document = self._page_document(
+                entry,
+                abs_src=entry.abs_src_path,
+                base_level=level - slots.template_bases.get(slot, slots.template),
+                output_root=output_root,
+                emitter=emitter,
+            )
+            chain.book = self._book_labels(book, entry)
+            try:
+                result = convert_document(
+                    document,
+                    output_dir=output_root,
+                    request=request,
+                    slot_overrides=None,
+                    template_overrides=overrides,
+                    state=converted.document_state,
+                    template_runtime=template_runtime,
+                    emitter=emitter,
+                    preloaded_bibliography=converted.bibliography,
+                    seen_bibliography_issues=seen_bibliography_issues,
+                    resolution=chain,
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                self.logger.exception("TeXSmith failed while rendering page '%s'.", entry.title)
+                raise _page_failure(exc, entry.title) from exc
+
+            converted.document_state = result.document_state or converted.document_state
+            if result.context is not None and result.context.bibliography_collection:
+                converted.bibliography = result.context.bibliography_collection
+                converted.bibliography_map = dict(result.context.bibliography_map)
+
+            page_rel_path = _page_fragment_path(entry, page_index)
+            page_abs_path = output_root / page_rel_path
+            page_abs_path.parent.mkdir(parents=True, exist_ok=True)
+            page_abs_path.write_text(result.latex_output, encoding="utf-8")
+            slots.append(slot, result.latex_output, f"\\input{{{page_rel_path.as_posix()}}}")
+            # A page's front matter may route parts of it to other slots.
+            for name, text in result.slot_outputs.items():
+                if name != result.default_slot and text.strip() and name in slots.embed:
+                    slots.append(name, text)
+            converted.assets.update(result.assets_map)
+        return converted
+
+    def _write_bibliography(
+        self,
+        converted: _Converted,
+        state: DocumentState,
+        *,
+        output_root: Path,
+        overrides: dict[str, Any],
+    ) -> Path | None:
+        """The ``.bib`` of the entries the book cites, or ``None`` when it cites none."""
+        if converted.bibliography is None or not state.citations or not converted.bibliography_map:
+            return None
+        target = output_root / "texsmith-bibliography.bib"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        converted.bibliography.write_bibtex(target, keys=state.citations)
+        overrides.setdefault("bibliography", target.stem)
+        overrides.setdefault("bibliography_resource", target.name)
+        return target
+
+    def _publish_bundle(
+        self,
+        book: Book,
+        wrap_result: Any,
+        converted: _Converted,
+        *,
+        output_root: Path,
+        stem: str,
+    ) -> BookResult:
+        """Everything the bundle holds beside the ``.tex`` the wrapping wrote."""
+        settings = self.settings
+        tex_path = wrap_result.output_path or (output_root / f"{stem}.tex")
+        self.logger.info("TeXSmith wrote '%s'.", relativise(settings.build_dir, tex_path))
+        self._announce_latexmk_command(output_root, tex_path)
+
+        if converted.assets:
+            self._write_assets_manifest(output_root, converted.assets)
+
+        if settings.latex.clean_assets and settings.copy_assets:
+            template_assets: list[Path] = list(wrap_result.asset_paths or [])
+            template_assets.extend(
+                Path(destination) for _, destination in getattr(wrap_result, "asset_pairs", [])
+            )
+            _prune_unused_assets(output_root, [*converted.assets.values(), *template_assets])
+
+        self._copy_extra_files(book.config, output_root)
+        self._publish_snippet_assets(output_root)
+        return BookResult(
+            title=book.config.title or stem,
+            output_root=output_root,
+            tex_path=tex_path,
         )
 
     # The book's shape.
@@ -951,19 +1021,12 @@ class BookBuilder:
             record = self.index.record(other.src_uri)
             if record is None:
                 continue
-            for label in record.labels:
-                prefix = label.get("prefix")
-                kind = label.get("kind")
-                heading = kind == "header"
-                user_counter = bool(prefix) and (
-                    prefix in self.index.counters or prefix in record.page_counters
-                )
-                if not (heading or user_counter or kind == "anchor"):
-                    continue
-                item = dict(label)
-                if heading and prefix not in HEADING_PREFIXES:
-                    item["kind"] = "counter_item"
-                labels.append(item)
+            counters = (*self.index.counters, *record.page_counters)
+            labels.extend(
+                item
+                for item in (_sibling_label(label, counters=counters) for label in record.labels)
+                if item is not None
+            )
         return labels
 
     def _page_document(
@@ -1213,6 +1276,29 @@ class BookBuilder:
                 self.logger.warning("LaTeX: %s", payload)
             else:
                 self.logger.info("LaTeX: %s", payload)
+
+
+def _sibling_label(label: Mapping[str, Any], *, counters: Sequence[str]) -> dict[str, Any] | None:
+    """One label of another page as the book hands it over, ``None`` when it does not.
+
+    ``counters`` are the user counter prefixes in play — the site's and the
+    page's own — which decide whether a label is one of theirs.
+    """
+    prefix = label.get("prefix")
+    kind = label.get("kind")
+    heading = kind == "header"
+    if not (heading or kind == "anchor" or (prefix and prefix in counters)):
+        return None
+    item = dict(label)
+    if heading and prefix not in HEADING_PREFIXES:
+        item["kind"] = "counter_item"
+    return item
+
+
+def _page_failure(exc: Exception, title: str) -> BookError:
+    """The error one page's conversion failed with, named after the page."""
+    detail = format_rendering_error(exc) if isinstance(exc, LatexRenderingError) else str(exc)
+    return BookError(f"LaTeX rendering failed for page '{title}': {detail}")
 
 
 def _page_fragment_path(entry: NavEntry, index: int) -> Path:

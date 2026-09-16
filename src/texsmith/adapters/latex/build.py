@@ -68,10 +68,9 @@ def compile_tex(
     One implementation for the two documents TeXSmith compiles — the single
     document of ``texsmith doc.md --build`` and the book of a site — so the
     auxiliary programs ``features`` calls for run for both. They are what
-    ``features`` is *for*: the runner is what turns `has_index` into a
-    ``makeindex``/``xindy`` pass between two engine runs, and the book used to
-    call it without ``features``, which is why a 270-entry index printed
-    nothing at all.
+    ``features`` is *for*: the runner is what turns ``has_index`` into a
+    ``makeindex``/``xindy`` pass between two engine runs, so a caller that
+    leaves them out gets a document whose index prints nothing at all.
 
     ``prepare`` is called with the resolved choice before the command is
     built, for a caller that has a file to write first (the book's

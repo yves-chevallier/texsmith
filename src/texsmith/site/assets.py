@@ -88,10 +88,18 @@ def write_stylesheet(root: Path) -> Path:
     the site, which the generator copies where every page's ``extra_css``
     link expects it. MkDocs takes it as a generated file instead, and leaves
     the copy alone when ``texsmith site assets`` has already put one there.
+
+    The file is written only when it differs from the one already there, as
+    the draw.io exports are: a source that does not change leaves the tree
+    untouched, and ``zensical serve`` does not rebuild the site because the
+    command ran.
     """
     target = Path(root) / CSS_URI
+    content = stylesheet()
+    if target.is_file() and target.read_text(encoding="utf-8") == content:
+        return target
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(stylesheet(), encoding="utf-8")
+    target.write_text(content, encoding="utf-8")
     return target
 
 

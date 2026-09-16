@@ -96,6 +96,20 @@ def test_the_stylesheet_is_written_beside_the_pages(
     assert report.stylesheet.read_text(encoding="utf-8") == assets.stylesheet()
 
 
+def test_the_stylesheet_is_left_alone_when_it_is_already_the_one_shipped(
+    site: Path, rendered: list[tuple[str, Path]]
+) -> None:
+    """A source that does not change keeps its modification time.
+
+    ``zensical serve`` watches the documentation directory: rewriting the
+    stylesheet on every run would rebuild the site because the command ran.
+    """
+    stylesheet = generate(site).stylesheet
+    stamp = stylesheet.stat().st_mtime_ns
+
+    assert generate(site).stylesheet.stat().st_mtime_ns == stamp
+
+
 def test_a_preview_that_is_already_there_is_not_rendered_again(
     site: Path, rendered: list[tuple[str, Path]]
 ) -> None:
