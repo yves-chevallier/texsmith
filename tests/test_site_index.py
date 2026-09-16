@@ -11,9 +11,11 @@ from pathlib import Path
 
 import pytest
 
+import tmark
+
 from texsmith.diagnostics import LoggingEmitter
 from texsmith.site import SiteIndex, SitePage
-from texsmith.site.index import split_page
+from texsmith.site.index import SPAN_FIELDS, merge_declarations, split_page
 
 
 log = logging.getLogger("texsmith.site.tests")
@@ -23,8 +25,8 @@ def _page(path: Path, src_uri: str) -> SitePage:
     return SitePage(src_uri=src_uri, abs_src_path=path)
 
 
-def _index(tmp_path: Path) -> SiteIndex:
-    return SiteIndex(project_dir=tmp_path, emitter=LoggingEmitter(logger_obj=log))
+def _index(tmp_path: Path, **kwargs: object) -> SiteIndex:
+    return SiteIndex(project_dir=tmp_path, emitter=LoggingEmitter(logger_obj=log), **kwargs)  # type: ignore[arg-type]
 
 
 def test_split_page_counts_the_lines_the_front_matter_occupied() -> None:
@@ -172,3 +174,150 @@ def test_a_page_reaches_a_figure_defined_on_another_page(tmp_path: Path) -> None
     assert [item.code for item in lowered.diagnostics] == []
     # The sibling is a link to the other page, carrying the figure's number.
     assert lowered.text == "# Second\n\nSee [Figure 1](first.md#fig:kitten).\n"
+
+
+def test_a_page_declaring_a_container_kind_lowers_it_to_a_callout(tmp_path: Path) -> None:
+    """``press.declare.admonitions`` reaches the parser, so ``::: exercise`` is one.
+
+    The generator hands the body without the front matter; the declarations
+    of the page are re-emitted ahead of it, or the parser reports
+    ``container-unknown`` and the fence stays literal text on the page.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "ex.md"
+    path.write_text(
+        "---\n"
+        "press:\n"
+        "  declare:\n"
+        "    admonitions:\n"
+        "      exercise: {name: Exercice}\n"
+        "---\n"
+        "\n"
+        "::: exercise\n"
+        "Compute it.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/ex.md"), body)
+
+    assert lowered is not None
+    assert [item.code for item in lowered.diagnostics] == []
+    assert lowered.text.strip() == "!!! exercise\n    Compute it."
+
+
+def test_a_site_wide_declaration_reaches_a_page_with_no_front_matter(tmp_path: Path) -> None:
+    """``plugins.texsmith.declare`` declares for every page, including the bare ones."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "ex.md"
+    path.write_text("::: exercise\nCompute it.\n:::\n", encoding="utf-8")
+
+    index = _index(tmp_path, declare={"admonitions": {"exercise": {"name": "Exercice"}}})
+    lowered = index.lower(_page(path, "docs/ex.md"), path.read_text(encoding="utf-8"))
+
+    assert lowered is not None
+    assert [item.code for item in lowered.diagnostics] == []
+    assert lowered.text.strip() == "!!! exercise\n    Compute it."
+
+
+def test_a_diagnostic_keeps_the_file_s_line_under_a_site_declaration(
+    caplog: pytest.LogCaptureFixture, tmp_path: Path
+) -> None:
+    """The synthetic header costs the body no line, whatever it weighs.
+
+    It is longer than the four lines of front matter the file carries, so a
+    naive header would push every diagnostic down; the spans move back to the
+    padded body instead.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "intro.md"
+    path.write_text(
+        "---\ntitle: Intro\nlang: en\n---\n\n# Intro\n\nSee @fw:nothing.\n",
+        encoding="utf-8",
+    )
+    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+
+    index = _index(
+        tmp_path,
+        declare={
+            "counters": {"ex": {"name": "Exercice", "format": "Exercice {n}"}},
+            "admonitions": {"exercise": {"name": "Exercice"}},
+        },
+    )
+    with caplog.at_level(logging.WARNING):
+        lowered = index.lower(_page(path, "docs/intro.md"), body)
+        assert lowered is not None
+        index.report(lowered)
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any("docs/intro.md:8:6: warning ref-unresolved:" in message for message in messages)
+
+
+def test_a_page_declaration_wins_over_the_site_s(tmp_path: Path) -> None:
+    """Both reach the parser; the page's own spelling of a kind is the one used."""
+    site = {"counters": {"ex": {"name": "Exercise"}}, "admonitions": {"tip": {"name": "Tip"}}}
+    meta = {"title": "T", "press": {"declare": {"counters": {"ex": {"name": "Exercice"}}}}}
+
+    merged = merge_declarations(site, meta)
+
+    assert merged["title"] == "T"
+    assert merged["press"]["declare"] == {
+        "counters": {"ex": {"name": "Exercice"}},
+        "admonitions": {"tip": {"name": "Tip"}},
+    }
+    # The site's mapping is not the merged one: a second page starts clean.
+    assert site["counters"] == {"ex": {"name": "Exercise"}}
+
+
+def test_the_deprecated_top_level_counters_merge_with_the_site_s(tmp_path: Path) -> None:
+    """``counters:`` at the top of a page joins ``press.declare.counters``."""
+    merged = merge_declarations(
+        {"counters": {"ex": {"name": "Exercice"}}}, {"counters": {"fw": {}}}
+    )
+
+    assert "counters" not in merged
+    assert merged["press"]["declare"]["counters"] == {"ex": {"name": "Exercice"}, "fw": {}}
+
+
+def test_span_fields_covers_every_span_of_the_ir_schema() -> None:
+    """The shift moves every span there is; a new one in the schema fails here.
+
+    A span the shift misses stays in the synthetic header's coordinates and
+    points at the wrong byte of the page — which is how ``key_span`` made a
+    reference report the line after its own.
+    """
+    span_types = {"Span", "SubSpan"}
+
+    def references_a_span(spec: object) -> bool:
+        if not isinstance(spec, dict):
+            return False
+        ref = spec.get("$ref")
+        if isinstance(ref, str) and ref.rsplit("/", 1)[-1] in span_types:
+            return True
+        return any(
+            references_a_span(item)
+            for key in ("anyOf", "allOf", "oneOf")
+            for item in spec.get(key) or ()
+        )
+
+    found: set[str] = set()
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for name, spec in (node.get("properties") or {}).items():
+                if references_a_span(spec):
+                    found.add(str(name))
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    for schema in ("ir", "resolved", "diagnostic"):
+        walk(tmark.schema(schema))
+
+    assert found == set(SPAN_FIELDS)

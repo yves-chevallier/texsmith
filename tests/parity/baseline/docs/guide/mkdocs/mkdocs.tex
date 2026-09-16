@@ -79,8 +79,9 @@ construct TeXSmith owns renders the same way it does in the PDF.
 Diagnostics are reported with the page path: \tscodeinline{docs/findings.md:12:5: warning
 ref-\allowbreak{}unresolved: …}.
 \section{Site-wide declarations}
-Counters declared under the plugin's \tscodeinline{declare:} key apply to every page, as
-\tscodeinline{press.declare} does in a page's front matter:
+Whatever a page declares under \tscodeinline{press.declare} in its front matter, the
+plugin's \tscodeinline{declare:} key declares for every page of the site --- counters,
+callout kinds, glossary terms:
 \begin{tscode}[lang=yaml, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{n+nt}{plugins}\PY{p}{:}
@@ -91,11 +92,19 @@ Counters declared under the plugin's \tscodeinline{declare:} key apply to every 
 \PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Requirement}
 \PY{+w}{            }\PY{n+nt}{format}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{REQ\PYZhy{}\PYZob{}n:03d\PYZcb{}}\PY{l+s}{\PYZdq{}}
 \PY{+w}{            }\PY{n+nt}{start}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{100}
+\PY{+w}{        }\PY{n+nt}{admonitions}\PY{p}{:}
+\PY{+w}{          }\PY{n+nt}{exercise}\PY{p}{:}
+\PY{+w}{            }\PY{n+nt}{name}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{Exercise}
 \end{Verbatim}
 \end{tscode}
 A page may still declare its own in its front matter; the page's declaration
-wins over the site's for the same prefix. See
-Counters for the numbering rules.
+wins over the site's, kind by kind and name by name, and the two sets merge.
+See Counters for the numbering rules.
+
+Both reach the \textbf{parser}, not only the renderer, so a callout kind declared
+here is one \tscodeinline{::: exercise} can be spelled with anywhere on the site --- on the
+web and in the books alike. A kind nothing declares is \tscodeinline{container-\allowbreak{}unknown}
+and its fence stays literal text on the page.
 \section{Options}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
@@ -105,7 +114,7 @@ Counters for the numbering rules.
 \tscodeinline{enabled} & Turn the plugin off entirely & \tscodeinline{true} \\
 \tscodeinline{template} & Template used for the books & \tscodeinline{book} \\
 \tscodeinline{build\_dir} & Where the \tscodeinline{.tex}, the assets and the PDF land & \tscodeinline{press} \\
-\tscodeinline{declare} & Site-wide declarations (\tscodeinline{declare.counters}) & \tscodeinline{\{\}} \\
+\tscodeinline{declare} & Site-wide declarations (\tscodeinline{declare.counters}, \tscodeinline{declare.admonitions}, \tscodeinline{declare.glossary}) & \tscodeinline{\{\}} \\
 \tscodeinline{web} & \tscodeinline{tmark.lower\_web} options: \tscodeinline{sections} (\tscodeinline{title} | \tscodeinline{number}), \tscodeinline{citations} (\tscodeinline{inline} | \tscodeinline{passthrough}), \tscodeinline{css\_prefix} & \tscodeinline{\{\}} \\
 \tscodeinline{inject\_markdown\_extensions} & Enable the extensions the lowering relies on & \tscodeinline{true} \\
 \tscodeinline{css} & Ship and register \tscodeinline{texsmith.css} & \tscodeinline{true} \\

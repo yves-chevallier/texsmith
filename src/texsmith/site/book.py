@@ -70,8 +70,14 @@ from texsmith.core.templates import (
 )
 from texsmith.diagnostics import LoggingEmitter, SinkEmitter
 from texsmith.site.assets import snippet_dir
-from texsmith.site.config import SiteConfig, option, site_counters, web_options
-from texsmith.site.index import HEADING_PREFIXES, PageRecord, SiteIndex, SitePage
+from texsmith.site.config import SiteConfig, option, site_declarations, web_options
+from texsmith.site.index import (
+    HEADING_PREFIXES,
+    PageRecord,
+    SiteIndex,
+    SitePage,
+    front_matter_text,
+)
 from texsmith.site.nav import (
     Navigation,
     NavItem,
@@ -1001,26 +1007,13 @@ class BookBuilder:
         return document
 
     def _persist_source(self, output_root: Path, src_uri: str, record: PageRecord) -> Path:
-        """Write the page's source as the PDF reads it: merged metadata, stored body."""
-        meta = dict(record.meta)
-        page_counters = meta.pop("counters", None)
-        merged_counters: dict[str, Any] = dict(self.index.counters)
-        press = meta.get("press")
-        press = dict(press) if isinstance(press, Mapping) else {}
-        declare = press.get("declare")
-        declare = dict(declare) if isinstance(declare, Mapping) else {}
-        if isinstance(declare.get("counters"), Mapping):
-            merged_counters.update(declare["counters"])
-        if isinstance(page_counters, Mapping):
-            merged_counters.update(page_counters)
-        if merged_counters:
-            declare["counters"] = merged_counters
-            press["declare"] = declare
-        if press:
-            meta["press"] = press
-        header = ""
-        if meta:
-            header = "---\n" + yaml.safe_dump(meta, sort_keys=False, allow_unicode=True) + "---\n"
+        """Write the page's source as the PDF reads it: merged metadata, stored body.
+
+        The site's declarations are merged under the page's own exactly as
+        the web lowering merges them, so a container kind or a counter the
+        generator's configuration declares reaches the book's parser too.
+        """
+        header = front_matter_text(self.index.merged_meta(record.meta), logger=self.logger)
         target = output_root / "sources" / Path(src_uri)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(header + record.body, encoding="utf-8")
@@ -1343,7 +1336,7 @@ def build_books(
         config.docs_dir, config.nav or None, exclude_docs=config.exclude_docs
     )
     index = SiteIndex(
-        counters=site_counters(options, logger=log),
+        declare=site_declarations(options, logger=log),
         lang=language,
         web_options=web_options(options, logger=log),
         project_dir=config.project_dir,

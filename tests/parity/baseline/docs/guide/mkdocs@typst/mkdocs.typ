@@ -66,8 +66,9 @@ ref-unresolved: …`.
 
 = Site-wide declarations
 
-Counters declared under the plugin's `declare:` key apply to every page, as
-`press.declare` does in a page's front matter:
+Whatever a page declares under `press.declare` in its front matter, the
+plugin's `declare:` key declares for every page of the site — counters,
+callout kinds, glossary terms:
 
 ```yaml
 plugins:
@@ -78,11 +79,19 @@ plugins:
             name: Requirement
             format: "REQ-{n:03d}"
             start: 100
+        admonitions:
+          exercise:
+            name: Exercise
 ```
 
 A page may still declare its own in its front matter; the page's declaration
-wins over the site's for the same prefix. See
-Counters for the numbering rules.
+wins over the site's, kind by kind and name by name, and the two sets merge.
+See Counters for the numbering rules.
+
+Both reach the *parser*, not only the renderer, so a callout kind declared
+here is one `::: exercise` can be spelled with anywhere on the site — on the
+web and in the books alike. A kind nothing declares is `container-unknown`
+and its fence stays literal text on the page.
 
 = Options
 
@@ -93,7 +102,7 @@ table.header([Option], [Description], [Default]),
 [`enabled`], [Turn the plugin off entirely], [`true`],
 [`template`], [Template used for the books], [`book`],
 [`build_dir`], [Where the `.tex`, the assets and the PDF land], [`press`],
-[`declare`], [Site-wide declarations (`declare.counters`)], [`{}`],
+[`declare`], [Site-wide declarations (`declare.counters`, `declare.admonitions`, `declare.glossary`)], [`{}`],
 [`web`], [`tmark.lower_web` options: `sections` (`title` | `number`), `citations` (`inline` | `passthrough`), `css_prefix`], [`{}`],
 [`inject_markdown_extensions`], [Enable the extensions the lowering relies on], [`true`],
 [`css`], [Ship and register `texsmith.css`], [`true`],

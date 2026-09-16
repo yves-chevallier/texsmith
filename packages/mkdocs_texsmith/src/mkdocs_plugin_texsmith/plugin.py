@@ -53,7 +53,7 @@ from texsmith.site.book import (
 )
 from texsmith.site.config import (
     language_from_mapping,
-    site_counters,
+    site_declarations,
     snippet_base_paths_from_extensions,
     web_options,
 )
@@ -230,7 +230,7 @@ class LatexPlugin(BasePlugin):
         # The site on tmark.
         self._search.clear()
         self._site = SiteIndex(
-            counters=site_counters(self.config, logger=log),
+            declare=site_declarations(self.config, logger=log),
             lang=language,
             web_options=web_options(self.config, logger=log),
             project_dir=self._project_dir,

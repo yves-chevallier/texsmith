@@ -11,15 +11,24 @@ map minus the page, then ``tmark.lower_web`` splices every TMark construct
 into what Material renders and leaves every other byte alone.
 
 A site generator hands the extension the body without its front matter
-(MkDocs and Zensical both do), and the counters declared site-wide in the
-generator's configuration are in no page at all. Rather than re-injecting a
-YAML header (which shifts every line the diagnostics name), the body is
-parsed as it is — padded with as many newlines as the front matter occupied,
-so line numbers match the file — and the parsed document receives a
-synthetic ``front_matter`` node whose typed keys are the page's own metadata
-merged with the site declarations (``press.declare.counters``). tmark builds
-the keys itself, from the same YAML the page carried, so the deprecated
-spellings (a top-level ``counters:``) keep working.
+(MkDocs and Zensical both do), and the declarations made site-wide in the
+generator's configuration are in no page at all. Both have to reach the
+**parser**: ``press.declare.admonitions`` names the container kinds ``:::
+exercise`` is spelled with, and a kind the parser does not know is
+``container-unknown`` and stays literal text. So the page's own metadata,
+with the site's declarations merged under it, is re-emitted as a YAML header
+ahead of the body and the whole thing is parsed at once
+(:func:`merge_declarations`, :func:`front_matter_text`).
+
+That header is not what the rest of the pipeline speaks of: the text handed
+to ``lower_web``, registered in the file table and named in every diagnostic
+is the body padded with as many newlines as the front matter occupied in the
+file, so a diagnostic reports the file's own line. :func:`shift_spans` moves
+every span of the parsed document from the one to the other — by the padding
+minus the header, in bytes — and collapses the synthetic front matter to the
+empty span at the top of the file. tmark builds the typed keys itself, from
+the same YAML the page carried, so the deprecated spellings (a top-level
+``counters:``) keep working.
 
 Nothing here imports a site generator: :class:`SitePage` is all the index
 asks of one, and a generator's own page object is converted at the call
@@ -45,11 +54,15 @@ from texsmith.diagnostics import Diagnostic, LoggingEmitter, SinkEmitter, from_t
 
 __all__ = [
     "HEADING_PREFIXES",
+    "SPAN_FIELDS",
     "LoweredPage",
     "PageRecord",
     "SiteIndex",
     "SitePage",
-    "max_node_id",
+    "front_matter_text",
+    "merge_declarations",
+    "page_declarations",
+    "shift_spans",
     "split_page",
 ]
 
@@ -108,19 +121,56 @@ class LoweredPage:
     bibliography: str | None = None
 
 
-def max_node_id(value: Any) -> int:
-    """The largest ``id`` in a tmark JSON document (``0`` when none)."""
-    best = 0
+#: Every field of the IR schema holding a ``[file, start, end]``: a node's
+#: own ``span``, the ``id_span`` of the attribute that named it and the
+#: ``key_span`` of one item of a reference.
+SPAN_FIELDS = frozenset({"span", "id_span", "key_span"})
+
+
+def _shift_span(span: Any, delta: int, empty_file: int) -> Any:
+    """One ``[file, start, end]`` moved by ``delta``; the header collapses to nothing."""
+    if not (isinstance(span, list) and len(span) == 3):
+        return span
+    file_id, start, end = span
+    if not isinstance(start, int) or not isinstance(end, int):
+        return span
+    if start + delta < 0:
+        # The span sits in the synthetic header, which is in no file: the
+        # empty span at the top of the page is where its front matter is.
+        return [empty_file, 0, 0]
+    return [file_id, start + delta, end + delta]
+
+
+def shift_spans(value: Any, delta: int, *, empty_file: int = 0) -> Any:
+    """A parsed document with every span moved by ``delta`` bytes.
+
+    The document is parsed from a synthetic header followed by the page
+    body, and every consumer downstream — ``tmark.lower_web``, the file
+    table, the diagnostics — speaks of the padded body instead. One shift
+    puts the whole tree in that second text's coordinates; a span that would
+    land before its start belongs to the header and collapses to the empty
+    span at the top of ``empty_file``.
+    """
+    if delta == 0:
+        return value
     if isinstance(value, Mapping):
+        shifted: dict[str, Any] = {}
         for key, item in value.items():
-            if key == "id" and isinstance(item, int) and not isinstance(item, bool):
-                best = max(best, item)
+            if key in SPAN_FIELDS:
+                shifted[key] = _shift_span(item, delta, empty_file)
+            elif key == "related" and isinstance(item, list):
+                shifted[key] = [
+                    [_shift_span(pair[0], delta, empty_file), *pair[1:]]
+                    if isinstance(pair, list) and pair
+                    else pair
+                    for pair in item
+                ]
             else:
-                best = max(best, max_node_id(item))
-    elif isinstance(value, list):
-        for item in value:
-            best = max(best, max_node_id(item))
-    return best
+                shifted[key] = shift_spans(item, delta, empty_file=empty_file)
+        return shifted
+    if isinstance(value, list):
+        return [shift_spans(item, delta, empty_file=empty_file) for item in value]
+    return value
 
 
 def split_page(text: str) -> tuple[dict[str, Any], str, int]:
@@ -140,18 +190,72 @@ def split_page(text: str) -> tuple[dict[str, Any], str, int]:
     return meta, body, text.count("\n") - body.count("\n")
 
 
-def _page_counters(meta: Mapping[str, Any]) -> dict[str, Any]:
-    """The counters a page declares, in either spelling."""
+def page_declarations(meta: Mapping[str, Any]) -> dict[str, Any]:
+    """What a page declares itself: ``press.declare``, in either spelling.
+
+    A kind (``counters``, ``admonitions``, ``glossary``…) maps to its own
+    declarations; the deprecated top-level ``counters:`` joins them under
+    ``counters``, so the two spellings merge with the site's instead of
+    shadowing one another.
+    """
     declared: dict[str, Any] = {}
     press = meta.get("press")
     if isinstance(press, Mapping):
         declare = press.get("declare")
-        if isinstance(declare, Mapping) and isinstance(declare.get("counters"), Mapping):
-            declared.update(declare["counters"])
+        if isinstance(declare, Mapping):
+            declared = {str(kind): value for kind, value in declare.items()}
     legacy = meta.get("counters")
     if isinstance(legacy, Mapping):
-        declared.update(legacy)
+        counters = declared.get("counters")
+        declared["counters"] = (
+            {**counters, **legacy} if isinstance(counters, Mapping) else dict(legacy)
+        )
     return declared
+
+
+def _page_counter_declarations(meta: Mapping[str, Any]) -> dict[str, Any]:
+    """The counters a page declares itself, in either spelling."""
+    counters = page_declarations(meta).get("counters")
+    return dict(counters) if isinstance(counters, Mapping) else {}
+
+
+def merge_declarations(site: Mapping[str, Any], meta: Mapping[str, Any]) -> dict[str, Any]:
+    """``meta`` with the site's ``press.declare`` merged under the page's own.
+
+    The page wins kind by kind and key by key: a site-wide counter ``ex`` and
+    a page-level counter ``fw`` both reach the parser, and a page redeclaring
+    ``ex`` keeps its own. The site declares the same things a page does —
+    counters, admonition kinds, glossary terms — so the merge is one level
+    deep and knows none of the kinds by name.
+    """
+    merged = copy.deepcopy(dict(meta))
+    merged.pop("counters", None)
+    declare: dict[str, Any] = {}
+    for source in (site, page_declarations(meta)):
+        for kind, value in source.items():
+            current = declare.get(kind)
+            if isinstance(current, Mapping) and isinstance(value, Mapping):
+                declare[kind] = {**current, **copy.deepcopy(dict(value))}
+            else:
+                declare[kind] = copy.deepcopy(value)
+    if declare:
+        press = merged.get("press")
+        merged["press"] = (
+            {**press, "declare": declare} if isinstance(press, Mapping) else {"declare": declare}
+        )
+    return merged
+
+
+def front_matter_text(meta: Mapping[str, Any], *, logger: logging.Logger) -> str:
+    """``meta`` as a YAML front-matter block; ``""`` when there is nothing to say."""
+    if not meta:
+        return ""
+    try:
+        body = yaml.safe_dump(dict(meta), sort_keys=False, allow_unicode=True)
+    except yaml.YAMLError as exc:  # pragma: no cover - the metadata parsed once
+        logger.warning("texsmith: cannot re-serialise the page metadata: %s", exc)
+        return ""
+    return f"---\n{body}---\n"
 
 
 class SiteIndex:
@@ -160,14 +264,16 @@ class SiteIndex:
     def __init__(
         self,
         *,
-        counters: Mapping[str, Any] | None = None,
+        declare: Mapping[str, Any] | None = None,
         lang: str | None = None,
         web_options: Mapping[str, Any] | None = None,
         project_dir: Path | None = None,
         logger: logging.Logger | None = None,
         emitter: SinkEmitter | None = None,
     ) -> None:
-        self.counters: dict[str, Any] = dict(counters or {})
+        #: The site-wide ``press.declare`` of the generator's configuration,
+        #: kind by kind, merged under each page's own declarations.
+        self.declare: dict[str, Any] = dict(declare or {})
         self.lang = lang
         self.web_options: dict[str, Any] = dict(web_options or {})
         self.project_dir = project_dir
@@ -180,6 +286,12 @@ class SiteIndex:
         self._chain: dict[str, int] = {}
 
     # The pre-pass.
+
+    @property
+    def counters(self) -> Mapping[str, Any]:
+        """The site-wide counter declarations, the one kind the book reads back."""
+        counters = self.declare.get("counters")
+        return counters if isinstance(counters, Mapping) else {}
 
     @property
     def records(self) -> Mapping[str, PageRecord]:
@@ -212,17 +324,9 @@ class SiteIndex:
             body=body,
             padding=padding,
             start=dict(self._chain),
-            page_counters=_page_counters(meta),
+            page_counters=_page_counter_declarations(meta),
         )
-        padded = "\n" * record.padding + body
-        doc = tmark.parse(padded, file=self._display_path(path))
-        node, _diagnostics = self._front_matter_node(
-            record.meta, file_id=0, node_id=max_node_id(doc) + 1
-        )
-        # ``front_matter: null`` is not a tmark document: a page with neither
-        # metadata nor a site declaration keeps the node ``parse`` gave it.
-        if node is not None:
-            doc["front_matter"] = node
+        doc, _padded = self._parse_page(record, body, file=self._display_path(path), file_id=0)
         resolved = tmark.resolve(doc, None, self._resolve_options(record))
         record.next_start = {
             str(prefix): int(value)
@@ -272,7 +376,6 @@ class SiteIndex:
         record.body = markdown
         record.lowered = True
 
-        padded = "\n" * record.padding + markdown
         files = self.emitter.sink.files
         # ``src_uri`` is the generator's own path, always POSIX (unlike an
         # OS-native ``src_path``): registering it as a ``PurePosixPath`` keeps
@@ -280,13 +383,9 @@ class SiteIndex:
         # display name ``str()`` of a native ``Path`` would otherwise mangle
         # back to backslashes on Windows.
         display = record.src_uri
+        padded = "\n" * record.padding + markdown
         file_id = int(files.add(PurePosixPath(display), padded))
-        doc = tmark.parse(padded, file=display, file_id=file_id)
-        node, front_diagnostics = self._front_matter_node(
-            record.meta, file_id=file_id, node_id=max_node_id(doc) + 1
-        )
-        if node is not None:
-            doc["front_matter"] = node
+        doc, padded = self._parse_page(record, markdown, file=display, file_id=file_id)
         options = self._resolve_options(record)
         options["book"] = self.book_for(record.src_uri)
         resolved = tmark.resolve(doc, None, options)
@@ -302,7 +401,6 @@ class SiteIndex:
             from_tmark(item)
             for item in (
                 *(doc.get("diagnostics") or ()),
-                *front_diagnostics,
                 *(resolved.get("diagnostics") or ()),
                 *(lowered.get("diagnostics") or ()),
             )
@@ -339,46 +437,32 @@ class SiteIndex:
             options["lang"] = self.lang
         return options
 
-    def _front_matter_node(
-        self, meta: Mapping[str, Any], *, file_id: int, node_id: int
-    ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
-        """A ``front_matter`` node carrying ``meta`` plus the site declarations.
+    def merged_meta(self, meta: Mapping[str, Any]) -> dict[str, Any]:
+        """A page's metadata with the site's declarations merged under it."""
+        return merge_declarations(self.declare, meta)
 
-        Built by tmark from the page's YAML, so its ``keys`` are the typed
-        ones (``press.declare.counters``, ``lang``, …) and the page's
-        deprecated spellings are honoured; the site-wide counters are merged
-        under the page's own. ``None`` when there is nothing to declare.
+    def _parse_page(
+        self, record: PageRecord, body: str, *, file: str, file_id: int
+    ) -> tuple[dict[str, Any], str]:
+        """``(doc, padded)``: the page parsed with its declarations in front of it.
+
+        The parser learns a page's declarations from its front matter and
+        from nowhere else — a container kind it does not know is
+        ``container-unknown`` and stays literal — so the merged metadata is
+        re-emitted as a header and parsed with the body. The document then
+        moves to the coordinates of ``padded``, the text every consumer
+        downstream reads, where the body sits on the file's own lines.
         """
-        merged: dict[str, Any] = copy.deepcopy(dict(meta))
-        counters = {**self.counters, **_page_counters(meta)}
-        merged.pop("counters", None)
-        if counters:
-            press = merged.get("press")
-            if not isinstance(press, dict):
-                press = {}
-                merged["press"] = press
-            declare = press.get("declare")
-            if not isinstance(declare, dict):
-                declare = {}
-                press["declare"] = declare
-            declare["counters"] = counters
-        if not merged:
-            return None, []
-        try:
-            header = "---\n" + yaml.safe_dump(merged, sort_keys=False, allow_unicode=True) + "---\n"
-        except yaml.YAMLError as exc:  # pragma: no cover - already loaded once
-            self._logger.warning("texsmith: cannot re-serialise the page metadata: %s", exc)
-            return None, []
-        parsed = tmark.parse(header)
-        node = parsed.get("front_matter")
-        if not isinstance(node, dict):
-            return None, []
-        node["id"] = node_id
-        node["span"] = [file_id, 0, 0]
-        node["raw"] = ""
-        diagnostics = [
-            {**item, "span": [file_id, 0, 0]}
-            for item in parsed.get("diagnostics") or ()
+        header = front_matter_text(self.merged_meta(record.meta), logger=self._logger)
+        padded = "\n" * record.padding + body
+        doc = tmark.parse(header + body, file=file, file_id=file_id)
+        doc = shift_spans(doc, record.padding - len(header.encode("utf-8")), empty_file=file_id)
+        # The header is TeXSmith's spelling of the page's metadata, not the
+        # author's: a deprecation it triggers names a key the merge wrote,
+        # which no one can fix in the page.
+        doc["diagnostics"] = [
+            item
+            for item in doc.get("diagnostics") or ()
             if item.get("code") != "deprecated-frontmatter-key"
         ]
-        return node, diagnostics
+        return doc, padded

@@ -18,7 +18,7 @@ string — a configuration file is data, and reading it never executes code.
 The MkDocs plugin does not come through here: at build time the live
 ``MkDocsConfig`` is the generator's truth. What both paths share are the
 pure functions below — :func:`language_from_mapping`,
-:func:`snippet_base_paths_from_extensions`, :func:`site_counters` and
+:func:`snippet_base_paths_from_extensions`, :func:`site_declarations` and
 :func:`web_options` — which read a theme mapping, an extension list and the
 ``texsmith`` options whatever produced them.
 """
@@ -49,7 +49,7 @@ __all__ = [
     "load_site_config",
     "option",
     "plugin_options",
-    "site_counters",
+    "site_declarations",
     "snippet_base_paths_from_extensions",
     "web_options",
 ]
@@ -246,26 +246,36 @@ def plugin_options(plugins: Any, name: str) -> dict[str, Any]:
     return {}
 
 
-def site_counters(
+def site_declarations(
     options: Mapping[str, Any], *, logger: logging.Logger | None = None
 ) -> dict[str, Any]:
-    """The site-wide ``declare.counters`` of the ``texsmith`` plugin options.
+    """The site-wide ``declare`` of the ``texsmith`` plugin options, kind by kind.
 
     ``options`` is the plugin's option mapping — MkDocs' validated
-    ``self.config`` or the ``texsmith:`` block of the configuration file.
+    ``self.config`` or the ``texsmith:`` block of the configuration file. The
+    kinds are the front matter's own (``counters``, ``admonitions``,
+    ``glossary``…): they are merged under each page's ``press.declare`` and
+    handed to the parser, so nothing here knows one from another.
     """
     log = logger or _log
     declare = options.get("declare") or {}
-    counters = declare.get("counters") if isinstance(declare, Mapping) else None
-    if counters is None:
-        return {}
-    if not isinstance(counters, Mapping):
+    if not isinstance(declare, Mapping):
         log.warning(
-            "texsmith: 'declare.counters' must map a prefix to its declaration; ignoring %r.",
-            type(counters).__name__,
+            "texsmith: 'declare' must map a kind to its declarations; ignoring %r.",
+            type(declare).__name__,
         )
         return {}
-    return dict(counters)
+    declared: dict[str, Any] = {}
+    for kind, value in declare.items():
+        if not isinstance(value, Mapping):
+            log.warning(
+                "texsmith: 'declare.%s' must map a name to its declaration; ignoring %r.",
+                kind,
+                type(value).__name__,
+            )
+            continue
+        declared[str(kind)] = dict(value)
+    return declared
 
 
 def web_options(

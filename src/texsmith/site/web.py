@@ -66,7 +66,7 @@ from texsmith.site.config import (
     config_file_in,
     language_from_mapping,
     load_site_config,
-    site_counters,
+    site_declarations,
     web_options,
 )
 from texsmith.site.html import unescape_table_pipes
@@ -368,7 +368,7 @@ def _build_state() -> SiteState | None:
 
     state = SiteState(
         index=SiteIndex(
-            counters=site_counters(plugin, logger=_log),
+            declare=site_declarations(plugin, logger=_log),
             lang=plugin.get("language") or language_from_mapping(config.get("theme")),
             web_options=web_options(plugin, logger=_log),
             project_dir=project_dir,
