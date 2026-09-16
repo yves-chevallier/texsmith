@@ -406,6 +406,34 @@ def test_the_front_matter_epigraph_is_set_under_the_page_s_heading(tmp_path: Pat
     )
 
 
+def test_the_epigraph_clears_the_underline_of_a_setext_heading(tmp_path: Path) -> None:
+    """A heading written with ``===`` is two lines, and the quote follows both.
+
+    Splicing between the title and its underline would leave the page a
+    paragraph followed by a row of equals signs.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "setext.md"
+    path.write_text(
+        "---\nepigraph:\n  quote: Sous le titre.\n---\n\nSyntaxe\n=======\n\nLe chapitre.\n",
+        encoding="utf-8",
+    )
+    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/setext.md"), body)
+
+    assert lowered is not None
+    assert lowered.text.strip() == (
+        "Syntaxe\n"
+        "=======\n"
+        "\n"
+        '<blockquote class="ts-epigraph">Sous le titre.</blockquote>\n'
+        "\n"
+        "Le chapitre."
+    )
+
+
 def test_a_page_with_no_heading_takes_its_epigraph_at_the_top(tmp_path: Path) -> None:
     """With nothing to sit under, the epigraph opens the page."""
     docs = tmp_path / "docs"

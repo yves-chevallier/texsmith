@@ -37,6 +37,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import replace
+import re
 from typing import TYPE_CHECKING, Any
 
 from tmark.ir import model
@@ -127,17 +128,41 @@ def web_html(epigraph: model.Epigraph) -> str:
 def splice_web(text: str, epigraph: model.Epigraph, index: int) -> str:
     """``text`` with :func:`web_html` inserted at ``index`` (:func:`insertion_index`).
 
-    ``1`` puts it after the line the opening heading occupies, ``0`` after
-    the blank lines the text opens with — a caller that padded the body to
-    keep the file's line numbers reads its padding back where it left it.
+    ``1`` puts it after the opening heading, ``0`` after the blank lines the
+    text opens with — a caller that padded the body to keep the file's line
+    numbers reads its padding back where it left it.
     """
     at = len(text) - len(text.lstrip("\r\n"))
     html = web_html(epigraph)
-    if index:
-        newline = text.find("\n", at)
-        at = len(text) if newline < 0 else newline
-        return f"{text[:at]}\n\n{html}{text[at:]}"
-    return f"{text[:at]}{html}\n\n{text[at:]}"
+    if not index:
+        return f"{text[:at]}{html}\n\n{text[at:]}"
+    end = _heading_end(text, at)
+    return f"{text[:end]}\n\n{html}{text[end:]}"
+
+
+#: The second line of a setext heading: the ``===`` under its title, indented
+#: by at most three spaces. A ``---`` under an **ATX** heading is a thematic
+#: rule of its own, which is why the first line decides.
+_SETEXT_UNDERLINE = re.compile(r"[ \t]{0,3}(?:=+|-+)[ \t]*")
+
+
+def _heading_end(text: str, at: int) -> int:
+    """The offset just past the opening heading that starts at ``at``.
+
+    A heading is one line when it is written with hashes and two when it is
+    written with an underline: splicing between the title and its ``===``
+    would leave the page a paragraph followed by a row of equals signs.
+    """
+    end = text.find("\n", at)
+    if end < 0:
+        return len(text)
+    if text[at:end].lstrip().startswith("#"):
+        return end
+    underline = text.find("\n", end + 1)
+    line = text[end + 1 :] if underline < 0 else text[end + 1 : underline]
+    if not _SETEXT_UNDERLINE.fullmatch(line):
+        return end
+    return len(text) if underline < 0 else underline
 
 
 def _escape(value: str) -> str:
