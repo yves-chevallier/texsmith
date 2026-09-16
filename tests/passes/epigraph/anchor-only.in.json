@@ -1,0 +1,50 @@
+{
+  "tmark": "0.2.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      98
+    ],
+    "raw": "---\ntitle: Les données\nepigraph:\n  quote: Tout devrait être rendu aussi simple que possible.\n---",
+    "keys": {
+      "title": "Les données",
+      "epigraph": {
+        "quote": "Tout devrait être rendu aussi simple que possible."
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        100,
+        115
+      ],
+      "content": [
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            100,
+            115
+          ],
+          "attrs": {
+            "id": "numeration",
+            "id_span": [
+              0,
+              104,
+              114
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}
