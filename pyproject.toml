@@ -124,7 +124,6 @@ dev = [
     "typst>=0.15",
 ]
 docs = [
-    "mike>=2.1.2",
     "mkdocs-awesome-nav>=3.2.0",
     "mkdocs-material>=9.6.22",
     "mkdocstrings[python]>=0.21.2",

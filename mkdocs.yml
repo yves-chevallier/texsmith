@@ -45,8 +45,6 @@ theme:
     repo: fontawesome/brands/github
 plugins:
   - search
-  - mike:
-      alias_type: redirect
   - awesome-nav
   - autorefs:
       resolve_closest: true
@@ -80,6 +78,10 @@ plugins:
               spacing: 0.5em
 extra:
   version:
+    # The version selector Material's bundle builds from the `versions.json`
+    # of the gh-pages branch; `scripts/publish_docs.py` writes that file and
+    # the `latest/` redirects `mike` used to. `mike` is the only provider the
+    # bundle knows, and the key is read by MkDocs and by Zensical alike.
     provider: mike
   social:
     - icon: fontawesome/brands/github
