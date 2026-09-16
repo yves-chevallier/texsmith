@@ -41,7 +41,7 @@ from texsmith.passes.snippet import is_snippet, snippet_block
 from texsmith.readers.loader import TexsmithLoader
 from texsmith.readers.tmark import read
 from texsmith.site.config import SiteConfig
-from texsmith.site.nav import resolve_navigation
+from texsmith.site.nav import every_page, resolve_navigation
 
 
 __all__ = [
@@ -255,13 +255,20 @@ def generate(
 ) -> GeneratedAssets:
     """Write the stylesheet, every ``.snippet`` preview and every diagram.
 
-    Every page the navigation reaches, then every page it does not, is parsed
-    once and walked twice: each ``.snippet`` fence's preview is rendered into
+    Every Markdown page under ``docs_dir`` is parsed once and walked twice:
+    each ``.snippet`` fence's preview is rendered into
     ``docs_dir/assets/snippets/`` unless the digest is already there, and each
     ``.drawio`` image is exported to an SVG under ``docs_dir/assets/drawio/``.
     What no page asks for any more is deleted from either directory: both hold
     nothing but generated files, so anything the pages do not name is a
     leftover.
+
+    *Every* page, and not the navigation's: the navigation is what decides the
+    **order** — the one the pre-pass and the book read the site in — but its
+    ``pages()`` and ``unlisted()`` both drop what ``exclude_docs`` names, and
+    Zensical publishes those pages anyway. Pruning against the navigation
+    alone would take the preview away from a fence on such a page
+    (:func:`~texsmith.site.nav.every_page`).
 
     An asset that cannot be read or built is an :class:`AssetFailure` naming
     its page, and the walk goes on: one broken snippet or diagram does not
@@ -278,7 +285,11 @@ def generate(
     failures: list[AssetFailure] = []
     wanted: set[str] = set()
     exported: set[str] = set()
-    for page in (*navigation.pages(), *navigation.unlisted()):
+    seen: set[str] = set()
+    for page in (*navigation.pages(), *navigation.unlisted(), *every_page(docs_dir)):
+        if page.src_uri in seen:
+            continue
+        seen.add(page.src_uri)
         document = _parse(page.abs_path, page=page.src_uri, failures=failures)
         if document is None:
             continue

@@ -49,6 +49,7 @@ __all__ = [
     "NavPage",
     "NavSection",
     "Navigation",
+    "every_page",
     "page_title",
     "resolve_navigation",
 ]
@@ -158,6 +159,23 @@ def resolve_navigation(
         if path.as_posix() not in reached
     )
     return Navigation(items, unlisted)
+
+
+def every_page(docs_dir: Path) -> tuple[NavPage, ...]:
+    """Every Markdown page under ``docs_dir``, in file order, exclusions included.
+
+    :func:`resolve_navigation` answers what the *navigation* reaches, and both
+    its ``pages()`` and its ``unlisted()`` drop what ``exclude_docs`` names.
+    That is MkDocs' rule and not everyone's: Zensical ignores ``exclude_docs``
+    and publishes those pages like any other. Whatever a build has to produce
+    for *a page that may be published* — a ``.snippet`` preview, a draw.io
+    export — is therefore wanted for these, and pruning what they do not name
+    would take a published page's preview away.
+    """
+    docs_dir = Path(docs_dir)
+    return tuple(
+        NavPage(None, path.as_posix(), docs_dir / path) for path in _collect_pages(docs_dir)
+    )
 
 
 def page_title(page: NavPage) -> str:

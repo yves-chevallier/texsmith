@@ -147,6 +147,28 @@ def test_a_page_the_navigation_does_not_reach_is_scanned_too(
     assert sorted(preview.page for preview in report.previews) == ["guide/a.md", "unlisted.md"]
 
 
+def test_a_page_the_site_excludes_keeps_its_preview(
+    site: Path, rendered: list[tuple[str, Path]]
+) -> None:
+    """``exclude_docs`` hides a page from MkDocs; Zensical publishes it anyway.
+
+    Both halves of the navigation drop an excluded page, so walking it for the
+    wanted set would prune the preview of a fence the site still shows.
+    """
+    (site / "mkdocs.yml").write_text(MKDOCS_YML + "exclude_docs: |\n  drafts/\n", encoding="utf-8")
+    drafts = site / "docs" / "drafts"
+    drafts.mkdir()
+    (drafts / "draft.md").write_text(PAGE_WITH_FENCE.replace("Hello", "Excluded"), encoding="utf-8")
+
+    report = generate(site)
+
+    assert sorted(preview.page for preview in report.previews) == [
+        "drafts/draft.md",
+        "guide/a.md",
+    ]
+    assert report.pruned == ()
+
+
 def test_a_fence_splicing_a_file_is_hashed_over_what_the_file_holds(
     site: Path, rendered: list[tuple[str, Path]]
 ) -> None:
