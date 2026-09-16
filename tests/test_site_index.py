@@ -366,3 +366,110 @@ def test_a_fence_include_nothing_holds_is_reported(tmp_path: Path) -> None:
 
     assert lowered is not None
     assert [item.code for item in lowered.diagnostics] == ["include-missing"]
+
+
+def test_the_front_matter_epigraph_is_set_under_the_page_s_heading(tmp_path: Path) -> None:
+    """``epigraph: {quote, source}`` becomes a blockquote after the opening heading.
+
+    The key is TMark's own, and the lowering is where the site reads it:
+    the page kept it in its front matter and showed it nowhere until the
+    core learned to print it.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "syntax.md"
+    path.write_text(
+        "---\n"
+        "epigraph:\n"
+        "  quote: Tout devrait être rendu aussi simple que possible.\n"
+        "  source: Albert Einstein\n"
+        "---\n"
+        "\n"
+        "# Syntaxe\n"
+        "\n"
+        "Le chapitre.\n",
+        encoding="utf-8",
+    )
+    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/syntax.md"), body)
+
+    assert lowered is not None
+    assert [item.code for item in lowered.diagnostics] == []
+    assert lowered.text.strip() == (
+        "# Syntaxe\n"
+        "\n"
+        '<blockquote class="ts-epigraph">Tout devrait être rendu aussi simple que '
+        "possible.<footer>Albert Einstein</footer></blockquote>\n"
+        "\n"
+        "Le chapitre."
+    )
+
+
+def test_a_page_with_no_heading_takes_its_epigraph_at_the_top(tmp_path: Path) -> None:
+    """With nothing to sit under, the epigraph opens the page."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "note.md"
+    path.write_text(
+        "---\nepigraph:\n  quote: Sans titre.\n---\n\nDu texte.\n",
+        encoding="utf-8",
+    )
+    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/note.md"), body)
+
+    assert lowered is not None
+    assert lowered.text.strip() == (
+        '<blockquote class="ts-epigraph">Sans titre.</blockquote>\n\nDu texte.'
+    )
+
+
+def test_a_callout_inside_a_numbered_one_is_lowered_to_html(tmp_path: Path) -> None:
+    """``md_in_html`` cannot read an indented HTML block inside a wrapper.
+
+    A numbered callout takes the ``<div class="admonition …" markdown="1">``
+    wrapper; a ``???`` inside it would carry its body four columns in, and
+    the ``</div>`` of a ``<div markdown>`` there closes the *wrapper*, which
+    swallows the rest of the page. The nested callout takes the wrapper too.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "ex.md"
+    path.write_text(
+        "---\n"
+        "press:\n"
+        "  declare:\n"
+        "    counters:\n"
+        "      ex: {name: Exercice, format: 'Exercice {n}'}\n"
+        "    admonitions:\n"
+        "      exercise: {counter: ex}\n"
+        "---\n"
+        "\n"
+        "# T\n"
+        "\n"
+        "::: exercise {#ex:one title=Identificateurs}\n"
+        "Lesquels sont valides ?\n"
+        "\n"
+        "??? solution\n"
+        "\n"
+        "    La réponse.\n"
+        "\n"
+        '    <div class="two-column-list" markdown>\n'
+        "\n"
+        "    1. un\n"
+        "\n"
+        "    </div>\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+    _meta, body, _padding = split_page(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/ex.md"), body)
+
+    assert lowered is not None
+    assert [item.code for item in lowered.diagnostics] == []
+    assert '<details class="solution" markdown="1">' in lowered.text
+    # The body of the nested callout is at the wrapper's own column.
+    assert '\n<div class="two-column-list" markdown>\n' in lowered.text
+    assert "\n    <div" not in lowered.text
