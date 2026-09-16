@@ -689,8 +689,7 @@ class SiteIndex:
         epigraph = epigraph_of(keys.get("epigraph"))
         if epigraph is None:
             return text
-        blocks = doc.get("blocks") or ()
-        return splice_web(text, epigraph, insertion_index(blocks[0]["type"] if blocks else None))
+        return splice_web(text, epigraph, insertion_index(doc.get("blocks") or ()))
 
     def report(self, lowered: LoweredPage) -> None:
         """Log the diagnostics of a lowered page with ``path:line:col``."""
