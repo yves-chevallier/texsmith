@@ -1,0 +1,40 @@
+{
+  "blocks": [
+    {
+      "type": "BlockQuote",
+      "attrs": {
+        "classes": [
+          "epigraph"
+        ]
+      },
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Sans titre."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Du texte, sans titre pour le porter."
+        }
+      ]
+    }
+  ],
+  "front_matter": {
+    "keys": {
+      "epigraph": {
+        "quote": "Sans titre."
+      }
+    },
+    "raw": "---\nepigraph:\n  quote: Sans titre.\n---"
+  }
+}

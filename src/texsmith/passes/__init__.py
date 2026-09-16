@@ -242,6 +242,7 @@ DEFAULT_PIPELINE: tuple[str, ...] = (
     "include",
     "var",
     "title",
+    "epigraph",
     "snippet",
     "assets",
     "doi",

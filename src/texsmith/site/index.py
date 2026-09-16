@@ -8,7 +8,11 @@ on the last one and the numbers are continuous across the site. The
 resolution of each page contributes its labels to the site map; lowering a
 page (:meth:`SiteIndex.lower`) resolves it again with ``book`` = the site
 map minus the page, then ``tmark.lower_web`` splices every TMark construct
-into what Material renders and leaves every other byte alone.
+into what Material renders and leaves every other byte alone. One thing is
+printed from the metadata rather than from a span, since a node a pass
+invented has no bytes to splice: the front matter's ``epigraph:``, which
+:func:`~texsmith.passes.epigraph.splice_web` sets into the lowered text
+where the ``epigraph`` pass sets its node into the block list.
 
 A site generator hands the extension the body without its front matter
 (MkDocs and Zensical both do), and the declarations made site-wide in the
@@ -50,6 +54,7 @@ import yaml
 
 from texsmith.core.front_matter import split_front_matter
 from texsmith.diagnostics import Diagnostic, LoggingEmitter, SinkEmitter, from_tmark
+from texsmith.passes.epigraph import epigraph_of, insertion_index, splice_web
 from texsmith.readers.loader import SearchPathLoader, TexsmithLoader
 
 
@@ -408,6 +413,7 @@ class SiteIndex:
             text = text[record.padding :]
         else:  # pragma: no cover - a splice never starts inside the padding
             text = text.lstrip("\n")
+        text = self._set_epigraph(text, doc)
 
         diagnostics = [
             from_tmark(item)
@@ -422,6 +428,23 @@ class SiteIndex:
             diagnostics=diagnostics,
             bibliography=lowered.get("bibliography"),
         )
+
+    @staticmethod
+    def _set_epigraph(text: str, doc: Mapping[str, Any]) -> str:
+        """The lowered text with the page's front-matter epigraph under its heading.
+
+        The ``epigraph`` pass builds that quote as a node for the writers;
+        ``tmark.lower_web`` splices a page's own bytes, and the node has
+        none, so the web takes the lowered shape as text at the position
+        :func:`~texsmith.passes.epigraph.insertion_index` gives it — the
+        one statement of the rule, read here off the raw parse.
+        """
+        keys = (doc.get("front_matter") or {}).get("keys") or {}
+        epigraph = epigraph_of(keys.get("epigraph"))
+        if epigraph is None:
+            return text
+        blocks = doc.get("blocks") or ()
+        return splice_web(text, epigraph, insertion_index(blocks[0]["type"] if blocks else None))
 
     def report(self, lowered: LoweredPage) -> None:
         """Log the diagnostics of a lowered page with ``path:line:col``."""

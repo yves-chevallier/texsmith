@@ -1,0 +1,77 @@
+{
+  "blocks": [
+    {
+      "type": "Header",
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Syntaxe"
+        }
+      ]
+    },
+    {
+      "type": "BlockQuote",
+      "attrs": {
+        "classes": [
+          "epigraph"
+        ],
+        "kv": [
+          [
+            "source",
+            "Albert Einstein"
+          ]
+        ]
+      },
+      "content": [
+        {
+          "type": "Para",
+          "content": [
+            {
+              "type": "Str",
+              "text": "Tout devrait être rendu aussi simple que possible."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Le chapitre."
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "level": 2,
+      "content": [
+        {
+          "type": "Str",
+          "text": "Une section"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "content": [
+        {
+          "type": "Str",
+          "text": "Sous une section, pas d'épigraphe."
+        }
+      ]
+    }
+  ],
+  "front_matter": {
+    "keys": {
+      "epigraph": {
+        "quote": "Tout devrait être rendu aussi simple que possible.",
+        "source": "Albert Einstein"
+      },
+      "title": "Syntaxe"
+    },
+    "raw": "---\ntitle: Syntaxe\nepigraph:\n  quote: Tout devrait être rendu aussi simple que possible.\n  source: Albert Einstein\n---"
+  }
+}

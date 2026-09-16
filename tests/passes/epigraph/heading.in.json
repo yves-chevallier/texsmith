@@ -1,0 +1,109 @@
+{
+  "tmark": "0.1.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      119
+    ],
+    "raw": "---\ntitle: Syntaxe\nepigraph:\n  quote: Tout devrait être rendu aussi simple que possible.\n  source: Albert Einstein\n---",
+    "keys": {
+      "title": "Syntaxe",
+      "epigraph": {
+        "quote": "Tout devrait être rendu aussi simple que possible.",
+        "source": "Albert Einstein"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        121,
+        130
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            123,
+            130
+          ],
+          "text": "Syntaxe"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        132,
+        144
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            132,
+            144
+          ],
+          "text": "Le chapitre."
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "id": 6,
+      "span": [
+        0,
+        146,
+        160
+      ],
+      "level": 2,
+      "content": [
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            149,
+            160
+          ],
+          "text": "Une section"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 8,
+      "span": [
+        0,
+        162,
+        197
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 9,
+          "span": [
+            0,
+            162,
+            197
+          ],
+          "text": "Sous une section, pas d'épigraphe."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

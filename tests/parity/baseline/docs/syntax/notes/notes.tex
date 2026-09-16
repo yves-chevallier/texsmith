@@ -359,7 +359,11 @@ From the well\PYZhy{}known [\PY{n+nt}{SOLID}](\PY{n+na}{https://en.wikipedia.org
 \section{Other constructs}
 \begin{itemize}
 \item \textbf{Epigraphs}: tag a blockquote \tscodeinline{\{.epigraph\}}, or set the front-matter
-\tscodeinline{epigraph:} key to place one before the first heading.
+\tscodeinline{epigraph: \{quote, source\}} key. That key is metadata, not a construct: the
+\tscodeinline{epigraph} pass builds the very same blockquote from it and sets it \emph{under}
+the document's opening heading --- between that heading and its content, or at
+the top of the document when it opens with something else. \tscodeinline{quote} and
+\tscodeinline{source} are plain text, not Markdown.
 \item \textbf{Lead-ins}: \tscodeinline{\{lead\}[Boot sequence.] The device powers…} sets a run-in
 heading. A paragraph that opens with a short strong span is promoted to one
 automatically while the \tscodeinline{paragraph.lead} feature is on.

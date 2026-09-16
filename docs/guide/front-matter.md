@@ -18,6 +18,9 @@ authors: [{name: Ada Lovelace, affiliation: Analytical Engine}]
 date: 2025-03-15                # ISO date | string | "commit"
 lang: en-GB                     # hyphenation, quotes, typographic spacing
 id: RHE-423                     # document identifier for cross-document references
+epigraph:                       # set under the document's opening heading
+  quote: Simplicity is the ultimate sophistication.
+  source: Leonardo da Vinci
 
 press:
   template: book                # article | book | letter | a user template

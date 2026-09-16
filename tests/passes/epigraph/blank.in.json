@@ -1,0 +1,85 @@
+{
+  "tmark": "0.1.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      51
+    ],
+    "raw": "---\nepigraph:\n  quote: \"   \"\n  source: Personne\n---",
+    "keys": {
+      "epigraph": {
+        "quote": "   ",
+        "source": "Personne"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Header",
+      "id": 2,
+      "span": [
+        0,
+        53,
+        59
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 3,
+          "span": [
+            0,
+            55,
+            59
+          ],
+          "text": "Rien"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 4,
+      "span": [
+        0,
+        61,
+        102
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            61,
+            64
+          ],
+          "text": "Un "
+        },
+        {
+          "type": "Code",
+          "id": 6,
+          "span": [
+            0,
+            64,
+            71
+          ],
+          "text": "quote"
+        },
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            71,
+            102
+          ],
+          "text": " vide n'est pas une épigraphe."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

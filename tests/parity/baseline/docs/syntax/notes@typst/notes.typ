@@ -352,7 +352,11 @@ press:
 = Other constructs
 
 - *Epigraphs*: tag a blockquote `{.epigraph}`, or set the front-matter
-`epigraph:` key to place one before the first heading.
+`epigraph: {quote, source}` key. That key is metadata, not a construct: the
+`epigraph` pass builds the very same blockquote from it and sets it _under_
+the document's opening heading — between that heading and its content, or at
+the top of the document when it opens with something else. `quote` and
+`source` are plain text, not Markdown.
 - *Lead-ins*: `{lead}[Boot sequence.] The device powers…` sets a run-in
 heading. A paragraph that opens with a short strong span is promoted to one
 automatically while the `paragraph.lead` feature is on.
