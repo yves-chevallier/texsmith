@@ -22,6 +22,11 @@ from texsmith.ui.cli import app
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
+def _plain(result: object) -> str:
+    """The command's output without Rich's colour codes (CI sets FORCE_COLOR)."""
+    return _ANSI.sub("", result.output)
+
+
 MKDOCS_YML = """\
 site_name: Test site
 nav:
@@ -57,9 +62,9 @@ def site(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_the_command_writes_the_generated_sources_and_says_so(site: Path) -> None:
     result = CliRunner().invoke(app, ["site", "assets", str(site / "mkdocs.yml")])
 
-    assert result.exit_code == 0, result.output
-    assert "guide/a.md" in result.output
-    assert "1 snippet previews" in result.output
+    assert result.exit_code == 0, _plain(result)
+    assert "guide/a.md" in _plain(result)
+    assert "1 snippet previews" in _plain(result)
     assert (site / "docs" / assets.CSS_URI).is_file()
 
 
@@ -70,7 +75,7 @@ def test_the_configuration_file_is_found_in_the_current_directory(
 
     result = CliRunner().invoke(app, ["site", "assets"])
 
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 0, _plain(result)
     assert (site / "docs" / assets.CSS_URI).is_file()
 
 
@@ -91,7 +96,7 @@ def test_a_stale_preview_is_reported_as_pruned(site: Path) -> None:
 
     result = CliRunner().invoke(app, ["site", "assets", str(site / "mkdocs.yml")])
 
-    assert "pruned snippet-stale.pdf" in result.output
+    assert "pruned snippet-stale.pdf" in _plain(result)
     assert not (previews / "snippet-stale.pdf").exists()
 
 
@@ -99,9 +104,7 @@ def test_the_group_does_not_take_the_root_command_away() -> None:
     """``texsmith doc.md`` is still the whole command line it has always been."""
     result = CliRunner().invoke(app, ["--help"], prog_name="texsmith")
 
-    # Typer colours its usage box when the terminal claims colour (CI sets
-    # FORCE_COLOR); the assertions read the plain text.
-    output = _ANSI.sub("", result.output)
+    output = _plain(result)
     assert result.exit_code == 0
     assert "Usage: texsmith [OPTIONS] [INPUT...]" in output
     assert "texsmith site" in output
@@ -113,8 +116,8 @@ def test_the_build_command_writes_the_book_and_says_where_it_landed(site: Path) 
         ["site", "build", str(site / "mkdocs.yml"), "--build-dir", str(site / "out"), "--no-pdf"],
     )
 
-    assert result.exit_code == 0, result.output
-    assert "out/index.tex" in result.output
+    assert result.exit_code == 0, _plain(result)
+    assert "out/index.tex" in _plain(result)
     assert (site / "out" / "index.tex").is_file()
     assert (site / "out" / "pages" / "index-md.tex").is_file()
 
