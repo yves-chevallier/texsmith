@@ -475,6 +475,89 @@ def test_the_epigraph_clears_the_underline_of_a_setext_heading(tmp_path: Path) -
     )
 
 
+def test_an_anchor_before_the_heading_keeps_the_epigraph_under_the_title(
+    tmp_path: Path,
+) -> None:
+    """``[]{#numeration}`` on its own line prints nothing: the title still wins.
+
+    The C course names a chapter before its heading so the links that point
+    at it have a target; the anchor lowers to ``[](){#numeration}`` and the
+    quote goes under the ``# heading`` that follows it, not above the page.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "data.md"
+    path.write_text(
+        "---\nepigraph:\n  quote: Les données.\n---\n\n[]{#numeration}\n\n# Les données\n\nLe chapitre.\n",
+        encoding="utf-8",
+    )
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/data.md"), body)
+
+    assert lowered is not None
+    assert lowered.text.strip() == (
+        "[](){#numeration}\n"
+        "\n"
+        "# Les données\n"
+        "\n"
+        '<blockquote class="ts-epigraph">Les données.</blockquote>\n'
+        "\n"
+        "Le chapitre."
+    )
+
+
+def test_two_anchors_and_a_comment_are_read_past_to_the_heading(tmp_path: Path) -> None:
+    """Several anchors, in one paragraph or in two, and an HTML comment."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "anchors.md"
+    path.write_text(
+        "---\nepigraph:\n  quote: Deux ancres.\n---\n\n"
+        "[]{#a} []{#b}\n\n[]{#c}\n\n<!-- une note -->\n\n# Titre\n\nLe chapitre.\n",
+        encoding="utf-8",
+    )
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/anchors.md"), body)
+
+    assert lowered is not None
+    assert lowered.text.strip() == (
+        "[](){#a} [](){#b}\n"
+        "\n"
+        "[](){#c}\n"
+        "\n"
+        "<!-- une note -->\n"
+        "\n"
+        "# Titre\n"
+        "\n"
+        '<blockquote class="ts-epigraph">Deux ancres.</blockquote>\n'
+        "\n"
+        "Le chapitre."
+    )
+
+
+def test_an_anchor_with_no_heading_after_it_takes_the_epigraph_at_the_top(
+    tmp_path: Path,
+) -> None:
+    """Nothing the page prints after the anchor: the quote opens the page."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    path = docs / "anchor-only.md"
+    path.write_text(
+        "---\nepigraph:\n  quote: Rien dessous.\n---\n\n[]{#a}\n",
+        encoding="utf-8",
+    )
+    _meta, body = split_front_matter(path.read_text(encoding="utf-8"))
+
+    lowered = _index(tmp_path).lower(_page(path, "docs/anchor-only.md"), body)
+
+    assert lowered is not None
+    assert lowered.text.strip() == (
+        '<blockquote class="ts-epigraph">Rien dessous.</blockquote>\n\n[](){#a}'
+    )
+
+
 def test_a_page_with_no_heading_takes_its_epigraph_at_the_top(tmp_path: Path) -> None:
     """With nothing to sit under, the epigraph opens the page."""
     docs = tmp_path / "docs"
