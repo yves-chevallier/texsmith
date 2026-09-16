@@ -47,7 +47,7 @@ Two approaches:
 1. Provide a DOI link; TeXSmith resolves it into a full BibTeX entry.
 2. Provide a manual entry with the fields you need.
 
-See the [academic paper][cheese] example or the [book][einstein] example.
+See the [academic paper](#cheese) example or the [book](#einstein) example.
 
 ## Citation Syntax
 

@@ -69,7 +69,7 @@ Two approaches:
 + Provide a DOI link; TeXSmith resolves it into a full #ts-logo("BibTeX") entry.
 + Provide a manual entry with the fields you need.
 
-See the \[academic paper\]\[cheese\] example or the \[book\]\[einstein\] example.
+See the #link(<cheese>)[academic paper] example or the #link(<einstein>)[book] example.
 
 = Citation Syntax
 

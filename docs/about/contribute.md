@@ -15,7 +15,7 @@ Improving documentation
 : Help us keep the documentation up-to-date and comprehensive by suggesting edits or additions.
 
 Documentation priorities
-: Check the [Release Notes][releasenotes] & Compatibility page and open issues to see which doc sections need attention when the engine evolves.
+: Check the [Release Notes](#releasenotes) & Compatibility page and open issues to see which doc sections need attention when the engine evolves.
 
 Develop templates
 : Create and share your own LaTeX templates for TeXSmith users to use.
