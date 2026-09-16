@@ -77,6 +77,7 @@ __all__ = [
     "Document",
     "SlotPlan",
     "TitleStrategy",
+    "append_front_matter_abbreviations",
     "front_matter_has_title",
 ]
 
@@ -168,13 +169,19 @@ def _front_matter_numbered(metadata: Mapping[str, Any] | None) -> bool | None:
     return coerce_bool(payload.get("numbered"))
 
 
-def _append_front_matter_abbreviations(text: str, emitter: DiagnosticEmitter) -> str:
+def append_front_matter_abbreviations(
+    text: str, front_matter: Mapping[str, Any] | None, *, emitter: DiagnosticEmitter
+) -> str:
     """Append the ``*[KEY]: description`` lines of the front-matter glossary.
 
     ``press.declare.glossary.entries`` declares acronyms without writing an
     abbreviation definition for each; the legacy path synthesised those lines
     for ``markdown.abbr`` before rendering. The tmark reader does the same at
     the end of the source, where the appended lines move no existing span.
+
+    ``front_matter`` is the metadata to read the glossary from — the page's
+    own for a file, the site's declarations merged under it for a book's
+    page, which is not what ``text`` itself carries.
     """
     from .glossary import (
         GlossaryValidationError,
@@ -182,7 +189,6 @@ def _append_front_matter_abbreviations(text: str, emitter: DiagnosticEmitter) ->
         parse_front_matter_glossary,
     )
 
-    front_matter, _body = split_front_matter(text)
     try:
         glossary = parse_front_matter_glossary(front_matter)
     except GlossaryValidationError as exc:
@@ -316,15 +322,19 @@ class Document:
         assets resolve against; it does not have to exist, which is how the
         snippet compiler builds a document out of a fence's body.
         """
-        from ..readers import tmark as tmark_reader
+        from ..readers.tmark import parse_payload
 
         emitter = emitter or NullEmitter()
+
+        # The legacy mapping is the raw YAML, as the HTML path sees it:
+        # ``normalise_press_metadata`` applies the same rules to both readers.
+        front_matter, _body = split_front_matter(text)
 
         # ``press.declare.glossary`` entries reach the body as the abbreviation
         # definitions the legacy path synthesised for ``markdown.abbr``: tmark
         # then lowers every occurrence to an ``Abbr`` and the writers to
         # ``\\tsacr{…}``. Appended at the end, so no span of the text above moves.
-        text = _append_front_matter_abbreviations(text, emitter)
+        text = append_front_matter_abbreviations(text, front_matter, emitter=emitter)
 
         # The build's file table is the emitter's sink: every document of a
         # batch registers in the same one, so a span's ``file`` identifies the
@@ -332,28 +342,71 @@ class Document:
         # second id 0.
         files = emitter.sink.files
         file_id = files.add(path, text)
-        ir_document, diagnostics = tmark_reader.read(text, file_id=file_id, name=str(path))
+        return cls.from_parsed(
+            parse_payload(text, file_id=int(file_id), name=str(path)),
+            path=path,
+            front_matter=front_matter,
+            files=files,
+            promote_title=promote_title,
+            strip_heading=strip_heading,
+            suppress_title=suppress_title,
+            base_level=base_level,
+            title_strategy=title_strategy,
+            numbered=numbered,
+            front_matter_overrides=front_matter_overrides,
+            emitter=emitter,
+        )
+
+    @classmethod
+    def from_parsed(
+        cls,
+        payload: Mapping[str, Any],
+        *,
+        path: Path,
+        front_matter: Mapping[str, Any],
+        files: FileTable,
+        promote_title: bool = False,
+        strip_heading: bool = False,
+        suppress_title: bool = False,
+        base_level: int | str = 0,
+        title_strategy: TitleStrategy | None = None,
+        numbered: bool = True,
+        front_matter_overrides: Mapping[str, Any] | None = None,
+        emitter: DiagnosticEmitter | None = None,
+    ) -> Document:
+        """The document of an already-parsed source.
+
+        ``payload`` is a raw ``tmark.parse`` result, ``path`` the file the
+        document belongs to — what a diagnostic names, what a relative include
+        or asset resolves against — and ``front_matter`` its metadata as the
+        plain YAML view the template machinery reads. The site's book comes in
+        here: it parses a page with the site's declarations ahead of the body
+        and the spans moved back onto the page's own file
+        (:func:`~texsmith.site.index.parse_page`), which is one text more than
+        the page holds and therefore not something :meth:`from_markdown_text`
+        could be handed.
+        """
+        from ..readers.tmark import decode
+
+        emitter = emitter or NullEmitter()
+        ir_document, diagnostics = decode(payload)
         for record in diagnostics:
             emitter.diagnostic(record)
 
-        # The legacy mapping is the raw YAML, as the HTML path sees it:
-        # ``normalise_press_metadata`` applies the same rules to both readers.
-        front_matter, _body = split_front_matter(text)
-
         resolved_base_level = _coerce_document_base_level(base_level, emitter)
-        declared_title = front_matter_has_title(front_matter)
         strategy = _resolve_title_strategy(
             explicit=title_strategy,
             promote_title=promote_title,
             strip_heading=strip_heading,
-            has_declared_title=declared_title,
+            has_declared_title=front_matter_has_title(front_matter),
         )
+        metadata = dict(front_matter)
         if front_matter_overrides:
-            front_matter = {**front_matter, **dict(front_matter_overrides)}
-        front_numbered = _front_matter_numbered(front_matter)
+            metadata.update(front_matter_overrides)
+        front_numbered = _front_matter_numbered(metadata)
         document = cls(
             source_path=path,
-            _front_matter=front_matter,
+            _front_matter=metadata,
             base_level=resolved_base_level,
             title_strategy=strategy,
             numbered=numbered if front_numbered is None else front_numbered,

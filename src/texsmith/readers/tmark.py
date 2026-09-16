@@ -18,7 +18,7 @@ from tmark.ir import codec, model
 from texsmith.diagnostics import Diagnostic, from_tmark
 
 
-__all__ = ["ReadResult", "parse_payload", "read"]
+__all__ = ["ReadResult", "decode", "parse_payload", "read"]
 
 ReadResult = tuple[model.Document, list[Diagnostic]]
 
@@ -61,9 +61,17 @@ def read(
     the file in the build's :class:`~texsmith.diagnostics.FileTable`); ``name``
     is what tmark prints in its own messages.
     """
-    payload = parse_payload(text, file_id=file_id, name=name, profile=profile)
-    document = codec.decode_document(payload)
-    return document, diagnostics_of(payload)
+    return decode(parse_payload(text, file_id=file_id, name=name, profile=profile))
+
+
+def decode(payload: Mapping[str, Any]) -> ReadResult:
+    """A raw ``tmark.parse`` result as the IR models and the parse diagnostics.
+
+    The seam a caller that had to touch the payload comes back through: the
+    site's book moves every span onto the file the bytes came from before the
+    document is typed (:func:`~texsmith.site.index.parse_page`).
+    """
+    return codec.decode_document(payload), diagnostics_of(payload)
 
 
 def diagnostics_of(payload: Mapping[str, Any]) -> list[Diagnostic]:
