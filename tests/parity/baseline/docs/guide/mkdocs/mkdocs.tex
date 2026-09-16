@@ -78,6 +78,43 @@ construct TeXSmith owns renders the same way it does in the PDF.
 
 Diagnostics are reported with the page path: \tscodeinline{docs/findings.md:12:5: warning
 ref-\allowbreak{}unresolved: …}.
+\section{French typography}
+A French page wants a narrow no-break space before \tscodeinline{;}, \tscodeinline{:}, \tscodeinline{!} and \tscodeinline{?}, and
+\tscodeinline{« … »} where the keyboard typed \tscodeinline{"…"}. \tscodeinline{babel-\allowbreak{}french} does it for the PDF,
+where the engine spaces the punctuation itself; a browser does nothing of the
+sort, so the rendered page carries the characters. Once the site's language is
+\tscodeinline{fr} --- \tscodeinline{theme.language}, \tscodeinline{theme.locale}, \tscodeinline{site\_language} or the plugin's own
+\tscodeinline{language} --- the rendered HTML goes through those two rules:
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Written} & \textbf{Published} \\
+\midrule
+\tscodeinline{Attention : ceci} & \tscodeinline{Attention} U+202F \tscodeinline{: ceci} \\
+\tscodeinline{Vraiment ?} & \tscodeinline{Vraiment} U+202F \tscodeinline{?} \\
+\tscodeinline{il a dit "oui"} & \tscodeinline{«} U+202F \tscodeinline{oui} U+202F \tscodeinline{»} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Only text is touched. A \tscodeinline{<code>}, \tscodeinline{<pre>}, \tscodeinline{<script>} or \tscodeinline{<style>} element,
+every attribute value, every character entity and every space the page already
+carries --- \tscodeinline{\&nbsp;}, a narrow one --- come out as they went in, and a mark that is
+part of a token rather than of a sentence (\tscodeinline{https://}, \tscodeinline{12:30}, \tscodeinline{?page=2}) is
+left alone. Running the rules over a page twice changes nothing the second
+time.
+
+\tscodeinline{web.typography} overrides the language: \tscodeinline{none} turns the rules off on a French
+site, \tscodeinline{fr} turns them on for a site that declares another language.
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{web}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{typography}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{fr}\PY{+w}{ }\PY{c+c1}{\PYZsh{} fr | none, the site language by default}
+\end{Verbatim}
+\end{tscode}
+Under Zensical the spaces are part of a page's cached render, so changing the
+option calls for \tscodeinline{zensical build -\allowbreak{}c}.
 \section{Site-wide declarations}
 Whatever a page declares under \tscodeinline{press.declare} in its front matter, the
 plugin's \tscodeinline{declare:} key declares for every page of the site --- counters,
@@ -115,7 +152,7 @@ and its fence stays literal text on the page.
 \tscodeinline{template} & Template used for the books & \tscodeinline{book} \\
 \tscodeinline{build\_dir} & Where the \tscodeinline{.tex}, the assets and the PDF land & \tscodeinline{press} \\
 \tscodeinline{declare} & Site-wide declarations (\tscodeinline{declare.counters}, \tscodeinline{declare.admonitions}, \tscodeinline{declare.glossary}) & \tscodeinline{\{\}} \\
-\tscodeinline{web} & Web-only options: \tscodeinline{sections} (\tscodeinline{title} | \tscodeinline{number}), \tscodeinline{citations} (\tscodeinline{inline} | \tscodeinline{passthrough}), \tscodeinline{css\_prefix} and \tscodeinline{tags} (\tscodeinline{index} | \tscodeinline{none}) & \tscodeinline{\{\}} \\
+\tscodeinline{web} & Web-only options: \tscodeinline{sections} (\tscodeinline{title} | \tscodeinline{number}), \tscodeinline{citations} (\tscodeinline{inline} | \tscodeinline{passthrough}), \tscodeinline{css\_prefix}, \tscodeinline{tags} (\tscodeinline{index} | \tscodeinline{none}) and \tscodeinline{typography} (\tscodeinline{fr} | \tscodeinline{none}) & \tscodeinline{\{\}} \\
 \tscodeinline{inject\_markdown\_extensions} & Enable the extensions the lowering relies on & \tscodeinline{true} \\
 \tscodeinline{css} & Ship and register \tscodeinline{texsmith.css} & \tscodeinline{true} \\
 \tscodeinline{language} & Document language, else the theme's & \emph{theme} \\
@@ -150,13 +187,21 @@ as a single book instead.
 \PY{+w}{          }\PY{n+nt}{root}\PY{p}{:}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{bar}\PY{l+s}{\PYZdq{}}
 \end{Verbatim}
 \end{tscode}
-The PDF is built from each page's \textbf{source} --- the Markdown MkDocs handed the
-plugin, macros expanded, with the page metadata and the site declarations back
-in front of it --- read through the tmark reader, not from the rendered HTML. The
-exact input is written next to the output under \tscodeinline{<build\_dir>/<folder>/sources/},
-so what the PDF was built from is always inspectable. The counters are seeded
-where the site's chain stood before the book's first page, so \tscodeinline{FW-\allowbreak{}10} is
-\tscodeinline{FW-\allowbreak{}10} on both media.
+The PDF is built from each page's \textbf{file} --- the Markdown the page is written
+in, read through the tmark reader, never from the rendered HTML and never from
+what another plugin made of the text while the site rendered. Each page is
+parsed under its own path, with its metadata and the site declarations
+re-emitted in front of the body and the site's \tscodeinline{auto\_append} after it, so a
+diagnostic names the line you edit (\tscodeinline{docs/syntax/tables.md:42:5}) and an asset
+the page names relatively is looked up from the page's own directory. The
+counters are seeded where the site's chain stood before the book's first page,
+so \tscodeinline{FW-\allowbreak{}10} is \tscodeinline{FW-\allowbreak{}10} on both media.
+
+Because the book reads the files, \tscodeinline{mkdocs build} and
+\hyperref[the-book-is-a-command]{\tscodeinline{texsmith site build}} write the \textbf{same bytes}: one
+book path, two ways of reaching it. What the parser was handed is dropped next
+to the output under \tscodeinline{<build\_dir>/<folder>/sources/} --- front matter, body,
+appended definitions --- as a debugging artefact; nothing reads it back.
 
 A book is not the plugin's own work: \tscodeinline{texsmith.site.book} builds it, and the
 plugin is the adapter that hands it MkDocs' navigation. The same builder runs
@@ -269,8 +314,10 @@ hand-written image:
 \end{tscode}
 The command reads the same configuration file the extension reads --- pass a
 path, or let it find \tscodeinline{mkdocs.yml}, \tscodeinline{mkdocs.yaml} or \tscodeinline{zensical.toml} in the
-current directory. It resolves the navigation, walks every page for \tscodeinline{.snippet}
-fences and \tscodeinline{.drawio} images, renders each fence's preview into
+current directory. It resolves the navigation for the order and walks \textbf{every}
+Markdown page under \tscodeinline{docs\_dir} for \tscodeinline{.snippet} fences and \tscodeinline{.drawio} images --- the
+pages \tscodeinline{exclude\_docs} hides included, since Zensical publishes them anyway --- and
+renders each fence's preview into
 \tscodeinline{docs/assets/snippets/}, exports each diagram to \tscodeinline{docs/assets/drawio/} as an
 SVG under the diagram's own relative path, writes
 \tscodeinline{docs/assets/texsmith/texsmith.css}, and deletes from both directories what no
@@ -364,7 +411,9 @@ strict check runs once the \tscodeinline{.tex} is written and before the engine,
 output is there to read. \tscodeinline{mkdocs} is not imported anywhere on its path.
 
 The \tscodeinline{.tex} it writes is the \tscodeinline{.tex} \tscodeinline{TEXSMITH\_BUILD=1 mkdocs build} writes, byte
-for byte. \tscodeinline{make docs-\allowbreak{}zensical} runs it after the site.
+for byte --- the same navigation, and the same files read the same way, which is
+what makes the claim hold whatever the site's other plugins do to the Markdown
+on their way to the HTML. \tscodeinline{make docs-\allowbreak{}zensical} runs it after the site.
 
 What does not carry over yet:
 \begin{itemize}

@@ -11,8 +11,8 @@ it: it copies the files it finds and skips generating its own.
 ``texsmith site build`` is the other half of what a generator without plugin
 hooks cannot do: the PDF book of the site, which MkDocs builds from
 ``on_post_build``. It reads the same configuration file, resolves the same
-navigation and runs the same builder, so the ``.tex`` it writes is the one
-``mkdocs build`` writes.
+navigation and runs the same builder over the same files, so the ``.tex`` it
+writes is the one ``mkdocs build`` writes, byte for byte.
 """
 
 from __future__ import annotations

@@ -148,13 +148,21 @@ plugins:
           root: "bar"
 ```
 
-The PDF is built from each page's **source** — the Markdown MkDocs handed the
-plugin, macros expanded, with the page metadata and the site declarations back
-in front of it — read through the tmark reader, not from the rendered HTML. The
-exact input is written next to the output under `<build_dir>/<folder>/sources/`,
-so what the PDF was built from is always inspectable. The counters are seeded
-where the site's chain stood before the book's first page, so `FW-10` is
-`FW-10` on both media.
+The PDF is built from each page's **file** — the Markdown the page is written
+in, read through the tmark reader, never from the rendered HTML and never from
+what another plugin made of the text while the site rendered. Each page is
+parsed under its own path, with its metadata and the site declarations
+re-emitted in front of the body and the site's `auto_append` after it, so a
+diagnostic names the line you edit (`docs/syntax/tables.md:42:5`) and an asset
+the page names relatively is looked up from the page's own directory. The
+counters are seeded where the site's chain stood before the book's first page,
+so `FW-10` is `FW-10` on both media.
+
+Because the book reads the files, `mkdocs build` and
+[`texsmith site build`](#the-book-is-a-command) write the **same bytes**: one
+book path, two ways of reaching it. What the parser was handed is dropped next
+to the output under `<build_dir>/<folder>/sources/` — front matter, body,
+appended definitions — as a debugging artefact; nothing reads it back.
 
 A book is not the plugin's own work: `texsmith.site.book` builds it, and the
 plugin is the adapter that hands it MkDocs' navigation. The same builder runs
@@ -277,8 +285,10 @@ $ zensical build -f mkdocs.yml
 
 The command reads the same configuration file the extension reads — pass a
 path, or let it find `mkdocs.yml`, `mkdocs.yaml` or `zensical.toml` in the
-current directory. It resolves the navigation, walks every page for `.snippet`
-fences and `.drawio` images, renders each fence's preview into
+current directory. It resolves the navigation for the order and walks **every**
+Markdown page under `docs_dir` for `.snippet` fences and `.drawio` images — the
+pages `exclude_docs` hides included, since Zensical publishes them anyway — and
+renders each fence's preview into
 `docs/assets/snippets/`, exports each diagram to `docs/assets/drawio/` as an
 SVG under the diagram's own relative path, writes
 `docs/assets/texsmith/texsmith.css`, and deletes from both directories what no
@@ -375,7 +385,9 @@ strict check runs once the `.tex` is written and before the engine, so the
 output is there to read. `mkdocs` is not imported anywhere on its path.
 
 The `.tex` it writes is the `.tex` `TEXSMITH_BUILD=1 mkdocs build` writes, byte
-for byte. `make docs-zensical` runs it after the site.
+for byte — the same navigation, and the same files read the same way, which is
+what makes the claim hold whatever the site's other plugins do to the Markdown
+on their way to the HTML. `make docs-zensical` runs it after the site.
 
 What does not carry over yet:
 

@@ -64,6 +64,44 @@ construct TeXSmith owns renders the same way it does in the PDF.
 Diagnostics are reported with the page path: `docs/findings.md:12:5: warning
 ref-unresolved: …`.
 
+= French typography
+
+A French page wants a narrow no-break space before `;`, `:`, `!` and `?`, and
+`« … »` where the keyboard typed `"…"`. `babel-french` does it for the PDF,
+where the engine spaces the punctuation itself; a browser does nothing of the
+sort, so the rendered page carries the characters. Once the site's language is
+`fr` — `theme.language`, `theme.locale`, `site_language` or the plugin's own
+`language` — the rendered HTML goes through those two rules:
+
+#table(
+columns: 2,
+align: (left, left),
+table.header([Written], [Published]),
+[`Attention : ceci`], [`Attention` U+202F `: ceci`],
+[`Vraiment ?`], [`Vraiment` U+202F `?`],
+[`il a dit "oui"`], [`«` U+202F `oui` U+202F `»`],
+)
+
+Only text is touched. A `<code>`, `<pre>`, `<script>` or `<style>` element,
+every attribute value, every character entity and every space the page already
+carries — `&nbsp;`, a narrow one — come out as they went in, and a mark that is
+part of a token rather than of a sentence (`https://`, `12:30`, `?page=2`) is
+left alone. Running the rules over a page twice changes nothing the second
+time.
+
+`web.typography` overrides the language: `none` turns the rules off on a French
+site, `fr` turns them on for a site that declares another language.
+
+```yaml
+plugins:
+  - texsmith:
+      web:
+        typography: fr # fr | none, the site language by default
+```
+
+Under Zensical the spaces are part of a page's cached render, so changing the
+option calls for `zensical build -c`.
+
 = Site-wide declarations
 
 Whatever a page declares under `press.declare` in its front matter, the
@@ -103,7 +141,7 @@ table.header([Option], [Description], [Default]),
 [`template`], [Template used for the books], [`book`],
 [`build_dir`], [Where the `.tex`, the assets and the PDF land], [`press`],
 [`declare`], [Site-wide declarations (`declare.counters`, `declare.admonitions`, `declare.glossary`)], [`{}`],
-[`web`], [Web-only options: `sections` (`title` | `number`), `citations` (`inline` | `passthrough`), `css_prefix` and `tags` (`index` | `none`)], [`{}`],
+[`web`], [Web-only options: `sections` (`title` | `number`), `citations` (`inline` | `passthrough`), `css_prefix`, `tags` (`index` | `none`) and `typography` (`fr` | `none`)], [`{}`],
 [`inject_markdown_extensions`], [Enable the extensions the lowering relies on], [`true`],
 [`css`], [Ship and register `texsmith.css`], [`true`],
 [`language`], [Document language, else the theme's], [_theme_],
@@ -138,13 +176,21 @@ plugins:
           root: "bar"
 ```
 
-The PDF is built from each page's *source* — the Markdown MkDocs handed the
-plugin, macros expanded, with the page metadata and the site declarations back
-in front of it — read through the tmark reader, not from the rendered HTML. The
-exact input is written next to the output under `<build_dir>/<folder>/sources/`,
-so what the PDF was built from is always inspectable. The counters are seeded
-where the site's chain stood before the book's first page, so `FW-10` is
-`FW-10` on both media.
+The PDF is built from each page's *file* — the Markdown the page is written
+in, read through the tmark reader, never from the rendered HTML and never from
+what another plugin made of the text while the site rendered. Each page is
+parsed under its own path, with its metadata and the site declarations
+re-emitted in front of the body and the site's `auto_append` after it, so a
+diagnostic names the line you edit (`docs/syntax/tables.md:42:5`) and an asset
+the page names relatively is looked up from the page's own directory. The
+counters are seeded where the site's chain stood before the book's first page,
+so `FW-10` is `FW-10` on both media.
+
+Because the book reads the files, `mkdocs build` and
+#link(<the-book-is-a-command>)[`texsmith site build`] write the *same bytes*: one
+book path, two ways of reaching it. What the parser was handed is dropped next
+to the output under `<build_dir>/<folder>/sources/` — front matter, body,
+appended definitions — as a debugging artefact; nothing reads it back.
 
 A book is not the plugin's own work: `texsmith.site.book` builds it, and the
 plugin is the adapter that hands it MkDocs' navigation. The same builder runs
@@ -267,8 +313,10 @@ $ zensical build -f mkdocs.yml
 
 The command reads the same configuration file the extension reads — pass a
 path, or let it find `mkdocs.yml`, `mkdocs.yaml` or `zensical.toml` in the
-current directory. It resolves the navigation, walks every page for `.snippet`
-fences and `.drawio` images, renders each fence's preview into
+current directory. It resolves the navigation for the order and walks *every*
+Markdown page under `docs_dir` for `.snippet` fences and `.drawio` images — the
+pages `exclude_docs` hides included, since Zensical publishes them anyway — and
+renders each fence's preview into
 `docs/assets/snippets/`, exports each diagram to `docs/assets/drawio/` as an
 SVG under the diagram's own relative path, writes
 `docs/assets/texsmith/texsmith.css`, and deletes from both directories what no
@@ -365,7 +413,9 @@ strict check runs once the `.tex` is written and before the engine, so the
 output is there to read. `mkdocs` is not imported anywhere on its path.
 
 The `.tex` it writes is the `.tex` `TEXSMITH_BUILD=1 mkdocs build` writes, byte
-for byte. `make docs-zensical` runs it after the site.
+for byte — the same navigation, and the same files read the same way, which is
+what makes the claim hold whatever the site's other plugins do to the Markdown
+on their way to the HTML. `make docs-zensical` runs it after the site.
 
 What does not carry over yet:
 
