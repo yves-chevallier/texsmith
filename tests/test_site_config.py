@@ -208,16 +208,25 @@ def test_snippet_base_paths_reads_either_spelling(tmp_path: Path) -> None:
     assert snippet_base_paths_from_extensions(extensions, tmp_path) == [tmp_path / "includes"]
 
 
-def test_snippet_base_paths_is_empty_when_it_cannot_see_one(tmp_path: Path) -> None:
+def test_snippet_base_paths_is_empty_when_the_extension_is_not_enabled(tmp_path: Path) -> None:
     assert snippet_base_paths_from_extensions({}, tmp_path) == []
     assert snippet_base_paths_from_extensions(None, tmp_path) == []
-    assert snippet_base_paths_from_extensions({"pymdownx.snippets": {}}, tmp_path) == []
+    assert snippet_base_paths_from_extensions(["abbr", "attr_list"], tmp_path) == []
     assert (
         snippet_base_paths_from_extensions(
             {"pymdownx.snippets": {"base_path": [object()]}}, tmp_path
         )
         == []
     )
+
+
+def test_snippet_base_paths_default_to_the_project_directory(tmp_path: Path) -> None:
+    """``pymdownx.snippets`` defaults to ``['.']``, the directory a build runs from."""
+    assert snippet_base_paths_from_extensions({"pymdownx.snippets": {}}, tmp_path) == [tmp_path]
+    assert snippet_base_paths_from_extensions(
+        {"pymdownx.snippets": {"check_paths": True}}, tmp_path
+    ) == [tmp_path]
+    assert snippet_base_paths_from_extensions(["abbr", "pymdownx.snippets"], tmp_path) == [tmp_path]
 
 
 def test_an_unknown_suffix_is_refused(tmp_path: Path) -> None:

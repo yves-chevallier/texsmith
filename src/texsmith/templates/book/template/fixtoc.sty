@@ -30,32 +30,69 @@
 }
 \renewcommand{\cftpartpresnum}{\partname\ }
 
+% \cftpartpresnum names the part through \partname, and babel-french turns that
+% into an ordinal built from \value{part} ("Première partie") which also cancels
+% \thepart, so the part heading carries the name alone. While the table of
+% contents is typeset that counter is 0, and \partname then expanded to nonsense
+% (a stray \ordinal: "Missing number, treated as zero"). memoir hands the entry's
+% own number to \partnumberlinehook, so the counter is restored from it there —
+% a local assignment, undone when \tableofcontents closes its group — and the
+% entry prints \thepart rather than the recorded numeral, so a language that
+% cancels \thepart labels the contents entry as it labels the heading.
+\newif\iftspartnumber
+\makeatletter
+\renewcommand{\partnumberline}[1]{%
+  \partnumberlinehook{#1}%
+  \partnumberlinebox\@tempdima{%
+    \cftpartname\@cftbsnum\iftspartnumber\thepart\else#1\fi\@cftasnum}%
+  \@cftasnumb}
+\makeatother
+
 \ExplSyntaxOn
+\RenewDocumentCommand{\partnumberlinehook}{m}
+ {
+  \int_set:Nn \l_tmpa_int { \int_from_roman:n {#1} }
+  \int_compare:nTF { \l_tmpa_int > 0 }
+   {
+    \int_set:cn { c@part } { \l_tmpa_int }
+    \tspartnumbertrue
+   }
+   {
+    \int_compare:nT { \value{part} < 1 } { \int_set:cn { c@part } { 1 } }
+    \tspartnumberfalse
+   }
+ }
 \NewDocumentCommand{\computemaxpartnumberwidth}{}
  {
   \dim_set:Nn \l_tmpa_dim {0pt}
+  \int_set:Nn \l_tmpa_int { \value{part} }
   \int_step_inline:nn { \use:c{LASTPART}+1 }
    {
+    \int_set:cn { c@part } {##1}
     \settowidth{\l_tmpb_dim}
      {
       \cftpartfont \cftpartpresnum \int_to_Roman:n {##1}
      }
    \dim_compare:nT { \l_tmpb_dim > \l_tmpa_dim } { \dim_set:Nn \l_tmpa_dim { \l_tmpb_dim } }
   }
+  \int_set:cn { c@part } { \l_tmpa_int }
   \addtolength{\l_tmpa_dim}{1em}
   \setlength{\cftpartnumwidth}{\l_tmpa_dim}
  }
 \NewDocumentCommand{\computemaxchapternumberwidth}{}
  {
   \dim_set:Nn \l_tmpa_dim {0pt}
+  \int_set:Nn \l_tmpa_int { \value{chapter} }
   \int_step_inline:nn { \use:c{LASTCHAPTER}+1 }
    {
+    \int_set:cn { c@chapter } {##1}
     \settowidth{\l_tmpb_dim}
      {
       \cftchapterfont \cftchapterpresnum \int_to_arabic:n {##1} \cftchapteraftersnum
      }
     \dim_compare:nT { \l_tmpb_dim > \l_tmpa_dim } { \dim_set:Nn \l_tmpa_dim { \l_tmpb_dim } }
    }
+  \int_set:cn { c@chapter } { \l_tmpa_int }
   \addtolength{\l_tmpa_dim}{1em}
   \setlength{\cftchapternumwidth}{\l_tmpa_dim}
  }

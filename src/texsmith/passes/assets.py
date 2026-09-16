@@ -60,7 +60,14 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
     from texsmith.core.documents import Document
 
 
-__all__ = ["ASSETS_DIR", "DRAWIO_SUFFIXES", "asset_registry", "mermaid_caption", "run"]
+__all__ = [
+    "ASSETS_DIR",
+    "DRAWIO_SUFFIXES",
+    "asset_registry",
+    "mermaid_caption",
+    "resolve_asset_path",
+    "run",
+]
 
 #: The directory next to the output where assets are copied (``LaTeXRenderer.assets_root``).
 ASSETS_DIR = "assets"
@@ -96,6 +103,29 @@ def strip_theme_variant(src: str) -> str:
         if src.endswith(marker):
             return src[: -len(marker)]
     return src
+
+
+def resolve_asset_path(src: str, *, source_dir: Path, root_dir: Path | None) -> Path | None:
+    """The file ``src`` names, or ``None`` when no file is there.
+
+    A **relative** path is read from ``source_dir``, the directory of the file
+    that names it. A **leading slash** is read first under ``root_dir``, the
+    documentation root of a site build — MkDocs'
+    ``validation.absolute_links: relative_to_docs``, the rule the site's own
+    draw.io export already follows — and then as the filesystem path it is for
+    a standalone conversion, which is also what a pass that *computed* an
+    absolute path (a snippet preview next to the output) means by it.
+
+    Every asset kind the pass resolves goes through here: images, the draw.io
+    and SVG diagrams it converts, and the ``.mmd`` sources it reads as fences.
+    """
+    if root_dir is not None and src.startswith("/"):
+        rooted = Path(root_dir) / src.lstrip("/")
+        if rooted.is_file():
+            return rooted.resolve()
+    candidate = Path(src)
+    resolved = candidate if candidate.is_absolute() else source_dir / candidate
+    return resolved.resolve() if resolved.is_file() else None
 
 
 def _attr(attrs: model.Attrs, name: str) -> str | None:
@@ -204,10 +234,8 @@ class _AssetPass:
         return self.local(node, src)
 
     def resolve(self, src: str) -> Path | None:
-        """The local file ``src`` names, relative to the document's directory."""
-        candidate = Path(src)
-        resolved = candidate if candidate.is_absolute() else self.source_dir / candidate
-        return resolved.resolve() if resolved.is_file() else None
+        """The local file ``src`` names; see :func:`resolve_asset_path`."""
+        return resolve_asset_path(src, source_dir=self.source_dir, root_dir=self.ctx.root_dir)
 
     def _live_diagram(self, node: model.Image, src: str) -> str | None:
         try:

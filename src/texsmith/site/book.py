@@ -240,6 +240,10 @@ class BookSettings:
     bibliography: list[Path] = field(default_factory=list)
     template_overrides: dict[str, Any] = field(default_factory=dict)
     snippet_base_paths: list[Path] = field(default_factory=list)
+    #: The site's ``docs_dir``: what a root-relative asset path (``/assets/…``)
+    #: in a page resolves against, MkDocs' ``validation.absolute_links:
+    #: relative_to_docs`` rule.
+    docs_dir: Path | None = None
 
     @property
     def build_dir(self) -> Path:
@@ -273,6 +277,7 @@ def load_book_settings(
     build_dir: Path,
     language: str | None = None,
     snippet_base_paths: Sequence[Path] = (),
+    docs_dir: Path | None = None,
     logger: logging.Logger | None = None,
 ) -> BookSettings:
     """Read the ``texsmith`` options into the settings the books are built with.
@@ -309,6 +314,7 @@ def load_book_settings(
         bibliography=coerce_paths(options.get("bibliography") or [], relative_to=project_dir),
         template_overrides=dict(options.get("template_overrides") or {}),
         snippet_base_paths=list(snippet_base_paths),
+        docs_dir=docs_dir,
     )
 
 
@@ -655,6 +661,7 @@ class BookBuilder:
             copy_assets=copy_assets,
             language=runtime_language,
             default_include_paths=list(settings.snippet_base_paths),
+            root_dir=settings.docs_dir,
             emitter=emitter,
         )
         chain = ResolutionChain(
@@ -1312,6 +1319,7 @@ def build_books(
         else book_build_root(options, config.project_dir),
         language=language,
         snippet_base_paths=config.snippet_base_paths,
+        docs_dir=config.docs_dir,
         logger=log,
     )
 

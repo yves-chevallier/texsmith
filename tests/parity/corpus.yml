@@ -137,6 +137,12 @@ examples:
     backend: typst
     requires: [network, typst]
 
+  # examples/book-fr (French book: parts and chapters under babel-french)
+  - id: book-fr
+    cwd: examples/book-fr
+    args: [book-fr.md, -tbook]
+    backend: latex
+
   # ---- examples/code (no template: bare fragments) ------------------------
   - id: code-block
     cwd: examples/code

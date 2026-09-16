@@ -28,11 +28,17 @@
 \expandafter\def\csname ts@key@\VAR{name}\endcsname{\VAR{label}}
 \BLOCK{ endfor }
 \ExplSyntaxOn
+% A key name is looked up as a string: a label the writer already resolved may
+% hold anything -- math (\(\leftarrow\)), a space, a symbol -- and such tokens
+% cannot go inside \csname. \tl_to_str:n makes the lookup name harmless, the
+% table is missed, and the label is typeset exactly as it was written.
 \cs_new_protected:Npn \ts_key:n #1
+  { \exp_args:Nx \__ts_key_typeset:nn { \tl_to_str:n {#1} } {#1} }
+\cs_new_protected:Npn \__ts_key_typeset:nn #1#2
   {
     \cs_if_exist:cTF { ts@key@#1 }
       { \keystroke { \use:c { ts@key@#1 } } }
-      { \keystroke { #1 } }
+      { \keystroke { #2 } }
   }
 \bool_new:N \l__ts_keys_first_bool
 \NewDocumentCommand { \tskeys } { m }

@@ -85,6 +85,17 @@ six seconds) after three changes to a copy of `mkdocs.yml`:
    symlink does not count.
 3. The `autorefs` option `resolve_closest` is rejected.
 
+**2026-09-16, Zensical 0.0.62.** The list has shrunk to its first two items,
+and the configuration this documentation is built from is `mkdocs.yml` itself.
+`zensical/config.py` loads it with the full `yaml.Loader`, so a
+`!!python/name:` tag resolves; it registers an `!ENV` constructor of its own;
+it rewrites `material.extensions` to `zensical.extensions` before parsing; and
+`resolve_closest` is listed among `autorefs`' recognised-but-unimplemented
+options, so it is accepted and dropped rather than rejected (item 3). Item 1
+stands: no `!relative` constructor is registered, and that is the single
+adaptation left. Item 2 stands as well — `docs_dir` is resolved and must be
+`is_relative_to` the project root, so a symlink still does not count.
+
 ## What breaks in TeXSmith
 
 The `texsmith` MkDocs plugin relies on four hooks that Zensical does not have:

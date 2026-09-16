@@ -12,6 +12,136 @@
         "text": "Abbreviations In modern chemical analysis, techniques like NMR, FTIR, and GC-MS are essential for iden- tifying compounds, while methods such as HPLC and ICP-OES provide high-precision quan- tification of analytes across a wide range of matrices. Researchers often rely on computational tools like DFT and Molecular Dynamics to model reaction pathways and molecular behavior, supported by data from X-ray Diffraction for crystalline structure determination. Acronyms DFT Density Functional Theory 1 FTIR Fourier Transform Infrared Spectroscopy 1 GC-MS Gas Chromatography\u2013Mass Spectrometry 1 HPLC High-Performance Liquid Chromatography 1 ICP-OES Inductively Coupled Plasma\u2013Optical Emission Spectroscopy 1 NMR Nuclear Magnetic Resonance 1"
       }
     ],
+    "book-fr/book-fr.pdf": [
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.00639,
+        "text": "Petit trait\u00e9 de typographie Ada Lovelace 16 septembre 2026"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0122,
+        "text": "Pr\u00e9face Ce livre existe pour une seule raison : v\u00e9rifier que le gabarit book se compose en fran\u00e7ais. La table des mati\u00e8res num\u00e9rote ses parties avec le nom ordinal que babel-french fabrique \u2014 \u00ab Premi\u00e8re partie \u00bb, \u00ab Deuxi\u00e8me partie \u00bb \u2014 et les colonnes de la table doivent \u00eatre mesur\u00e9es avec ce nom-l\u00e0. iii"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.01117,
+        "text": "Table des mati\u00e8res Premi\u00e8re partie Les caract\u00e8res 1 1 L\u2019alphabet 3 2 La ponctuation 5 2.1 Les guillemets . . . . . . . . . . . . . . . . . . . . . . . . 5 Deuxi\u00e8me partie Les mesures 7 3 Le cic\u00e9ro 9 4 Le corps 11 iv"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.00559,
+        "text": "Premi\u00e8re partie Les caract\u00e8res"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.00701,
+        "text": "Chapitre 1 L\u2019alphabet Le fran\u00e7ais ajoute \u00e0 l\u2019alphabet latin des lettres accentu\u00e9es : \u00e0, \u00e2, \u00e7, \u00e9, \u00e8, \u00ea, \u00eb, \u00ee, \u00ef, \u00f4, \u00f9, \u00fb, \u00fc, \u00ff, ainsi que les ligatures \u0153 et \u00e6. 3"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0157,
+        "text": "Chapitre 2 La ponctuation La ponctuation haute \u2014 le point-virgule, les deux-points, le point d\u2019interrogation et le point d\u2019exclamation \u2014 demande une espace fine ins\u00e9cable. Les guillemets fran\u00e7ais encadrent la citation : \u00ab ainsi \u00bb. 2.1 Les guillemets Une citation dans une citation se marque avec les guillemets anglais : \u00ab il a dit \u201cnon\u201d puis il est parti \u00bb. 5"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.00544,
+        "text": "Deuxi\u00e8me partie Les mesures"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0059,
+        "text": "Chapitre 3 Le cic\u00e9ro Le cic\u00e9ro vaut douze points Didot, soit 4,512 mm. Le point pica anglo-saxon, lui, vaut 0,3528 mm. 9"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.01243,
+        "text": "Chapitre 4 Le corps Usage Corps Interligne Note 8 pt 10 pt Texte 10 pt 12 pt Titre 14 pt 16 pt Une formule pour finir : c = 12 \u00d7 d, o\u00f9 d est le point Didot. 11"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      }
+    ],
     "counters/counters.pdf": [
       {
         "size": [
@@ -78,16 +208,16 @@
           827,
           1170
         ],
-        "ink": 0.03574,
-        "text": "Margin Notes The {aside}[\u2026] inline extension TeXSmith 1 Margin Notes TeXSmith\u2019s margin-note extension adds a single inline shorthand to the unified {keyword}[content] family already used by {index}[term] and {raw latex}(payload). The syntax is: {aside side=\u2026}[note text] where side is an optional placement \u2014 left, right, outer or inner \u2014 selecting a margin explicitly. It compiles down to \\marginnote{\u2026} from the marginnote LATEX package (auto- loaded on first use). 1.1 Default placement No su\ufb00ix means the document\u2019s default side. In a oneside layout that\u2019s the right margin; in a twoside layout, the outer margin (so the note flips automatically between recto and verso pages). Most readers appreciate a short quip default note that sits beside the paragraph without interrupting the flow. When margin notes are kept brief and self-contained, they feel like a friendly aside rather than a distraction. 1.2 Forced side Force the left margin with side=left and the right margin with side=right. Because the switch is scoped to a LATEX group, subsequent unqualified notes still follow the document\u2019s default placement. Some diagrams read better when labelled on the left left-hand pointer , while running commentary fits the right-hand margin right-hand commentary more naturally. Mixing the two in close succession is fine \u2014 each note is independent. 1.3 Inline formatting Margin notes pass through the full inline-Markdown parser, so they support the usual bold, italic, inline code, and links. Viscoelastic materials can be approximated as linear Hooke\u2019s law applies at small strain where the stress is proportional to the strain under moderate stress, but non-linear effects dominate above the yield point. 1"
+        "ink": 0.03706,
+        "text": "default note right-hand commen- tary Hooke\u2019s law applies at small strain where the stress is proportional to the strain Margin Notes The {aside}[\u2026] inline extension TeXSmith 1 Margin Notes TeXSmith\u2019s margin-note extension adds a single inline shorthand to the unified {keyword}[content] family already used by {index}[term] and {raw latex}(payload). The syntax is: {aside side=\u2026}[note text] where side is an optional placement \u2014 left, right, outer or inner \u2014 selecting a margin explicitly. It compiles down to \\tsaside: a \\marginpar that marginfix moves past the previous note on the document\u2019s own side, a \\marginnote fixed at its line on the other side or inside a box. 1.1 Default placement No su\ufb00ix means the document\u2019s default side. In a oneside layout that\u2019s the right margin; in a twoside layout, the outer margin (so the note flips automatically between recto and verso pages). Most readers appreciate a short quip that sits beside the paragraph without interrupting the flow. When margin notes are kept brief and self-contained, they feel like a friendly aside rather than a distraction. 1.2 Forced side Force the left margin with side=left and the right margin with side=right. Because the switch is scoped to a LATEX group, subsequent unqualified notes still follow the document\u2019s default placement. Some diagrams read better when labelled on the left left-hand pointer , while running commentary fits the right-hand margin more naturally. Mixing the two in close succession is fine \u2014 each note is independent. 1.3 Inline formatting Margin notes pass through the full inline-Markdown parser, so they support the usual bold, italic, inline code, and links. Viscoelastic materials can be approximated as linear under moderate stress, but non-linear effects dominate above the yield point. 1"
       },
       {
         "size": [
           827,
           1170
         ],
-        "ink": 0.01486,
-        "text": "1.4 Longer notes The package handles multi-sentence notes gracefully. They line-wrap in the margin and do not disturb the main text\u2019s baseline grid. Longer notes wrap over several lines and keep flowing down the margin. Keep them concise so the reader can scan them without losing the thread of the main text. Below, a denser example mixing sides and inline styles: \u2022 Classical mechanics see Newton, Prin 1687 predates the calculus of variations. \u2022 Modern formulations rely on Lagrangians or Hamiltonians for energy-based analyses and variational principles. \u2022 Quantum mechanics introduces non-commuting observables follows in the 20th century. 1.5 Inner / Outer In a twoside layout \u2014 like this article \u2014 {o} (outer) and {i} (inner) are MVP aliases of {r} and {l} respectively. On single-side documents they behave identically to their counterparts. 2"
+        "ink": 0.01498,
+        "text": "Longer notes wrap over several lines and keep flowing down the margin. Keep them concise so the reader can scan them without losing the thread of the main text. see Newton, Principia, 1687 or Hamiltonians for energy-based analyses 1.4 Longer notes The package handles multi-sentence notes gracefully. They line-wrap in the margin and do not disturb the main text\u2019s baseline grid. Below, a denser example mixing sides and inline styles: \u2022 Classical mechanics predates the calculus of variations. \u2022 Modern formulations rely on Lagrangians and variational principles. \u2022 Quantum mechanics introduces non-commuting observables follows in the 20th century. 1.5 Inner / Outer In a twoside layout \u2014 like this article \u2014 {o} (outer) and {i} (inner) are MVP aliases of {r} and {l} respectively. On single-side documents they behave identically to their counterparts. 2"
       }
     ]
   }

@@ -170,6 +170,22 @@ def _extension_options(markdown_extensions: Any, name: str) -> Mapping[str, Any]
     return None
 
 
+def _extension_declared(markdown_extensions: Any, name: str) -> bool:
+    """Whether the site enables one Markdown extension, with or without options."""
+    if _extension_options(markdown_extensions, name) is not None:
+        return True
+    if isinstance(markdown_extensions, Mapping):
+        return name in markdown_extensions
+    if isinstance(markdown_extensions, Sequence) and not isinstance(
+        markdown_extensions, str | bytes
+    ):
+        return any(
+            entry == name or (isinstance(entry, Mapping) and name in entry)
+            for entry in markdown_extensions
+        )
+    return False
+
+
 def snippet_base_paths_from_extensions(markdown_extensions: Any, project_dir: Path) -> list[Path]:
     """The ``base_path`` of the site's ``pymdownx.snippets``, as directories.
 
@@ -178,15 +194,18 @@ def snippet_base_paths_from_extensions(markdown_extensions: Any, project_dir: Pa
     may be one path or a list, and a ``!relative`` tag arrives as a
     placeholder object that spells itself out through :func:`os.fspath`
     (``!relative $config_dir`` is the directory of the configuration file).
-    Anything else — the extension absent, an option we cannot read as a path —
-    yields no search path rather than a guess.
+
+    A site that enables the extension without naming a ``base_path`` gets the
+    project directory, which is what ``pymdownx.snippets`` itself uses: its
+    default is ``['.']``, relative to the working directory a build runs from.
+    Only a site that does not enable the extension at all gets no search path.
     """
+    if not _extension_declared(markdown_extensions, SNIPPETS_EXTENSION):
+        return []
     section = _extension_options(markdown_extensions, SNIPPETS_EXTENSION)
-    if section is None:
-        return []
-    raw = section.get("base_path")
+    raw = section.get("base_path") if section is not None else None
     if raw is None:
-        return []
+        return [Path(os.path.normpath(project_dir))]
     candidates = raw if isinstance(raw, list | tuple) else [raw]
     paths: list[Path] = []
     for candidate in candidates:

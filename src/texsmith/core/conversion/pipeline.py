@@ -191,6 +191,7 @@ def build_pass_context(
         loader=TexsmithLoader(document.files, active_sink),
         output_dir=context.output_dir,
         include_paths=include_search_path(context.request, document),
+        root_dir=context.request.root_dir if context.request is not None else None,
         request=context.request,
         contexts=contexts,
         emitter=emitter,

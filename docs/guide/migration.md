@@ -135,6 +135,24 @@ press:
 ---
 ```
 
+### MkDocs plugin options
+
+| Legacy | Canonical | Horizon |
+| ------ | --------- | ------- |
+| `save_html: true` | — | removed in 0.7 |
+
+`save_html` saved the rendered HTML of every page next to the book. Nothing
+reads it any more: since the TMark migration the PDF is built from each page's
+Markdown, so the snapshot recorded a document the book did not come from. The
+option is gone rather than ignored, and MkDocs says so — `Plugin 'texsmith'
+option 'save_html': Unrecognised configuration name` — so a configuration that
+still carries it is told, and the build carries on.
+
+What the book *was* built from is written unconditionally: one
+`<build_dir>/<folder>/sources/**.md` per page, the page's Markdown with its
+metadata and the site's declarations back in front of it, exactly what the
+reader parsed. That is the file to read when a PDF and a page disagree.
+
 ## Behaviour changes that are not bugs
 
 These are not deprecations: they are places where a CommonMark parser reads

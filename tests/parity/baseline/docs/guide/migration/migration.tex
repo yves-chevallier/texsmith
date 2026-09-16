@@ -180,6 +180,27 @@ After:
 \PY{n+nn}{\PYZhy{}\PYZhy{}\PYZhy{}}
 \end{Verbatim}
 \end{tscode}
+\subsection{MkDocs plugin options}
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Legacy} & \textbf{Canonical} & \textbf{Horizon} \\
+\midrule
+\tscodeinline{save\_html: true} & --- & removed in 0.7 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+\tscodeinline{save\_html} saved the rendered HTML of every page next to the book. Nothing
+reads it any more: since the TMark migration the PDF is built from each page's
+Markdown, so the snapshot recorded a document the book did not come from. The
+option is gone rather than ignored, and MkDocs says so --- \tscodeinline{Plugin 'texsmith'
+option 'save\_html': Unrecognised configuration name} --- so a configuration that
+still carries it is told, and the build carries on.
+
+What the book \emph{was} built from is written unconditionally: one
+\tscodeinline{<build\_dir>/<folder>/sources/**.md} per page, the page's Markdown with its
+metadata and the site's declarations back in front of it, exactly what the
+reader parsed. That is the file to read when a PDF and a page disagree.
 \section{Behaviour changes that are not bugs}
 These are not deprecations: they are places where a CommonMark parser reads
 your bytes differently from Python-Markdown. \tscodeinline{tmark lint -\allowbreak{}-\allowbreak{}fix} cannot repair

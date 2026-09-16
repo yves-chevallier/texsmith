@@ -172,6 +172,10 @@ class PassContext:
     #: not resolve against the including file, in order (``--include-path``,
     #: ``press.include_paths``, the site's ``pymdownx.snippets`` base path).
     include_paths: tuple[Path, ...] = ()
+    #: The directory a root-relative asset path (``/assets/logo.png``) resolves
+    #: against — the site's ``docs_dir``. ``None``: a leading ``/`` names a
+    #: filesystem path, as it does for a standalone conversion.
+    root_dir: Path | None = None
     request: ConversionRequest | None = None
     #: Mustache contexts, first match wins (template overrides, front matter, defaults).
     contexts: tuple[Mapping[str, Any], ...] = ()

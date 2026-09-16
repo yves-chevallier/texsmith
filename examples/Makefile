@@ -6,6 +6,7 @@ EXAMPLES := \
 	admonition \
 	booby \
 	book \
+	book-fr \
 	code \
 	colorful \
 	counters \

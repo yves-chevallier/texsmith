@@ -10,14 +10,17 @@ from __future__ import annotations
 from pathlib import Path
 import textwrap
 from typing import Any
+from xml.etree import ElementTree
 
 from markdown import Markdown
 import pytest
 
 from texsmith.adapters.plugins import snippet
 from texsmith.site import assets, web
+from texsmith.site.index import SitePage
 
 
+autorefs = pytest.importorskip("zensical.extensions.autorefs")
 context = pytest.importorskip("zensical.extensions.context")
 links = pytest.importorskip("zensical.extensions.links")
 
@@ -298,6 +301,29 @@ def test_a_drawio_image_points_at_the_exported_svg(tmp_path: Path, monkeypatch) 
     assert ".drawio" not in html
 
 
+def test_a_glightbox_link_follows_the_drawio_image_it_wraps(tmp_path: Path, monkeypatch) -> None:
+    """The lightbox must open the SVG, not hand the browser the .drawio XML."""
+    page = (
+        "# T\n\n"
+        '<a class="glightbox" href="d.drawio"><img alt="Diagram" src="d.drawio" /></a>\n\n'
+        '<a href="d.drawio">the source file</a>\n'
+    )
+    config = make_site(tmp_path, {"guide/a.md": page})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    (tmp_path / "docs" / "guide" / "d.drawio").write_text("<mxfile/>", encoding="utf-8")
+    export = tmp_path / "docs" / assets.drawio_export_uri("guide/d.drawio")
+    export.parent.mkdir(parents=True, exist_ok=True)
+    export.write_text("<svg/>", encoding="utf-8")
+
+    html = render(config, "guide/a.md", page)
+
+    assert 'href="../../assets/drawio/guide/d.svg"' in html
+    assert 'src="../../assets/drawio/guide/d.svg"' in html
+    # A link an author wrote to the diagram itself is not an image's lightbox:
+    # it keeps its target, with only the site's own relative rewrite applied.
+    assert '<a href="../d.drawio">the source file</a>' in html
+
+
 def test_a_drawio_image_without_an_export_keeps_its_tag(
     tmp_path: Path, monkeypatch, caplog
 ) -> None:
@@ -336,3 +362,78 @@ def test_a_page_the_site_excludes_is_lowered_without_reporting(
         render(config, "assets/part.md", page)
 
     assert "deprecated" in caplog.text
+
+
+ANCHOR_PAGE = """\
+# Anchored
+
+[]{#opengl-coordinates}
+
+The coordinates are right-handed.
+"""
+
+REFERRING_PAGE = """\
+# Referring
+
+[Plus haut][opengl-coordinates], we defined them.
+"""
+
+
+def lower(text: str, src_uri: str) -> str:
+    """The Markdown the extension splices, before Python-Markdown reads it."""
+    state = web.site_state()
+    assert state is not None
+    lowered = state.index.lower(
+        SitePage(src_uri=src_uri, abs_src_path=state.docs_dir / src_uri, meta={}),
+        text,
+    )
+    assert lowered is not None
+    return lowered.text
+
+
+def test_an_anchor_lowers_to_an_element_and_not_to_raw_html(tmp_path: Path, monkeypatch) -> None:
+    """Python-Markdown stashes raw HTML out of the element tree that
+    ``mkdocs-autorefs`` scans, so ``<span id>`` is an id no page can point
+    at; the empty-link spelling is the one ``attr_list`` turns into an
+    ``<a id>``."""
+    config = make_site(tmp_path, {"a.md": ANCHOR_PAGE, "b.md": REFERRING_PAGE})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    html = render(config, "a.md", ANCHOR_PAGE)
+    lowered = lower(ANCHOR_PAGE, "a.md")
+
+    assert "[](){#opengl-coordinates}" in lowered
+    assert "<span id=" not in lowered
+    assert 'id="opengl-coordinates"></a>' in html
+
+    # The round trip Python-Markdown makes of it: an element with the id.
+    rendered = Markdown(extensions=["attr_list"]).convert(lowered)
+    root = ElementTree.fromstring(f"<body>{rendered}</body>")
+    assert [el for el in root.iter("a") if el.get("id") == "opengl-coordinates"], rendered
+
+    # And what autorefs itself makes of that element: a registered anchor.
+    autorefs.AUTOREFS = None
+    page = context.Page(url="a/", path="a.md")
+    md = Markdown(
+        extensions=[
+            context.ContextExtension(page=page, config=config),
+            "attr_list",
+            autorefs.AutorefsExtension(),
+        ]
+    )
+    md.convert(lowered)
+    registered = autorefs.get_autorefs_page_data("a/")["primary"]
+    autorefs.AUTOREFS = None
+    assert "opengl-coordinates" in registered, registered
+
+
+def test_a_reference_style_link_is_left_to_autorefs(tmp_path: Path, monkeypatch) -> None:
+    """``[text][id]`` is Markdown a site already resolves across pages, and
+    the lowering knows no page but its own: it leaves the bytes alone."""
+    config = make_site(tmp_path, {"a.md": ANCHOR_PAGE, "b.md": REFERRING_PAGE})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    render(config, "b.md", REFERRING_PAGE)
+    lowered = lower(REFERRING_PAGE, "b.md")
+
+    assert "[Plus haut][opengl-coordinates], we defined them." in lowered

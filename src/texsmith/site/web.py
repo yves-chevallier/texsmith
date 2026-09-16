@@ -95,6 +95,12 @@ DRAWIO_PRIORITY = 1
 
 #: Matches one ``<img>`` tag and the ``src`` it carries.
 RE_IMG = re.compile(r"<img\b[^>]*?\bsrc=\"([^\"]+)\"[^>]*>", re.IGNORECASE)
+#: An image wrapped in a link, the shape glightbox gives a figure: the anchor
+#: names the same file the image does.
+RE_LINKED_IMG = re.compile(
+    r"<a\b[^>]*?\bhref=\"([^\"]+)\"[^>]*>\s*<img\b[^>]*?\bsrc=\"([^\"]+)\"[^>]*>\s*</a>",
+    re.IGNORECASE,
+)
 
 
 @dataclass(slots=True)
@@ -174,6 +180,12 @@ class DrawioPostprocessor(Postprocessor):
     diagram to an SVG under ``docs_dir``, and this rewrites the tag to it —
     only when the export is there, so a diagram nobody exported keeps its tag
     rather than pointing at a file the build would not publish.
+
+    An image glightbox wrapped in a link to the very same file has its
+    ``href`` rewritten with it: the lightbox otherwise offers the ``.drawio``
+    XML for download. That shape — an anchor naming the diagram its own image
+    shows — is the only ``href`` touched, so a link an author wrote to the
+    source file is left as it is.
     """
 
     def run(self, text: str) -> str:
@@ -190,18 +202,36 @@ class DrawioPostprocessor(Postprocessor):
         prefix = assets.asset_prefix(dest_uri)
         missing: list[str] = []
 
-        def rewrite(match: re.Match[str]) -> str:
-            src = match.group(1)
+        def export(src: str) -> tuple[str, str] | None:
+            """``(diagram, published URL of its SVG)``, or ``None`` when there is none."""
             source_uri = assets.drawio_source_uri(src, page_uri=dest_uri)
             if source_uri is None:
-                return match.group(0)
+                return None
             export_uri = assets.drawio_export_uri(source_uri)
             if not (state.docs_dir / export_uri).is_file():
                 missing.append(source_uri)
-                return match.group(0)
-            return match.group(0).replace(f'src="{src}"', f'src="{prefix}{export_uri}"', 1)
+                return None
+            return source_uri, f"{prefix}{export_uri}"
 
-        rewritten = RE_IMG.sub(rewrite, text)
+        def rewrite_linked(match: re.Match[str]) -> str:
+            href, src = match.group(1), match.group(2)
+            linked, image = export(href), export(src)
+            if linked is None or image is None or linked[0] != image[0]:
+                return match.group(0)
+            return (
+                match.group(0)
+                .replace(f'href="{href}"', f'href="{linked[1]}"', 1)
+                .replace(f'src="{src}"', f'src="{image[1]}"', 1)
+            )
+
+        def rewrite(match: re.Match[str]) -> str:
+            src = match.group(1)
+            image = export(src)
+            if image is None:
+                return match.group(0)
+            return match.group(0).replace(f'src="{src}"', f'src="{image[1]}"', 1)
+
+        rewritten = RE_IMG.sub(rewrite, RE_LINKED_IMG.sub(rewrite_linked, text))
         if missing:
             _log.warning(
                 "texsmith: page '%s' shows %s, which no SVG was exported for — "

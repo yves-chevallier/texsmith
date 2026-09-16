@@ -95,6 +95,31 @@ def test_keystrokes_fragment_renders_when_used(tmp_path: Path) -> None:
     assert (tmp_path / "build" / "ts-keystrokes.sty").exists()
 
 
+def test_keystrokes_fragment_accepts_labels_that_are_not_csname_safe(tmp_path: Path) -> None:
+    """``++alt+left++`` and friends reach ``\\tskeys`` as math, not as a csname.
+
+    The writer resolves an arrow key to ``\\(\\leftarrow\\)``; feeding that to
+    ``\\csname ts@key@...`` used to abort the LaTeX run with
+    ``Missing \\endcsname inserted``, so the fragment looks the key-label table
+    up on the *string* form of the label and prints the label unchanged when it
+    is not a registered name.
+    """
+
+    md = tmp_path / "doc.md"
+    md.write_text("Press ++alt+left++, ++ctrl+s++ and ++shift+←++.", encoding="utf-8")
+
+    session = TemplateSession(load_template_runtime("article"))
+    session.add_document(Document.from_markdown(md))
+    result = session.render(tmp_path / "build")
+
+    tex_content = result.main_tex_path.read_text(encoding="utf-8")
+    assert "\\tskeys{Ctrl,S}" in tex_content
+    assert "\\(\\leftarrow\\)" in tex_content
+
+    fragment = (tmp_path / "build" / "ts-keystrokes.sty").read_text(encoding="utf-8")
+    assert "\\exp_args:Nx \\__ts_key_typeset:nn { \\tl_to_str:n {#1} } {#1}" in fragment
+
+
 def test_todolist_fragment_renders_when_used(tmp_path: Path) -> None:
     md = tmp_path / "doc.md"
     md.write_text("- [x] Task\n- [ ] Other task\n", encoding="utf-8")

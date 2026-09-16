@@ -1168,8 +1168,10 @@ def _ink(image: Any) -> Any:
 
 # The entries the nightly job guards: one acronym-heavy page, the counter
 # contract, the index and the margin notes — the four the triage's §6 pixel diff
-# already covered, and the four whose fragments are most easily broken.
-PDF_BASELINE_ENTRIES = ("abbr", "counters", "index", "marginnote")
+# already covered, and the four whose fragments are most easily broken — plus the
+# French book, whose parts exercise the language-dependent part names the book
+# template's table of contents has to measure and print.
+PDF_BASELINE_ENTRIES = ("abbr", "book-fr", "counters", "index", "marginnote")
 # Absolute tolerance on a page's ink coverage. A pixel-exact figure is not
 # reproducible across machines (see `pdf_digest`), so a page passes when its
 # text layer is identical and its ink moved by less than this.

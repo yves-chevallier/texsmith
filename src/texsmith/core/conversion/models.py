@@ -42,6 +42,11 @@ class ConversionRequest:
     #: MkDocs companion passes the site's ``pymdownx.snippets`` base path here).
     #: Searched last, after the document's ``press.include_paths``.
     default_include_paths: Sequence[Path] = field(default_factory=tuple)
+    #: The directory a root-relative asset path (``/assets/logo.png``) resolves
+    #: against: the site's ``docs_dir``, which is MkDocs'
+    #: ``validation.absolute_links: relative_to_docs`` rule. ``None`` — a
+    #: standalone conversion — leaves such a path a filesystem path.
+    root_dir: Path | None = None
 
     base_level: int = 0
     strip_heading_all: bool = False

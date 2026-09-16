@@ -12,7 +12,7 @@ from tmark.ir.walk import walk
 
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.exceptions import TransformerExecutionError
-from texsmith.passes.assets import mermaid_caption, strip_theme_variant
+from texsmith.passes.assets import mermaid_caption, resolve_asset_path, strip_theme_variant
 
 
 _PNG = b"\x89PNG\r\n\x1a\nfake"
@@ -51,6 +51,37 @@ def test_helpers() -> None:
     assert strip_theme_variant("a.png#x") == "a.png#x"
     assert mermaid_caption("%% Cap\ngraph LR") == ("Cap", "graph LR")
     assert mermaid_caption("graph LR") == (None, "graph LR")
+
+
+def test_a_root_relative_path_belongs_to_the_documentation_root(tmp_path: Path) -> None:
+    """MkDocs' ``validation.absolute_links: relative_to_docs``, for assets too.
+
+    A site page writes ``/assets/logo.png`` for a file under ``docs_dir``; only a
+    standalone conversion means the filesystem root by a leading slash.
+    """
+    docs = (tmp_path / "docs").resolve()
+    (docs / "assets").mkdir(parents=True)
+    (docs / "assets" / "logo.png").write_bytes(_PNG)
+    page_dir = docs / "course"
+    page_dir.mkdir()
+    (page_dir / "figure.png").write_bytes(_PNG)
+
+    resolve = resolve_asset_path
+    assert resolve("/assets/logo.png", source_dir=page_dir, root_dir=docs) == (
+        docs / "assets" / "logo.png"
+    )
+    assert resolve("figure.png", source_dir=page_dir, root_dir=docs) == page_dir / "figure.png"
+    assert resolve("../assets/logo.png", source_dir=page_dir, root_dir=docs) == (
+        docs / "assets" / "logo.png"
+    )
+    assert resolve("/assets/logo.png", source_dir=page_dir, root_dir=None) is None
+    assert resolve("/assets/gone.png", source_dir=page_dir, root_dir=docs) is None
+    # An absolute path a pass computed — a snippet preview beside the output —
+    # still names the file it names, root or no root.
+    preview = tmp_path / "press" / "snippets" / "preview.pdf"
+    preview.parent.mkdir(parents=True)
+    preview.write_bytes(_PNG)
+    assert resolve(str(preview), source_dir=page_dir, root_dir=docs) == preview
 
 
 def test_local_assets_copied_converted_fetched_and_reported(

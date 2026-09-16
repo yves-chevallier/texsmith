@@ -216,6 +216,7 @@ class LatexPlugin(BasePlugin):
                 snippet_base_paths=snippet_base_paths_from_extensions(
                     getattr(config, "mdx_configs", None), self._project_dir
                 ),
+                docs_dir=Path(config["docs_dir"]),
                 logger=log,
             )
         except BookError as exc:
