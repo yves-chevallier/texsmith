@@ -250,10 +250,15 @@ jobs:
           mkdir -p examples
           zip -j examples/examples.zip examples/build/*.pdf
 
-      # Build MkDocs HTML documentation
-      - name: Build documentation (HTML + LaTeX)
+      # Build the documentation site with Zensical, then the book PDF.
+      # `make docs-zensical` is the chain: `make artifacts` regenerates the
+      # gitignored CLI snippets, `texsmith site assets` renders the snippet
+      # previews and exports the draw.io diagrams (Playwright, installed
+      # above) and writes the stylesheet, `zensical build` writes `site/`,
+      # and `texsmith site build` writes the book under `press/`.
+      - name: Build documentation (Zensical site + book PDF)
         run: |
-          make docs
+          make docs-zensical
 
       # Upload all artifacts needed for the release job
       - name: Upload release artifacts
@@ -265,6 +270,7 @@ jobs:
             packages/mkdocs_texsmith/dist/*
             press/texsmith-docs/texsmith-docs.pdf
             examples/examples.zip
+            site/**
           if-no-files-found: error
 
   release:
@@ -284,7 +290,7 @@ jobs:
       url: https://pypi.org/project/texsmith/
 
     steps:
-      # Checkout repository (needed by mike deploy)
+      # Checkout repository (the docs publisher commits on its gh-pages worktree)
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
@@ -319,26 +325,13 @@ jobs:
             dest="packages/mkdocs_texsmith/dist/$(basename "$f")"
             mv "$f" "$dest"
           done
-      # Install uv for deploying the docs
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: "0.9.18"
-          enable-cache: true
-          cache-python: false
-        env:
-          UV_CACHE_SAVE: "false"
 
-      # Install docs dependencies for the docs publish steps
-      - name: Sync docs dependencies
-        run: uv sync --group docs --frozen
-
-      # Generate documentation snippets that are gitignored
-      - name: Build documentation artifacts
-        run: make artifacts
-
-      # Publish versioned documentation to GitHub Pages using mike
-      - name: Publish documentation to GitHub Pages (mike)
+      # Publish the versioned documentation to GitHub Pages. The site is the
+      # one Zensical built in `build-artifacts`, downloaded above; the script
+      # writes it under `<version>/`, rewrites `latest/` as the redirect pages
+      # `mkdocs.yml` asks for, updates `versions.json` and the root redirect,
+      # and pushes the gh-pages branch. Standard library only — no sync needed.
+      - name: Publish documentation to GitHub Pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -346,9 +339,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin gh-pages || true
-          uv run mike deploy --push --branch gh-pages --remote origin --update-aliases "$VERSION" latest
-          uv run mike set-default --push --branch gh-pages --remote origin latest
+          python3 scripts/publish_docs.py "$VERSION" --alias latest --site site --push
 
       # Publish the package to PyPI from prebuilt dists
       - name: Publish package to PyPI
