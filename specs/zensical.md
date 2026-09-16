@@ -143,6 +143,84 @@ the CommonMark switch as the reason for TMark's canonical form and
 `tmark fmt --profile mkdocs`: the site receives Markdown any parser
 understands, TeXSmith keeps its own parser for the PDF.
 
+## What shipped, and what the handbook taught (2026-09-16)
+
+Strategies 1 and 2 are implemented on the `zensical` branch: `texsmith.site`
+(index, config, nav, book, search, assets, web) is the site machinery, the
+MkDocs plugin is an adapter over it, and `texsmith.site.web` is the
+Python-Markdown extension Zensical runs. Two facts of Zensical's build model
+shaped the design more than any hook inventory:
+
+- **Zensical clears `site_dir` on every build and, on a warm `.cache/`,
+  never calls Python at all.** A render-time side effect (a stylesheet, a
+  snippet preview written into `site_dir`) therefore exists only after a
+  cold-cache build. Generated files must be *sources* under `docs_dir`,
+  produced before the build: that is `texsmith site assets`, and the reason
+  `make docs-zensical` chains `assets → build → search → site build`. A file
+  written into `docs_dir` during a render is published one build later, which
+  is what makes `zensical serve` pick up an edited snippet.
+- **The Python side sees no navigation.** awesome-nav is resolved in Rust and
+  `get_config()["nav"]` is `[]`, so `texsmith.site.nav` resolves `.nav.yml`
+  itself (verified identical to MkDocs + awesome-nav on two sites). Zensical
+  arms awesome-nav on plugin *presence*: a site that lists only
+  `awesome-pages` gets an alphabetical, untitled navigation until
+  `awesome-nav` is declared too.
+
+The second corpus, the HEIG-VD handbook (142 pages, French, two PDF books,
+six MkDocs hooks, awesome-pages, TeXSmith 0.2.1), was migrated on its own
+`zensical` branch and reached `zensical build` with no issue, a search index
+carrying its entries, and two compiling books (647 and 64 pages, the C book
+on its own cover and with a printed index). What it taught, by layer:
+
+- **Zensical itself** needs no configuration change for such a site (full
+  `yaml.Loader`, its own `!ENV`, `material.extensions` remapped). It ignores
+  `exclude_docs`, `hooks:` and every unknown plugin silently, so include
+  sources under `docs/` become orphan pages and nothing on our side can stop
+  it. Its search engine indexes `tags` only as a filter facet: the index
+  entries go into `text`.
+- **TeXSmith, template and build.** The `book` template did not compile in
+  French at all (`fixtoc.sty` measured `\partname` under `babel-french`
+  before the counter existed, twice); lists stopped at four levels; the book
+  compiled without the `features` that run biber/makeindex, so `\printindex`
+  was empty; root-relative `/assets/…` paths and an undeclared snippet
+  `base_path` were resolved against the wrong directory; `\newacronym` was
+  emitted twice per acronym under a folded key; callout titles were English
+  whatever `language:` said; keystrokes did not survive a PDF bookmark;
+  `copy_files` could copy a title page nothing consumed (`press.titlepage`,
+  `press.imprint`, `press.preamble` are the answer, with the `file` attribute
+  format).
+- **TeXSmith, site.** The pre-pass parsed a page's *body* and attached its
+  front matter afterwards, so a page's own `press.declare` never reached the
+  parser; `lower_web` received no `Loader` for fence includes; `auto_append`
+  was honoured by nobody; a `.drawio` image was redirected but not the
+  lightbox anchor around it; `\|` inside a code span of a table cell reaches
+  the site with its backslash (Python-Markdown's, unescaped in our
+  postprocessor).
+- **tmark.** The autorefs idiom (`[](){#id}` + `[text][id]`) was invisible on
+  both media: the anchor lowered to raw HTML no tree scanner sees, and the
+  reference-style link had no reading (spec §Ref gained one). Fragment spans
+  were relative to the fragment, not the file, which mislocated a counter in a
+  `!!!` title and a code span in a `yaml table` cell. Label names were
+  escaped as prose (`\hyperref[a\_b]`). A literal `[` opening a table cell
+  read as `\\[dimen]`. Material's braces-only fence info (`{ .c .annotate }`)
+  parsed `{` as the language with no diagnostic. `/// html | div[…]`
+  containers and fence `include=` were dropped on the web.
+- **The corpus.** Every wiki-link `[[tag]]`, epigraph key, `.pages` file,
+  spantable marker and translated admonition title had a TMark spelling; the
+  migration is scripted (`utils/` in the handbook) and idempotent. Two
+  constructs have none yet: the `exercises` plugin's quizzes (`- [x]`) and
+  fill-in-the-blanks (`{{word}}`), and per-page numbering (TMark counters are
+  site-wide).
+
+Still open after this round: `mike` versioning has no Zensical equivalent;
+`<p class="admonition-title">` carries no `markdown` attribute, so Markdown
+inside a rewritten callout title does not render; box-drawing glyphs in code
+blocks have no coverage in the monospace font (7 831 missing characters in
+the C book); `texsmith.site.nav` reimplements wcmatch, natsort and pathspec
+rather than depending on them; and every core fix lives on tmark's
+`autorefs-anchors` branch behind an unstaged `[tool.uv.sources]` override,
+which a `tmark-core` release must replace before the TeXSmith branch merges.
+
 ## Sources
 
 - [Roadmap](https://zensical.org/about/roadmap/),

@@ -41,4 +41,5 @@ traps it fell into. Read it before continuing that work.
 : What Zensical is, what it does not offer a plugin, and the strategy for
   keeping one source for the site and the PDF when MkDocs is no longer the
   generator. Recorded against Zensical 0.0.60 before the TMark migration, with
-  a preamble on what the migration changed under it.
+  a preamble on what the migration changed under it, and a closing section on
+  what shipped and what migrating the HEIG-VD handbook taught (2026-09-16).
