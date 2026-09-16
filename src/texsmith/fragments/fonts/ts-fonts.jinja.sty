@@ -357,14 +357,18 @@
 
 \BLOCK{- if fallback and fallback.get("entries") }
   % Ensure hyperref can build PDF strings without font selection commands.
+  % hyperref is loaded on demand (ts-extra, only for a document that links),
+  % so the hook is only installed when it is there — as ts-keystrokes does.
   \makeatletter
   \AtBeginDocument{%
+    \ifcsname pdfstringdefDisableCommands\endcsname
   \BLOCK{ for entry in fallback.entries }
     \BLOCK{ set text_cmd = '\\' + entry.text_command }
       \pdfstringdefDisableCommands{%
         \def\VAR{text_cmd}#1{#1}%
       }%
   \BLOCK{ endfor }
+    \fi
   }
   \makeatother
 \BLOCK{- endif }
