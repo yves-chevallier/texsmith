@@ -173,19 +173,21 @@ class _Renderer:
         return model.Figure(attrs=figure_attrs, content=tuple(content), id=node.id, span=span)
 
 
-def _host_of(document: Document, ctx: PassContext) -> Path:
-    ir = document.ir
-    if ir is not None and ir.file in ctx.files:
-        return Path(ctx.files.path(ir.file))
-    return Path(document.source_path)
-
-
 @spec("snippet", stage="pre", after=("include",), needs_io=True)
 def run(document: Document, ctx: PassContext) -> Document:
+    """Render every ``.snippet`` fence of the document into its preview figure.
+
+    The fences are read from the document's **own** path, never from the file
+    the parse happened to be handed: a fence's ``cwd`` and its ``sources`` are
+    written against the page the author wrote them in, and the book of a site
+    parses a copy of that page — the merged front matter, the site's appended
+    snippets — from under the build directory, where none of what a fence
+    names is to be found.
+    """
     ir = document.ir
     if ir is None:
         return document
-    rebuilt = map_tree(ir, _Renderer(ctx, _host_of(document, ctx)).rewrite)
+    rebuilt = map_tree(ir, _Renderer(ctx, Path(document.source_path)).rewrite)
     if rebuilt is ir:
         return document
     return document.evolve(ir=rebuilt)

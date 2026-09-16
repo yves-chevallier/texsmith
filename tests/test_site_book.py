@@ -17,6 +17,7 @@ import pytest
 
 from texsmith.adapters.latex.engines import EngineFeatures
 from texsmith.core.config import BookConfig
+from texsmith.passes import snippet as snippet_pass
 from texsmith.site.book import (
     FULL_NAVIGATION_ROOT,
     BookBuilder,
@@ -293,6 +294,52 @@ def test_a_two_page_site_becomes_one_tex_with_both_pages(site: Path) -> None:
     # Each page's exact input is written next to the output.
     assert (result.output_root / "sources" / "index.md").is_file()
     assert (result.output_root / "sources" / "guide" / "one.md").is_file()
+
+
+def test_a_fence_names_its_sources_from_the_page_that_holds_it(
+    site: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ``.snippet`` fence is read from the page, not from the copy of it.
+
+    The book writes each page's exact input under ``sources/``; a fence's
+    ``cwd`` and ``sources`` are written against the page the author wrote
+    them in, and nothing of what they name sits under the build directory.
+    """
+    letter = site / "examples" / "letter"
+    letter.mkdir(parents=True)
+    (letter / "letter.md").write_text("# Letter\n\nDear reader.\n", encoding="utf-8")
+    (site / "docs" / "guide" / "one.md").write_text(
+        "# One {#sec:one}\n\n"
+        '```yaml {.snippet caption="Download"}\n'
+        "cwd: ../../examples/letter\n"
+        "sources:\n"
+        "  - letter.md\n"
+        "```\n",
+        encoding="utf-8",
+    )
+
+    seen: list[Path] = []
+
+    def render(block: object, *, output_dir: Path, source_path: Path, emitter: object):
+        from texsmith.adapters.plugins.snippet import SnippetAssets
+
+        del emitter
+        seen.append(source_path)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        pdf = output_dir / "snippet.pdf"
+        png = output_dir / "snippet.png"
+        pdf.write_bytes(b"%PDF-1.4")
+        png.write_bytes(b"\x89PNG\r\n")
+        return SnippetAssets(pdf=pdf, png=png)
+
+    monkeypatch.setattr(snippet_pass, "render_snippet_assets", render)
+
+    (result,) = build_books(load_site_config(site / "mkdocs.yml"), compile_pdf=False)
+
+    page_tex = (result.output_root / "pages" / "guide-one-md.tex").read_text(encoding="utf-8")
+    assert seen == [site / "docs" / "guide" / "one.md"]
+    assert "\\tsfigure" in page_tex or "includegraphics" in page_tex
+    assert ".snippet" not in page_tex
 
 
 def test_an_anchor_of_another_page_is_a_reference_style_link_target(site: Path) -> None:
