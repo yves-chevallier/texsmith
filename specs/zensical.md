@@ -212,18 +212,20 @@ on its own cover and with a printed index). What it taught, by layer:
   fill-in-the-blanks (`{{word}}`), and per-page numbering (TMark counters are
   site-wide).
 
-Still open after this round: `mike` versioning has no Zensical equivalent;
-`mkdocs-caption` is a plugin, so a plain `![alt](img)` is a bare `<img>` on the
-web with no numbered caption (the PDF numbers its figures itself); an
-abbreviation key such as `UTF-8`, `EOF`, `W3C` does not reach the glossary
-(4 of the handbook's 44);
+Still open after this round: `mkdocs-caption` is a plugin, so a plain
+`![alt](img)` is a bare `<img>` on the web with no numbered caption (the PDF
+numbers its figures itself); an abbreviation key such as `UTF-8`, `EOF`, `W3C`
+does not reach the glossary (4 of the handbook's 44);
 `<p class="admonition-title">` carries no `markdown` attribute, so Markdown
-inside a rewritten callout title does not render; box-drawing glyphs in code
-blocks have no coverage in the monospace font (7 831 missing characters in
-the C book); `texsmith.site.nav` reimplements wcmatch, natsort and pathspec
-rather than depending on them; and every core fix lives on tmark's
-`autorefs-anchors` branch behind an unstaged `[tool.uv.sources]` override,
-which a `tmark-core` release must replace before the TeXSmith branch merges.
+inside a rewritten callout title does not render; and box-drawing glyphs in
+code blocks have no coverage in the monospace font (7 831 missing characters
+in the C book).
+
+Closed since: `texsmith.site.nav` resolves its globs, its sort and its
+exclusions with `wcmatch`, `natsort` and `pathspec` rather than
+reimplementing them; the core fixes are the `tmark-core` 0.2.0 wheel, which
+replaced the local `[tool.uv.sources]` override; and `mike` versioning has an
+equivalent — the section below.
 
 ## Tags, and the one extension point Python still has (2026-09-16)
 
@@ -313,6 +315,47 @@ after the search index is written. It is no longer needed for the tags —
 nothing is patched into `search.json` any more — but a `post_build` entry
 point in the module system is what any later step of the kind would want,
 rather than a second command a `Makefile` has to remember.
+
+## Versioned deploys without mike (2026-09-16)
+
+`mike` is the only thing the MkDocs deploy did that Zensical had no answer
+for, and it is not a rendering question: the version selector is Material's
+own bundle, which Zensical ships, and it builds itself from a `versions.json`
+fetched at `../versions.json` as soon as the page config carries a `version`
+key. `zensical/templates/base.html` sets that key from `config.extra.version`
+(unless a `mike` *plugin* is configured and turns its selector off), so
+`extra.version.provider: mike` in `mkdocs.yml` is enough and the selector
+renders under both generators.
+
+What has no answer is `mike` the publisher. `mike deploy` takes a
+configuration file, not a directory: `mike/commands.py::deploy` loads
+`mkdocs.yml` through `mkdocs_utils` and runs an MkDocs build between opening
+and closing its git commit. There is no `--site-dir` that means "publish what
+is already there", and the alias, `versions.json` and default-version logic
+are inside that same commit context. So the publisher is replaced rather than
+driven: `scripts/publish_docs.py` takes the built directory and writes what
+`mike` wrote on `gh-pages`, because a reader's bookmark into `latest/` and the
+selector's own fetch depend on that shape and nothing else does:
+
+- `<version>/` — the site, verbatim.
+- `<alias>/` — one redirect page per `.html` page of the version, from
+  `mike`'s own template, with the href `os.path.relpath`'d the same way and
+  shortened to its directory when the page is an `index.html`
+  (`alias_type: redirect`, which is what `mkdocs.yml` asks for).
+- `versions.json` — `[{"version", "title", "aliases"}]`, newest first by the
+  loose version comparison `verspec` gives `mike`, the alias moved off
+  whichever version held it.
+- `index.html` — the redirect to the alias `mike set-default` wrote, from the
+  same template.
+- `.nojekyll`.
+
+It checks `origin/gh-pages` out as a git worktree under `build/gh-pages` and
+stops at the commit; `--push` is opt-in, so the release workflow is the only
+caller that publishes. What `mike` did *not* do, this does not do either: the
+version directories are served from relative links, `site_url` keeps pointing
+at the site root, and the only absolute paths in a version are in its
+`404.html`, which GitHub Pages serves from the branch root and therefore never
+from a version at all.
 
 ## Sources
 
