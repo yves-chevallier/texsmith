@@ -467,16 +467,47 @@ def test_an_anchor_lowers_to_an_element_and_not_to_raw_html(tmp_path: Path, monk
     assert "opengl-coordinates" in registered, registered
 
 
-def test_a_reference_style_link_is_left_to_autorefs(tmp_path: Path, monkeypatch) -> None:
-    """``[text][id]`` is Markdown a site already resolves across pages, and
-    the lowering knows no page but its own: it leaves the bytes alone."""
-    config = make_site(tmp_path, {"a.md": ANCHOR_PAGE, "b.md": REFERRING_PAGE})
+CANONICAL_REFERRING_PAGE = """\
+# Referring
+
+[Plus haut](#opengl-coordinates), we defined them.
+"""
+
+
+def test_a_cross_page_anchor_is_spliced_with_the_page_that_holds_it(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The site index knows which page holds a label, so the lowering points
+    the link at it — ``[text](a.md#id)`` — instead of leaving the resolution
+    to ``mkdocs-autorefs``. That holds for the canonical ``[text](#id)`` and
+    for the deprecated reference-style spelling alike."""
+    config = make_site(
+        tmp_path,
+        {"a.md": ANCHOR_PAGE, "b.md": REFERRING_PAGE, "c.md": CANONICAL_REFERRING_PAGE},
+    )
     monkeypatch.setattr("zensical.config.get_config", lambda: config)
 
     render(config, "b.md", REFERRING_PAGE)
-    lowered = lower(REFERRING_PAGE, "b.md")
+    assert "[Plus haut](a.md#opengl-coordinates), we defined them." in lower(REFERRING_PAGE, "b.md")
 
-    assert "[Plus haut][opengl-coordinates], we defined them." in lowered
+    render(config, "c.md", CANONICAL_REFERRING_PAGE)
+    assert "[Plus haut](a.md#opengl-coordinates), we defined them." in lower(
+        CANONICAL_REFERRING_PAGE, "c.md"
+    )
+
+
+def test_a_reference_style_link_is_deprecated(tmp_path: Path, monkeypatch, caplog) -> None:
+    """``[text][id]`` is a compatibility spelling: a plain CommonMark parser
+    reads brackets there. It is reported ``deprecated`` with the canonical
+    ``[text](#id)`` as its fix."""
+    config = make_site(tmp_path, {"a.md": ANCHOR_PAGE, "b.md": REFERRING_PAGE})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    with caplog.at_level("WARNING", logger="texsmith.site"):
+        render(config, "b.md", REFERRING_PAGE)
+
+    assert "deprecated" in caplog.text
+    assert "[Plus haut](#opengl-coordinates)" in caplog.text
 
 
 PAGE_TAGS = """\
