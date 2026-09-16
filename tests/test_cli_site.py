@@ -6,7 +6,6 @@ group is reached only by its own name.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import textwrap
 from typing import Any
@@ -99,73 +98,6 @@ def test_the_group_does_not_take_the_root_command_away() -> None:
     assert result.exit_code == 0
     assert "Usage: texsmith [OPTIONS] [INPUT...]" in result.output
     assert "texsmith site" in result.output
-
-
-SEARCH_PAGE = """\
-<h1 id="a">A<a class="headerlink" href="#a" title="Permanent link">&para;</a></h1>
-<p>Text <span class="ts-index" data-tag="cake"></span>.</p>
-"""
-
-
-def built_site(root: Path) -> Path:
-    """A built site holding one page with an index entry and MkDocs' lunr index."""
-    site_dir = root / "site"
-    (site_dir / "guide" / "a").mkdir(parents=True)
-    (site_dir / "guide" / "a" / "index.html").write_text(SEARCH_PAGE, encoding="utf-8")
-    lunr = site_dir / "search" / "search_index.json"
-    lunr.parent.mkdir(parents=True)
-    lunr.write_text(
-        json.dumps({"config": {}, "docs": [{"location": "guide/a/", "text": "Body."}]}),
-        encoding="utf-8",
-    )
-    return site_dir
-
-
-def test_the_search_command_patches_the_index_of_the_built_site(site: Path) -> None:
-    site_dir = built_site(site)
-
-    result = CliRunner().invoke(app, ["site", "search", str(site / "mkdocs.yml")])
-
-    assert result.exit_code == 0, result.output
-    assert "1 search entries" in result.output
-    index = json.loads((site_dir / "search" / "search_index.json").read_text(encoding="utf-8"))
-    assert index["docs"][0]["tags"] == ["cake"]
-
-
-def test_the_index_a_zensical_build_wrote_is_not_touched(site: Path) -> None:
-    """``search.json`` carries the terms as a page's ``tags``, written at render time."""
-    site_dir = site / "site"
-    (site_dir / "guide" / "a").mkdir(parents=True)
-    (site_dir / "guide" / "a" / "index.html").write_text(SEARCH_PAGE, encoding="utf-8")
-    index = site_dir / "search.json"
-    index.write_text(
-        json.dumps({"config": {}, "items": [{"location": "guide/a/", "text": "<p>Body.</p>"}]}),
-        encoding="utf-8",
-    )
-    before = index.read_text(encoding="utf-8")
-
-    result = CliRunner().invoke(app, ["site", "search", str(site / "mkdocs.yml")])
-
-    assert result.exit_code == 0, result.output
-    assert "No lunr index" in result.output
-    assert index.read_text(encoding="utf-8") == before
-
-
-def test_the_search_command_needs_a_built_site(site: Path) -> None:
-    result = CliRunner().invoke(app, ["site", "search", str(site / "mkdocs.yml")])
-
-    assert result.exit_code == 1
-
-
-def test_a_site_without_index_entries_is_left_alone(site: Path) -> None:
-    site_dir = site / "site"
-    site_dir.mkdir()
-    (site_dir / "index.html").write_text("<p>Nothing.</p>", encoding="utf-8")
-
-    result = CliRunner().invoke(app, ["site", "search", str(site / "mkdocs.yml")])
-
-    assert result.exit_code == 0, result.output
-    assert "No index entries" in result.output
 
 
 def test_the_build_command_writes_the_book_and_says_where_it_landed(site: Path) -> None:

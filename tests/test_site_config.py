@@ -243,7 +243,7 @@ def test_an_unknown_suffix_is_refused(tmp_path: Path) -> None:
 def test_directory_urls_are_read_and_default_to_the_generators_own_default(
     tmp_path: Path,
 ) -> None:
-    """``texsmith site search`` names a built page the way the index does."""
+    """The web lowering names a page's file the way the generator writes it."""
     config_path = tmp_path / "mkdocs.yml"
     config_path.write_text("site_name: Demo\n", encoding="utf-8")
     assert load_site_config(config_path).use_directory_urls is True

@@ -8,14 +8,6 @@ before a build and replays cached pages without calling Python, so nothing a
 render writes can be relied upon. MkDocs does not need it, and does not mind
 it: it copies the files it finds and skips generating its own.
 
-``texsmith site search`` puts the index entries of the pages into the lunr
-index of a site already built — the only index that searches them, and the one
-MkDocs writes. The plugin does the same from ``on_post_build``, through the
-same :mod:`texsmith.site.search` code, so the command is for an index written
-without it. A Zensical site has no lunr index and needs none: its search reads
-the terms as a page's ``tags``, which the web extension writes while the page
-renders.
-
 ``texsmith site build`` is the other half of what a generator without plugin
 hooks cannot do: the PDF book of the site, which MkDocs builds from
 ``on_post_build``. It reads the same configuration file, resolves the same
@@ -31,7 +23,7 @@ from typing import Annotated
 import typer
 
 from texsmith.diagnostics import LoggingEmitter
-from texsmith.site import assets, search
+from texsmith.site import assets
 from texsmith.site.book import BookError, build_books
 from texsmith.site.config import CONFIG_NAMES, SiteConfig, config_file_in, load_site_config
 
@@ -117,31 +109,6 @@ def site_assets(config: ConfigArgument = None) -> None:
         f"{len(generated.pruned)} pruned, {len(generated.failures)} failed. "
         f"Stylesheet at {generated.stylesheet.relative_to(root)}."
     )
-
-
-@app.command("search")
-def site_search(config: ConfigArgument = None) -> None:
-    """Add the index entries of every page to the search index of the built site."""
-    console = get_cli_state().console
-    site_config = site_configuration(config)
-    site_dir = site_config.site_dir
-    if not site_dir.is_dir():
-        emit_error(f"No built site at {site_dir}; build the site before indexing it.")
-        raise typer.Exit(code=1)
-
-    tags = search.collect_site(site_dir, use_directory_urls=site_config.use_directory_urls)
-    if not tags:
-        console.print(f"No index entries under {site_dir}: the search index is left alone.")
-        return
-
-    patched = tags.inject(site_dir)
-    if not patched:
-        emit_warning(
-            f"No lunr index under {site_dir}; expected {search.LUNR_INDEX}, "
-            "and the index entries reach nothing."
-        )
-        return
-    console.print(f"{patched} search entries gained the index entries of their page.")
 
 
 @app.command("build")

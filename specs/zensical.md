@@ -231,7 +231,7 @@ The handbook's `hooks/tags.py` did two things with `[[tag]]`: it made an index
 entry, and it appended the tag to the page's entries in lunr's
 `search_index.json`, where Material searches it and shows it. The first half is
 TMark's `#[term]` now; the second half had nowhere to go on Zensical, and
-`texsmith site search` put the terms in `text` instead. That works for typing
+a post-build pass put the terms in `text` instead. That works for typing
 and loses the *notion* of a tag. Measured on Zensical 0.0.62, here is what the
 generator actually offers, and what it would take upstream to close the gap.
 

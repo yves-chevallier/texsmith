@@ -18,9 +18,7 @@ docs: artifacts
 site-assets: artifacts
 	$(PRE_CMD) texsmith site assets mkdocs.yml
 
-# The book hangs off no hook Zensical has, so it is a command of its own. The
-# search index needs nothing after the build: a page's index entries are its
-# tags, which the extension writes while the page renders.
+# The book hangs off no hook Zensical has, so it is a command of its own.
 docs-zensical: site-assets
 	$(PRE_CMD) zensical build -f mkdocs.yml
 	$(PRE_CMD) texsmith site build mkdocs.yml

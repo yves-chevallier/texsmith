@@ -58,7 +58,6 @@ __all__ = [
     "drawio_source_uri",
     "generate",
     "page_dest_uri",
-    "page_url",
     "snippet_dir",
     "snippet_urls",
     "stylesheet",
@@ -106,19 +105,6 @@ def page_dest_uri(url: str, *, use_directory_urls: bool) -> str:
     if not use_directory_urls:
         return url
     return posixpath.join(url, "index.html")
-
-
-def page_url(dest_uri: str, *, use_directory_urls: bool) -> str:
-    """The URL of a page, from the file the generator wrote it to.
-
-    The inverse of :func:`page_dest_uri`, for the one caller that has only
-    the built site to read: ``texsmith site search`` walks the HTML files and
-    has to name each one the way the search index does.
-    """
-    if not use_directory_urls or posixpath.basename(dest_uri) != "index.html":
-        return dest_uri
-    parent = posixpath.dirname(dest_uri)
-    return f"{parent}/" if parent else ""
 
 
 def asset_prefix(dest_uri: str) -> str:

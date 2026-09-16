@@ -342,8 +342,7 @@ page's tags from \tscodeinline{on\_page\_markdown} at the same priority as this 
 declared before it, so it reads the metadata before the lowering writes it;
 index entries reach MkDocs' search through the \tscodeinline{tags} field of
 \tscodeinline{search\_index.json}, which lunr indexes and Material boosts, and which the
-plugin patches from \tscodeinline{on\_post\_build}. \tscodeinline{texsmith site search [CONFIG]} does the
-same to a site already built, for a lunr index written without the plugin.
+plugin patches from \tscodeinline{on\_post\_build}.
 \subsection{The book is a command}
 \label{the-book-is-a-command}
 A book hangs off \tscodeinline{on\_post\_build} under MkDocs, a hook Zensical has not got, so

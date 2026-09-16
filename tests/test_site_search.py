@@ -121,32 +121,6 @@ def test_nothing_collected_touches_nothing(tmp_path: Path) -> None:
     assert index.read_text(encoding="utf-8") == before
 
 
-def test_the_built_site_is_walked_and_every_page_named_as_the_index_names_it(
-    tmp_path: Path,
-) -> None:
-    (tmp_path / "guide" / "a").mkdir(parents=True)
-    (tmp_path / "guide" / "a" / "index.html").write_text(PAGE, encoding="utf-8")
-    (tmp_path / "index.html").write_text(PAGE, encoding="utf-8")
-    (tmp_path / "404.html").write_text("<p>Nothing.</p>", encoding="utf-8")
-
-    tags = search.collect_site(tmp_path)
-
-    assert tags.tokens("guide/a/") == ["cake"]
-    assert tags.tokens("guide/a/#b") == ["cake", "chocolate", "cake::chocolate"]
-    assert tags.tokens("") == ["cake"]
-    assert tags.tokens("#b") == ["cake", "chocolate", "cake::chocolate"]
-
-
-def test_a_site_without_directory_urls_names_the_file(tmp_path: Path) -> None:
-    (tmp_path / "guide").mkdir()
-    (tmp_path / "guide" / "a.html").write_text(PAGE, encoding="utf-8")
-
-    tags = search.collect_site(tmp_path, use_directory_urls=False)
-
-    assert tags.tokens("guide/a.html") == ["cake"]
-    assert tags.tokens("guide/a.html#b") == ["cake", "chocolate", "cake::chocolate"]
-
-
 def test_index_terms_keep_the_top_level_of_each_entry_once_and_in_order() -> None:
     assert search.index_terms(PAGE) == ["cake"]
 

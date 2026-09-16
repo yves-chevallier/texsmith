@@ -40,8 +40,7 @@ Both generators spell a location the same way — ``""`` for the home page,
 normalisation covers both, and matching is exact.
 
 Nothing here imports a site generator: the MkDocs plugin feeds the collector
-from ``on_page_content`` and injects in ``on_post_build``, and ``texsmith
-site search`` walks a built site instead, for an index written without it.
+from ``on_page_content`` and injects in ``on_post_build``.
 """
 
 from __future__ import annotations
@@ -54,13 +53,10 @@ from pathlib import Path
 import re
 from typing import Any
 
-from texsmith.site.assets import page_url
-
 
 __all__ = [
     "LUNR_INDEX",
     "SearchTags",
-    "collect_site",
     "entry_tag",
     "expand_search_terms",
     "extract_tags",
@@ -271,24 +267,3 @@ class SearchTags:
             return False
         existing.extend(payload)
         return True
-
-
-def collect_site(site_dir: Path, *, use_directory_urls: bool = True) -> SearchTags:
-    """Collect the ``ts-index`` markers of every page of a built site.
-
-    The page's URL is what the index keys an entry by, and the built file is
-    all there is left to read it from: it is the inverse of
-    :func:`texsmith.site.assets.page_dest_uri`.
-    """
-    root = Path(site_dir)
-    tags = SearchTags()
-    for path in sorted(root.rglob("*.html")):
-        try:
-            html = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):  # pragma: no cover - unreadable page
-            continue
-        if "ts-index" not in html:
-            continue
-        dest_uri = path.relative_to(root).as_posix()
-        tags.collect(html, page_url(dest_uri, use_directory_urls=use_directory_urls))
-    return tags

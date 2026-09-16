@@ -342,8 +342,7 @@ page's tags from `on_page_markdown` at the same priority as this plugin and is
 declared before it, so it reads the metadata before the lowering writes it;
 index entries reach MkDocs' search through the `tags` field of
 `search_index.json`, which lunr indexes and Material boosts, and which the
-plugin patches from `on_post_build`. `texsmith site search [CONFIG]` does the
-same to a site already built, for a lunr index written without the plugin.
+plugin patches from `on_post_build`.
 
 == The book is a command <the-book-is-a-command>
 
