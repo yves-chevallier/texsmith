@@ -40,8 +40,11 @@ def test_squash_blank_lines_trims_trailing_whitespace() -> None:
 
 def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -> None:
     assets = list(book_template.iter_assets())
-    assert len(assets) == 1
-    assert assets[0].destination.name == "fixtoc.sty"
+    names = [asset.destination.name for asset in assets]
+    assert names == ["fixtoc.sty", "texsmith-lists.sty"]
+    # The second one lives in ``templates/common``, shared with the other
+    # templates rather than copied into each.
+    assert assets[1].source.parent.name == "common"
 
 
 def test_wrap_document_injects_mainmatter(book_template: WrappableTemplate) -> None:

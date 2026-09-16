@@ -4,6 +4,7 @@
 
 \usepackage[svgnames,dvipsnames,x11names]{xcolor}
 \usepackage{graphicx}
+\usepackage{texsmith-lists}
 \usepackage[english]{babel}
 \usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
 \usepackage[a4paper]{geometry}
@@ -124,6 +125,8 @@ With great scientific affection,
 ]\PY{n+nb}{\PYZob{}}scrlttr2\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}xcolor\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}definecolor}\PY{n+nb}{\PYZob{}}texsmithLinkColor\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}HTML\PY{n+nb}{\PYZcb{}}\PY{n+nb}{\PYZob{}}0B3D91\PY{n+nb}{\PYZcb{}}
+\PY{c}{\PYZpc{} enumitem, plus the nine list levels Markdown can nest (shared package).}
+\PY{k}{\PYZbs{}usepackage}\PY{n+nb}{\PYZob{}}texsmith\PYZhy{}lists\PY{n+nb}{\PYZcb{}}
 \PY{k}{\PYZbs{}VAR}\PY{n+nb}{\PYZob{}}extra\PY{n+nb}{\PYZus{}}packages\PY{n+nb}{\PYZcb{}}
 \PY{c}{\PYZpc{} Contract macros (fragment\PYZhy{}contracts.md §4): a letter keeps its callouts}
 \PY{c}{\PYZpc{} flat — a thin rule on the left, no rounded frame — by restyling the}
@@ -450,6 +453,8 @@ With great scientific affection,
 
 \PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{.}\PY{k}{assets}\PY{k}{]}
 \PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/modernline.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{fonts/modernline.otf}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
+\PY{c+c1}{\PYZsh{} Shared with the other templates (templates/common): nine list levels.}
+\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{texsmith\PYZhy{}lists.sty}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n}{source}\PY{+w}{ }\PY{p}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{../common/texsmith\PYZhy{}lists.sty}\PY{l+s+s2}{\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
 
 \PY{c+c1}{\PYZsh{} Typst backend: the same DIN / SN / NF window\PYZhy{}envelope layouts as the}
 \PY{c+c1}{\PYZsh{} KOMA\PYZhy{}Script class options, laid out from the page corner; sender /}

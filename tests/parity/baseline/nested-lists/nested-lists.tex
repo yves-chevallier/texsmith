@@ -1,0 +1,270 @@
+\documentclass[twoside]{memoir}
+
+\usepackage{amssymb}
+\usepackage{nicefrac}
+\usepackage{xurl}
+
+\usepackage[svgnames,dvipsnames,x11names]{xcolor}
+
+\usepackage{fancyhdr}
+
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage{epigraph}
+\usepackage{capt-of}
+\usepackage{texsmith-lists}
+\usepackage{etoolbox}
+\usepackage{tocloft}
+\usepackage{caption}
+\usepackage[english]{babel}
+\usepackage[colorlinks=true, linkcolor=DarkBlue, urlcolor=DarkBlue, citecolor=DarkBlue]{hyperref}
+\makeatletter
+\@twosidetrue
+\@mparswitchtrue
+\makeatother
+\setstocksize{297mm}{210mm}
+\settrimmedsize{297mm}{210mm}{*}
+\setlrmarginsandblock{2cm}{2cm}{*}
+\setulmarginsandblock{2cm}{2cm}{*}
+\checkandfixthelayout
+\usepackage{ts-fonts}
+\usepackage{float}
+\usepackage{seqsplit}
+\usepackage{ts-code}
+\ifcsname tscodeinline\endcsname
+\RenewDocumentCommand{\tscodeinline}{O{}m}{\mbox{\texttt{#2}}}
+\fi
+\usepackage{emptypage}
+\usepackage{fixtoc}
+
+\graphicspath{{assets/}}
+
+\chapterstyle{default}
+
+\renewcommand*{\partnamefont}{\normalfont\sffamily\Huge\bfseries\scshape}
+\renewcommand*{\partnumfont}{\normalfont\sffamily\Huge\bfseries}
+\renewcommand*{\parttitlefont}{\normalfont\sffamily\Huge\bfseries}
+
+\renewcommand*{\chapnamefont}{\normalfont\sffamily\Large\scshape}
+\renewcommand*{\chapnumfont}{\normalfont\sffamily\Huge\bfseries}
+\renewcommand*{\chaptitlefont}{\normalfont\sffamily\Huge\bfseries}
+\setsecheadstyle{\sffamily\Large\bfseries}
+\setsubsecheadstyle{\sffamily\large\bfseries}
+
+\renewcommand{\cftpartfont}{\sffamily\Large\bfseries}
+\renewcommand{\cftpartpagefont}{\sffamily\Large\bfseries}
+\renewcommand{\cftpartpresnum}{\partname~}
+
+\tolerance=2000
+\emergencystretch=10pt
+\hfuzz=1pt
+\hbadness=2000
+
+\setlength{\cftpartnumwidth}{4em}
+\setlength{\cftsectionnumwidth}{3em}
+\setlength{\cftsubsectionnumwidth}{3.5em}
+\setlength{\cftfigurenumwidth}{3em}
+\setlength{\cfttablenumwidth}{3em}
+
+\AtBeginEnvironment{displayquote}{\small\itshape}
+
+\let\oldtabular\tabular
+\let\endoldtabular\endtabular
+
+\newsavebox{\mytablebox}
+\renewenvironment{tabular}[2][c]
+{\begin{lrbox}{\mytablebox}\small\oldtabular[#1]{#2}}
+{\endoldtabular\end{lrbox}
+\ifdim\wd\mytablebox>\linewidth
+\resizebox{\linewidth}{!}{\usebox{\mytablebox}}
+\else
+\usebox{\mytablebox}
+\fi
+}
+
+\AtBeginDocument{\setlength{\headwidth}{\textwidth}}
+
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{part}{
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+}
+
+\makeatletter
+\fancypagestyle{plain}{
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\if@twoside
+\fancyfoot[LE,RO]{\thepage}
+\else
+\fancyfoot[RO]{\thepage}
+\fi
+}
+
+\fancypagestyle{fancy}{
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.5pt}
+\if@twoside
+\fancyhead[LE]{\scshape \leftmark}
+\fancyhead[RO]{\scshape \rightmark}
+\fancyfoot[LE,RO]{\thepage}
+\else
+\fancyhead[R]{\scshape \rightmark}
+\fancyfoot[R]{\thepage}
+\fi
+}
+\nouppercaseheads
+\renewcommand{\chaptermark}[1]{
+\markboth{\thechapter\quad #1}{}
+}
+\renewcommand{\sectionmark}[1]{
+\markright{\thesection\quad #1}
+}
+\makeatother
+
+\patchcmd{\part}{\thispagestyle{plain}}{\thispagestyle{part}}{}{}
+
+\newcommand{\changelocaltocdepth}[1]{
+\addtocontents{toc}{\protect\setcounter{tocdepth}{#1}}
+\setcounter{tocdepth}{#1}
+}
+
+\apptocmd{\frontmatter}{
+\pagestyle{plain}
+\changelocaltocdepth{1}
+\setcounter{secnumdepth}{0}
+}{}{}
+
+\apptocmd{\mainmatter}{
+\pagestyle{fancy}
+\changelocaltocdepth{2}
+\setcounter{secnumdepth}{2}
+}{}{}
+
+\providecommand{\allowhyphens}{\ifvmode\else\nobreak\hspace{0pt}\fi}
+
+\setcounter{secnumdepth}{5}
+
+\setlength\parskip{\smallskipamount}
+
+\makeatletter
+\patchcmd\@afterheading{\clubpenalty \@M}{\clubpenalties 3 \@M\@M 5000 }{
+\typeout{patched}}{\typeout{patch failed}
+}
+\makeatother
+
+\AddToHook{cmd/descriptionlabel/after}{\rule[-8pt]{0pt}{0pt}}
+\setlist[description]{
+style=nextline,
+labelindent=0pt,
+leftmargin=1cm,
+itemindent=\dimexpr-5pt-\labelsep\relax
+}
+
+\newcommand{\booktitle}{Nested Lists}
+\newcommand{\booksubtitle}{Six levels deep}
+\newcommand{\bookauthor}{TeXSmith}
+\newcommand{\bookemail}{\href{mailto:john.doe@acme.corp}{john.doe@acme.corp}}
+\newcommand{\bookpublisher}{}
+\newcommand{\bookedition}{}
+\newcommand{\bookdate}{\today}
+
+\title{\Huge\bfseries\booktitle}
+\author{\bookauthor}
+\makeatletter
+\gdef\@subtitle{\booksubtitle}
+\gdef\@authoremail{\bookemail}
+\makeatother
+\newcommand{\subtitletext}{\booksubtitle}
+\newcommand{\authorname}{\bookauthor}
+\newcommand{\authoremail}{\bookemail}
+\providecommand{\texsmithEmoji}[1]{#1}
+
+\definecolor{indigo(dye)}{rgb}{0.0, 0.25, 0.42}
+\begin{document}
+\hypersetup{pageanchor=false}
+\frontmatter
+\maketitle
+\thispagestyle{empty}
+\thispagestyle{empty}
+\raggedbottom
+\clearpage
+\tableofcontents*
+\hypersetup{pageanchor=true}
+\mainmatter
+\chapter{Deep nesting}
+Markdown nests a list as deeply as its author indents it. \LaTeX{} stops at four
+levels of \tscodeinline{itemize}, four of \tscodeinline{enumerate} and six lists of any kind inside one
+another, and says \tscodeinline{Too deeply nested}. The \tscodeinline{texsmith-\allowbreak{}lists} package the
+templates share lifts both limits to nine levels; this page walks to six.
+\section{Bullets}
+\begin{itemize}
+\item Level one
+\begin{itemize}
+\item Level two
+\begin{itemize}
+\item Level three
+\begin{itemize}
+\item Level four
+\begin{itemize}
+\item Level five
+\begin{itemize}
+\item Level six
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\section{Numbers}
+\begin{enumerate}
+\item Level one
+\begin{enumerate}
+\item Level two
+\begin{enumerate}
+\item Level three
+\begin{enumerate}
+\item Level four
+\begin{enumerate}
+\item Level five
+\begin{enumerate}
+\item Level six
+\end{enumerate}
+\end{enumerate}
+\end{enumerate}
+\end{enumerate}
+\end{enumerate}
+\end{enumerate}
+\section{Mixed}
+\begin{enumerate}
+\item An ordered outline
+\begin{itemize}
+\item with a bullet under it
+\begin{enumerate}
+\item and a number under that
+\begin{itemize}
+\item and a bullet again
+\begin{enumerate}
+\item and a fifth level
+\begin{itemize}
+\item and a sixth
+\end{itemize}
+\end{enumerate}
+\end{itemize}
+\end{enumerate}
+\end{itemize}
+\end{enumerate}
+\backmatter
+
+\ifnum\value{figure}>0
+\clearpage
+\listoffigures
+\fi
+\ifnum\value{table}>0
+\clearpage
+\listoftables
+\fi
+\end{document}

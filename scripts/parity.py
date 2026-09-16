@@ -1254,7 +1254,14 @@ def _ink(image: Any) -> Any:
 # already covered, and the four whose fragments are most easily broken — plus the
 # French book, whose parts exercise the language-dependent part names the book
 # template's table of contents has to measure and print.
-PDF_BASELINE_ENTRIES = ("abbr", "book-fr", "counters", "index", "marginnote")
+PDF_BASELINE_ENTRIES = (
+    "abbr",
+    "book-fr",
+    "counters",
+    "index",
+    "marginnote",
+    "nested-lists",
+)
 # Absolute tolerance on a page's ink coverage. A pixel-exact figure is not
 # reproducible across machines (see `pdf_digest`), so a page passes when its
 # text layer is identical and its ink moved by less than this.

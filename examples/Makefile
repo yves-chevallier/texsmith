@@ -22,6 +22,7 @@ EXAMPLES := \
 	math \
 	mermaid \
 	multi-document \
+	nested-lists \
 	mkdocs \
 	paper \
 	progressbar \

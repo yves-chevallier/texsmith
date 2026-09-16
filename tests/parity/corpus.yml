@@ -337,6 +337,17 @@ examples:
     backend: typst
     requires: [typst]
 
+  # ---- examples/nested-lists (six list levels; LaTeX alone stops at four) --
+  - id: nested-lists
+    cwd: examples/nested-lists
+    args: [nested-lists.md, -tbook]
+    backend: latex
+  - id: nested-lists@typst
+    cwd: examples/nested-lists
+    args: [nested-lists.md, -tbook, --format, typst]
+    backend: typst
+    requires: [typst]
+
   # ---- examples/paper (DOI lookups, served from tests/parity/cache) -------
   - id: paper
     cwd: examples/paper

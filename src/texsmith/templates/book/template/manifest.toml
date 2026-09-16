@@ -218,6 +218,8 @@ strip_heading = true
 
 [latex.template.assets]
 "fixtoc.sty" = { source = "template/fixtoc.sty" }
+# Shared with the other templates (templates/common): nine list levels.
+"texsmith-lists.sty" = { source = "../common/texsmith-lists.sty" }
 
 # Typst backend (parallel to [latex.template]).
 [typst.template]

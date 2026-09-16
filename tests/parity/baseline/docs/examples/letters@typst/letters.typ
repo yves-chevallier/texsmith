@@ -108,6 +108,8 @@ With great scientific affection,
 ]{scrlttr2}
 \usepackage{xcolor}
 \definecolor{texsmithLinkColor}{HTML}{0B3D91}
+% enumitem, plus the nine list levels Markdown can nest (shared package).
+\usepackage{texsmith-lists}
 \VAR{extra_packages}
 % Contract macros (fragment-contracts.md §4): a letter keeps its callouts
 % flat — a thin rule on the left, no rounded frame — by restyling the
@@ -432,6 +434,8 @@ strip_heading = true
 
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }
+# Shared with the other templates (templates/common): nine list levels.
+"texsmith-lists.sty" = { source = "../common/texsmith-lists.sty" }
 
 # Typst backend: the same DIN / SN / NF window-envelope layouts as the
 # KOMA-Script class options, laid out from the page corner; sender /

@@ -196,6 +196,8 @@ strip_heading = true
 
 [latex.template.assets]
 "fonts/modernline.otf" = { source = "fonts/modernline.otf" }
+# Shared with the other templates (templates/common): nine list levels.
+"texsmith-lists.sty" = { source = "../common/texsmith-lists.sty" }
 
 # Typst backend: the same DIN / SN / NF window-envelope layouts as the
 # KOMA-Script class options, laid out from the page corner; sender /

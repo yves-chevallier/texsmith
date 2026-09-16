@@ -153,6 +153,10 @@ description = "Appendix content inserted before backmatter."
 depth = "section"
 strip_heading = true
 
+[latex.template.assets]
+# Shared with the other templates (templates/common): nine list levels.
+"texsmith-lists.sty" = { source = "../common/texsmith-lists.sty" }
+
 # Typst backend (parallel to [latex.template]). Attributes are backend-agnostic
 # but use raw values (no LaTeX escaping); the Typst scaffolding escapes inline.
 [typst.template]

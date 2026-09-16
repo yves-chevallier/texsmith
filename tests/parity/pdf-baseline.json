@@ -219,6 +219,40 @@
         "ink": 0.01498,
         "text": "Longer notes wrap over several lines and keep flowing down the margin. Keep them concise so the reader can scan them without losing the thread of the main text. see Newton, Principia, 1687 or Hamiltonians for energy-based analyses 1.4 Longer notes The package handles multi-sentence notes gracefully. They line-wrap in the margin and do not disturb the main text\u2019s baseline grid. Below, a denser example mixing sides and inline styles: \u2022 Classical mechanics predates the calculus of variations. \u2022 Modern formulations rely on Lagrangians and variational principles. \u2022 Quantum mechanics introduces non-commuting observables follows in the 20th century. 1.5 Inner / Outer In a twoside layout \u2014 like this article \u2014 {o} (outer) and {i} (inner) are MVP aliases of {r} and {l} respectively. On single-side documents they behave identically to their counterparts. 2"
       }
+    ],
+    "nested-lists/nested-lists.pdf": [
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.00182,
+        "text": "Nested Lists TeXSmith September 16, 2026"
+      },
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.00239,
+        "text": "Contents 1 Deep nesting 1 1.1 Bullets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 1.2 Numbers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 1.3 Mixed . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 ii"
+      },
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.01291,
+        "text": "Chapter 1 Deep nesting Markdown nests a list as deeply as its author indents it. LATEX stops at four levels of itemize, four of enumerate and six lists of any kind inside one another, and says Too deeply nested. The texsmith-lists package the templates share lifts both limits to nine levels; this page walks to six. 1.1 Bullets \u2022 Level one \u2013 Level two \u2217Level three \u00b7 Level four \u2022 Level five \u2013 Level six 1.2 Numbers 1. Level one (a) Level two i. Level three A. Level four 1. Level five (a) Level six 1.3 Mixed 1. An ordered outline \u2022 with a bullet under it (a) and a number under that \u2013 and a bullet again i. and a fifth level \u2217and a sixth 1"
+      },
+      {
+        "size": [
+          827,
+          1170
+        ],
+        "ink": 0.0,
+        "text": ""
+      }
     ]
   }
 }

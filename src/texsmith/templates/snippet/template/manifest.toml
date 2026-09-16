@@ -64,3 +64,7 @@ sources = ["border"]
 [latex.template.slots.mainmatter]
 default = true
 depth = "section"
+
+[latex.template.assets]
+# Shared with the other templates (templates/common): nine list levels.
+"texsmith-lists.sty" = { source = "../common/texsmith-lists.sty" }
