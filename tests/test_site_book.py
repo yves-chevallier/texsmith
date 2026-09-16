@@ -295,6 +295,33 @@ def test_a_two_page_site_becomes_one_tex_with_both_pages(site: Path) -> None:
     assert (result.output_root / "sources" / "guide" / "one.md").is_file()
 
 
+def test_an_anchor_of_another_page_is_a_reference_style_link_target(site: Path) -> None:
+    """``[text][id]`` reaches an anchor of a sibling page (the book is one document)."""
+    docs = site / "docs"
+    (docs / "guide" / "one.md").write_text(
+        "# One {#sec:one}\n\nA []{#cheese} anchor and a [span]{#brie}.\n",
+        encoding="utf-8",
+    )
+    (docs / "index.md").write_text(
+        "# Home\n\nSee the [academic paper][cheese] and the [wheel][brie], "
+        "but @cheese and @brie and @nowhere.\n",
+        encoding="utf-8",
+    )
+
+    (result,) = build_books(load_site_config(site / "mkdocs.yml"), compile_pdf=False)
+
+    page_tex = (result.output_root / "pages" / "index-md.tex").read_text(encoding="utf-8")
+    assert "\\hyperref[cheese]{academic paper}" in page_tex
+    assert "\\hyperref[brie]{wheel}" in page_tex
+    # A page that defines the anchor carries the label the link points at.
+    one_tex = (result.output_root / "pages" / "guide-one-md.tex").read_text(encoding="utf-8")
+    assert "\\label{cheese}" in one_tex
+    # ``@key`` writes text, not a link: a sibling anchor shows what a local
+    # one shows — its span text, else its id — and an unknown key stays
+    # visibly unresolved.
+    assert "but cheese and span and [?nowhere]" in page_tex
+
+
 def test_the_build_directory_can_be_moved_and_one_book_named(site: Path) -> None:
     config = load_site_config(site / "mkdocs.yml")
     elsewhere = site / "build" / "books"

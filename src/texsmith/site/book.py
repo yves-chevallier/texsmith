@@ -918,9 +918,18 @@ class BookBuilder:
 
         The LaTeX writer prints a sibling as text (design 06 §Sibling
         documents), so only labels whose text is the same on both media are
-        handed over: user counters (tmark numbers them in print too) and
-        headings (their title). A backend-numbered float of another page
-        stays ``[?key]`` rather than carrying the site's number into the PDF.
+        handed over: user counters (tmark numbers them in print too),
+        headings (their title) and anchors (their span text, else their id —
+        what ``@key`` shows for a local anchor too). A backend-numbered
+        float of another page stays ``[?key]`` rather than carrying the
+        site's number into the PDF.
+
+        An anchor carries no number and no title of its own, so it says
+        nothing a ``@key`` could show; it is handed over for the
+        reference-style ``[text][key]``, whose text the author wrote, which
+        tmark refers only when the key is a label of the document or of the
+        book. The book being one LaTeX document, the ``\\label`` is there and
+        the link lands.
         """
         labels: list[dict[str, Any]] = []
         for other in book.entries:
@@ -936,7 +945,7 @@ class BookBuilder:
                 user_counter = bool(prefix) and (
                     prefix in self.index.counters or prefix in record.page_counters
                 )
-                if not (heading or user_counter):
+                if not (heading or user_counter or kind == "anchor"):
                     continue
                 item = dict(label)
                 if heading and prefix not in HEADING_PREFIXES:
