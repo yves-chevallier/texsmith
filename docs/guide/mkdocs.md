@@ -347,10 +347,11 @@ What does not carry over yet:
 - **`mike`.** Versioning is not supported: there is no version selector.
 - **`exclude_docs`.** Zensical builds the pages MkDocs excludes, so a file
   under `docs/` that only exists to be included somewhere else becomes a page
-  of its own; nothing on the TeXSmith side can prevent that. They are lowered
-  like any other page, after the ones the navigation reaches, and the numbering
-  of the site is unaffected. Keeping one out of the search is Material's own
-  front matter, which Zensical does honour:
+  of its own; nothing on the TeXSmith side can prevent that. Each is lowered
+  on its own, with the numbers that follow the last page of the navigation,
+  and neither the numbering of the site nor its label map is affected. Keeping
+  one out of the search is Material's own front matter, which Zensical does
+  honour:
 
   ```yaml
   ---
