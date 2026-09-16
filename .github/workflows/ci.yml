@@ -271,6 +271,11 @@ jobs:
             press/texsmith-docs/texsmith-docs.pdf
             examples/examples.zip
             site/**
+          # Zensical copies the `.nav.yml` files of `docs/` into the site, and
+          # the publisher writes the site verbatim: without this the artifact
+          # would drop them and CI would publish a different tree from a local
+          # `scripts/publish_docs.py` run.
+          include-hidden-files: true
           if-no-files-found: error
 
   release:
