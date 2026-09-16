@@ -491,6 +491,8 @@ def render_entry(
 
 
 RENDER_LOCK_PATH = BUILD_DIR / "render.lock"
+#: The byte a Windows lock covers, past any pid the file will ever hold.
+LOCK_BYTE = 1 << 16
 
 
 @contextmanager
@@ -529,6 +531,12 @@ def _take_lock(handle: Any) -> None:
         except ModuleNotFoundError:  # pragma: no cover - Windows
             import msvcrt
 
+            # A Windows lock covers a byte range, and a locked byte cannot be
+            # read by anyone, this process included. The pid sits at the
+            # start of the file and must stay readable (by the test, and by
+            # the run that is refused), so the lock takes one byte far past
+            # it; locking past the end of the file is allowed.
+            handle.seek(LOCK_BYTE)
             msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
     except OSError as exc:
         handle.seek(0)
