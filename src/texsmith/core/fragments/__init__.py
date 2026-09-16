@@ -275,6 +275,12 @@ class FragmentRegistry:
         for entry in discovered:
             try:
                 target = entry.load()
+                # A callable entry point is a lazy factory; a factory that
+                # raises must not take ``import texsmith`` down with it.
+                if callable(target) and not isinstance(
+                    target, (Path, FragmentDefinition, BaseFragment)
+                ):
+                    target = target()
             except Exception as exc:  # pragma: no cover - defensive
                 # No document/emitter exists yet: this fires once, from the
                 # module-level ``FRAGMENT_REGISTRY`` singleton, at import time.
@@ -282,11 +288,6 @@ class FragmentRegistry:
                     "Failed to load texsmith fragment entry point '%s': %s", entry.name, exc
                 )
                 continue
-
-            if callable(target) and not isinstance(
-                target, (Path, FragmentDefinition, BaseFragment)
-            ):
-                target = target()
 
             if isinstance(target, (BaseFragment, FragmentDefinition)):
                 self._register_fragment_object(target)
