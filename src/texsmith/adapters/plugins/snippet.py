@@ -108,6 +108,31 @@ _SNIPPET_RUNTIME: TemplateRuntime | None = None
 _SNIPPET_CACHE: _SnippetCache | None = None
 
 
+def _cache_tmp_path(destination: Path) -> Path:
+    """A name of this process's own, beside ``destination``."""
+    return destination.with_name(f"{destination.name}.{os.getpid()}.tmp")
+
+
+def _publish_into_cache(destination: Path, write: Callable[[Path], None]) -> None:
+    """Fill ``destination`` in the shared cache so no reader sees half a file.
+
+    Several renders share one snippet cache — the parity harness runs four at
+    a time, a site build and a ``serve`` run side by side — and they compile
+    the same fence. ``write`` fills a file named after this process, which is
+    then renamed over the entry: a reader either finds the previous artefact
+    or the new one, never the bytes in between, and two writers no longer
+    interleave in one temporary file.
+    """
+    tmp = _cache_tmp_path(destination)
+    try:
+        write(tmp)
+        tmp.replace(destination)
+    except OSError:
+        with contextlib.suppress(OSError):
+            tmp.unlink()
+        raise
+
+
 @dataclass(slots=True)
 class _SnippetCache:
     """Disk-backed cache storing rendered snippet artefacts."""
@@ -164,8 +189,11 @@ class _SnippetCache:
 
         cached_md_path: Path | None = None
         if block is not None and block.content is not None:
+            content = block.content
             try:
-                cached_md.write_text(block.content, encoding="utf-8")
+                _publish_into_cache(
+                    cached_md, lambda path: path.write_text(content, encoding="utf-8")
+                )
                 cached_md_path = cached_md
             except OSError:
                 cached_md_path = None
@@ -194,9 +222,9 @@ class _SnippetCache:
             source_pdf = Path(pdf_path).resolve()
             source_png = Path(png_path).resolve()
             if source_pdf != cached_pdf:
-                shutil.copy2(source_pdf, cached_pdf)
+                _publish_into_cache(cached_pdf, lambda path: shutil.copy2(source_pdf, path))
             if source_png != cached_png:
-                shutil.copy2(source_png, cached_png)
+                _publish_into_cache(cached_png, lambda path: shutil.copy2(source_png, path))
         except OSError:
             return
 
@@ -227,10 +255,11 @@ class _SnippetCache:
             "version": _SNIPPET_CACHE_VERSION,
             "entries": self._entries(),
         }
-        tmp_path = self.metadata_path.with_suffix(".tmp")
+        body = json.dumps(payload, indent=2, sort_keys=True)
         try:
-            tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-            tmp_path.replace(self.metadata_path)
+            _publish_into_cache(
+                self.metadata_path, lambda path: path.write_text(body, encoding="utf-8")
+            )
             self.dirty = False
         except OSError:
             return

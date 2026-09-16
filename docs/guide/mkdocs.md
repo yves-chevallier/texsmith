@@ -161,6 +161,29 @@ is a plain `base_path: .` — the directory every documented command runs from.
 And `extra_css` must name the stylesheet: Zensical reads that list before
 Python runs, so the extension cannot add it the way the plugin does.
 
+A site whose navigation lives in `.nav.yml` files needs one more line. Zensical
+reads them only when `awesome-nav` is listed under `plugins:` — it arms its own
+reader on the plugin's presence, not on the files being there — so a site that
+relied on `awesome-pages` adds the newer name:
+
+```yaml
+plugins:
+  - awesome-nav
+```
+
+The file's contents also differ on one point: awesome-pages' `arrange:` lists
+the items it reorders and appends everything else implicitly, while awesome-nav
+does not. Converting `arrange:` to `nav:` therefore ends with a `- "*"`, or the
+pages the list does not name disappear from the navigation — and from a book
+built out of it:
+
+```yaml
+nav:
+  - intro.md
+  - basics
+  - "*"
+```
+
 Per page the extension does what the plugin does: the pre-pass over every page
 in navigation order, and the lowering. It runs once per page — mkdocstrings
 renders each docstring through a `Markdown` instance of its own, and only the
@@ -174,6 +197,15 @@ rendered page: a second build finds the cache warm, replays the HTML and never
 calls Python at all. A stylesheet or a preview written while a page rendered is
 therefore deleted by the next build and never written again — the page keeps
 linking to a file nobody makes any more.
+
+That cache is also why a change to the extension can look like no change at
+all: `.cache/` replays a page whose source has not moved without calling Python
+again, so a new TeXSmith, a new option under `texsmith:` or an edited extension
+reaches the pages only once the cache is dropped:
+
+```console
+$ zensical build -c -f mkdocs.yml
+```
 
 The generated files are sources instead. `texsmith site assets` writes them
 under `docs_dir`, before Zensical runs, and the build copies them like any

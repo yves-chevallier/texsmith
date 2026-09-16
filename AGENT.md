@@ -116,6 +116,10 @@ migration followed.
   `render --out DIR` dumps raw outputs; `pdf --baseline [--check]` compares built
   PDFs against `tests/parity/pdf-baseline.json`; `list` says which entries can
   run here. **Changing a page under `docs/` changes its baseline: re-record it.**
+  One run at a time per checkout: every entry renders into
+  `build/parity/render/<id>`, which the run clears first, so a run holds
+  `build/parity` while it renders and a second one is refused by name rather
+  than deleting the first one's output.
 - `scripts/refresh_cli_help.sh` regenerates `docs/assets/cli-help`, the
   gitignored snippet `docs/cli/index.md` includes. Run it after touching a CLI
   option, before building the site.

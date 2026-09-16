@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 import sys
 import textwrap
@@ -355,3 +356,21 @@ def test_committed_pdf_baseline_is_well_formed(parity):
     assert {name.split("/")[0] for name in documents} == set(parity.PDF_BASELINE_ENTRIES)
     for pages in documents.values():
         assert pages and all({"size", "ink", "text"} == set(page) for page in pages)
+
+
+def test_a_second_run_is_refused_rather_than_racing(parity, tmp_path, monkeypatch):
+    """Two runs would clear each other's output directories."""
+    monkeypatch.setattr(parity, "BUILD_DIR", tmp_path / "parity")
+    monkeypatch.setattr(parity, "ROOT", tmp_path)
+    monkeypatch.setattr(parity, "RENDER_LOCK_PATH", tmp_path / "parity" / "render.lock")
+
+    with parity.render_lock():
+        assert (tmp_path / "parity" / "render.lock").read_text(encoding="utf-8").strip() == str(
+            os.getpid()
+        )
+        with pytest.raises(parity.ParityError, match="another parity run"), parity.render_lock():
+            pass
+
+    # Released with the run: the next one takes it.
+    with parity.render_lock():
+        pass

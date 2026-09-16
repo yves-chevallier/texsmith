@@ -191,6 +191,29 @@ is a plain \tscodeinline{base\_path: .} --- the directory every documented comma
 And \tscodeinline{extra\_css} must name the stylesheet: Zensical reads that list before
 Python runs, so the extension cannot add it the way the plugin does.
 
+A site whose navigation lives in \tscodeinline{.nav.yml} files needs one more line. Zensical
+reads them only when \tscodeinline{awesome-\allowbreak{}nav} is listed under \tscodeinline{plugins:} --- it arms its own
+reader on the plugin's presence, not on the files being there --- so a site that
+relied on \tscodeinline{awesome-\allowbreak{}pages} adds the newer name:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{awesome\PYZhy{}nav}
+\end{Verbatim}
+\end{tscode}
+The file's contents also differ on one point: awesome-pages' \tscodeinline{arrange:} lists
+the items it reorders and appends everything else implicitly, while awesome-nav
+does not. Converting \tscodeinline{arrange:} to \tscodeinline{nav:} therefore ends with a \tscodeinline{-\allowbreak{} "*"}, or the
+pages the list does not name disappear from the navigation --- and from a book
+built out of it:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{nav}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{intro.md}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{basics}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{l+s}{\PYZdq{}}\PY{l+s}{*}\PY{l+s}{\PYZdq{}}
+\end{Verbatim}
+\end{tscode}
 Per page the extension does what the plugin does: the pre-pass over every page
 in navigation order, and the lowering. It runs once per page --- mkdocstrings
 renders each docstring through a \tscodeinline{Markdown} instance of its own, and only the
@@ -203,6 +226,15 @@ calls Python at all. A stylesheet or a preview written while a page rendered is
 therefore deleted by the next build and never written again --- the page keeps
 linking to a file nobody makes any more.
 
+That cache is also why a change to the extension can look like no change at
+all: \tscodeinline{.cache/} replays a page whose source has not moved without calling Python
+again, so a new TeXSmith, a new option under \tscodeinline{texsmith:} or an edited extension
+reaches the pages only once the cache is dropped:
+\begin{tscode}[lang=console, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gp}{\PYZdl{} }zensical\PY{+w}{ }build\PY{+w}{ }\PYZhy{}c\PY{+w}{ }\PYZhy{}f\PY{+w}{ }mkdocs.yml
+\end{Verbatim}
+\end{tscode}
 The generated files are sources instead. \tscodeinline{texsmith site assets} writes them
 under \tscodeinline{docs\_dir}, before Zensical runs, and the build copies them like any
 hand-written image:

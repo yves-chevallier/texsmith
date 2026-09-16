@@ -25,9 +25,10 @@ Design: specs/migration/writers-and-passes.md §5.
 from __future__ import annotations
 
 import argparse
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from contextlib import contextmanager
+from dataclasses import dataclass, field, replace
 import difflib
 import fnmatch
 from functools import cache
@@ -431,6 +432,11 @@ class RenderResult:
     returncode: int
     seconds: float
     log: str = ""
+    #: The bodies present the moment the command exited. Compared against
+    #: :meth:`outputs` at the end of the run, it says whether a body that is
+    #: missing was never written or was written and then removed by something
+    #: outside the harness.
+    produced: tuple[str, ...] = ()
 
     @property
     def ok(self) -> bool:
@@ -480,7 +486,59 @@ def render_entry(
     (out_dir / "_parity.log").write_text(
         f"$ (cd {entry.cwd} && texsmith {' '.join(argv[3:])})\n\n{log}", encoding="utf-8"
     )
-    return RenderResult(entry, out_dir, returncode, time.monotonic() - started, log)
+    result = RenderResult(entry, out_dir, returncode, time.monotonic() - started, log)
+    return replace(result, produced=tuple(path.name for path in result.outputs()))
+
+
+RENDER_LOCK_PATH = BUILD_DIR / "render.lock"
+
+
+@contextmanager
+def render_lock() -> Iterator[None]:
+    """Hold ``build/parity`` for one run at a time.
+
+    Every entry renders into a directory named after its id, which the run
+    clears before the command writes into it. Two runs in one checkout
+    therefore delete each other's output: the one that read its directory
+    after the other cleared it reports ``no .tex output`` for a different
+    handful of entries every time, which reads exactly like a regression and
+    is not one. The lock lives with the open file, so it is released when the
+    process ends however it ends, and a run that finds it held says who holds
+    it instead of racing.
+    """
+    BUILD_DIR.mkdir(parents=True, exist_ok=True)
+    handle = RENDER_LOCK_PATH.open("a+", encoding="utf-8")
+    try:
+        _take_lock(handle)
+        handle.seek(0)
+        handle.truncate()
+        handle.write(f"{os.getpid()}\n")
+        handle.flush()
+        yield
+    finally:
+        handle.close()
+
+
+def _take_lock(handle: Any) -> None:
+    """Lock ``handle`` for this process, or raise naming the run that holds it."""
+    try:
+        try:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except ModuleNotFoundError:  # pragma: no cover - Windows
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError as exc:
+        handle.seek(0)
+        holder = handle.read().strip() or "another process"
+        raise ParityError(
+            f"another parity run (pid {holder}) is rendering into "
+            f"{BUILD_DIR.relative_to(ROOT)}: the two would clear each other's output "
+            "directories and report differences neither of them produced. Wait for it "
+            "to finish."
+        ) from exc
 
 
 def render_many(
@@ -491,20 +549,23 @@ def render_many(
     build: bool = False,
 ) -> dict[str, RenderResult]:
     """Render entries in parallel; prints one progress line per entry."""
-    env = render_env(seed_cache())
     results: dict[str, RenderResult] = {}
     total = len(entries)
 
-    def work(entry: Entry) -> RenderResult:
-        return render_entry(entry, out_dir=out_root / entry.entry_id, env=env, build=build)
+    with render_lock():
+        env = render_env(seed_cache())
 
-    with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
-        for index, result in enumerate(pool.map(work, entries), start=1):
-            results[result.entry.entry_id] = result
-            state = "ok" if result.ok else f"FAILED ({result.returncode})"
-            print(
-                f"[{index:>3}/{total}] {result.entry.entry_id:<48} {state} {result.seconds:5.1f}s"
-            )
+        def work(entry: Entry) -> RenderResult:
+            return render_entry(entry, out_dir=out_root / entry.entry_id, env=env, build=build)
+
+        with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+            for index, result in enumerate(pool.map(work, entries), start=1):
+                results[result.entry.entry_id] = result
+                state = "ok" if result.ok else f"FAILED ({result.returncode})"
+                print(
+                    f"[{index:>3}/{total}] {result.entry.entry_id:<48} "
+                    f"{state} {result.seconds:5.1f}s"
+                )
     return results
 
 
@@ -973,6 +1034,32 @@ def error_report(result: RenderResult) -> EntryReport:
     )
 
 
+def no_output_report(result: RenderResult) -> EntryReport:
+    """A render the CLI reported as successful that left no body behind.
+
+    The command said it worked, so the log alone explains nothing: the report
+    names what the directory does hold, which separates a body written under
+    another name from a directory that stayed empty.
+    """
+    entry = result.entry
+    try:
+        present = sorted(path.name for path in result.out_dir.iterdir())
+    except OSError:
+        present = []
+    held = ", ".join(name for name in present if name != "_parity.log") or "nothing"
+    wrote = (
+        f"the command wrote {', '.join(result.produced)}, which is gone"
+        if result.produced
+        else "the command wrote none"
+    )
+    return EntryReport(
+        entry,
+        ERROR,
+        f"no {entry.suffix} output in {result.out_dir.relative_to(ROOT)}, which holds {held}; "
+        f"{wrote} (see {result.out_dir.relative_to(ROOT) / '_parity.log'})",
+    )
+
+
 # subcommands
 
 
@@ -1102,11 +1189,7 @@ def cmd_baseline(args: argparse.Namespace) -> int:
             continue
         files = normalised_outputs(result)
         if not files:
-            reports.append(
-                EntryReport(
-                    entry, ERROR, f"no {entry.suffix} output in {result.out_dir.relative_to(ROOT)}"
-                )
-            )
+            reports.append(no_output_report(result))
             continue
         if args.check:
             reports.append(_check_baseline(entry, files))

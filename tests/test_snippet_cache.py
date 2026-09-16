@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
+
+import pytest
 
 from texsmith.adapters.plugins import snippet
 
@@ -106,3 +110,41 @@ def test_cache_store_records_markdown_and_metadata(tmp_path, monkeypatch) -> Non
     assert entry["attributes"]["layout"] is None
     assert entry["files"]["pdf"] == snippet.asset_filename(block.digest, ".pdf")
     assert (cache.root / entry["files"]["pdf"]).read_bytes() == pdf_source.read_bytes()
+
+
+def test_the_shared_cache_is_filled_through_a_name_of_its_own(tmp_path, monkeypatch) -> None:
+    """Several renders share one cache: an entry appears whole or not at all."""
+    monkeypatch.setenv("TEXSMITH_CACHE_DIR", str(tmp_path / "cache-root"))
+    monkeypatch.setattr(snippet, "_SNIPPET_CACHE", None, raising=False)
+    block = _build_block("body")
+    cache = snippet._resolve_cache()
+    assert cache is not None
+
+    pdf_source = tmp_path / "prefill.pdf"
+    png_source = tmp_path / "prefill.png"
+    pdf_source.write_bytes(b"%PDF-TEST%")
+    png_source.write_bytes(b"\x89PNG\r\n")
+
+    cache.store(block.digest, pdf_source, png_source, template_version="v1", block=block)
+    cache.flush()
+
+    # The temporary names carry the process id, so two writers never share one,
+    # and none of them is left behind.
+    assert snippet._cache_tmp_path(cache.metadata_path).name.endswith(f"{os.getpid()}.tmp")
+    assert [path.name for path in cache.root.glob("*.tmp")] == []
+    assert json.loads(cache.metadata_path.read_text(encoding="utf-8"))["entries"]
+
+
+def test_a_failed_cache_write_leaves_the_previous_entry_alone(tmp_path) -> None:
+    target = tmp_path / "entry.json"
+    target.write_text("kept", encoding="utf-8")
+
+    def _explode(path) -> None:
+        path.write_text("half", encoding="utf-8")
+        raise OSError("disk full")
+
+    with pytest.raises(OSError, match="disk full"):
+        snippet._publish_into_cache(target, _explode)
+
+    assert target.read_text(encoding="utf-8") == "kept"
+    assert [path.name for path in tmp_path.glob("*.tmp")] == []
