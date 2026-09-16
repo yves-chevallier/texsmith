@@ -175,6 +175,35 @@ def test_a_page_reaches_a_figure_defined_on_another_page(tmp_path: Path) -> None
     assert lowered.text == "# Second\n\nSee [Figure 1](first.md#fig:kitten).\n"
 
 
+def test_a_page_the_site_never_pre_passed_stays_out_of_the_map(tmp_path: Path) -> None:
+    """Lowering a page the pre-pass never saw leaves the site's map alone.
+
+    Zensical publishes what ``exclude_docs`` removes, so such a page is
+    lowered like any other; joining the map there would hand its labels to
+    the pages rendered after it and to no other — a render order, not a site.
+    """
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    listed = docs / "listed.md"
+    listed.write_text("# Listed\n\n![A kitten](kitten.png){#fig:kitten}\n", encoding="utf-8")
+    hidden = docs / "hidden.md"
+    hidden.write_text(
+        "# Hidden\n\n![A puppy](puppy.png){#fig:puppy}\n\nSee @fig:puppy.\n", encoding="utf-8"
+    )
+
+    index = _index(tmp_path)
+    index.prepass([_page(listed, "listed.md")])
+    before = index.book_for("listed.md")
+
+    lowered = index.lower(_page(hidden, "hidden.md"), hidden.read_text(encoding="utf-8"))
+
+    assert lowered is not None
+    # The page reads, with the numbers that follow the site's own.
+    assert "See [Figure 2](#fig:puppy)." in lowered.text
+    assert set(index.records) == {"listed.md"}
+    assert index.book_for("listed.md") == before
+
+
 def test_a_page_declaring_a_container_kind_lowers_it_to_a_callout(tmp_path: Path) -> None:
     """``press.declare.admonitions`` reaches the parser, so ``::: exercise`` is one.
 

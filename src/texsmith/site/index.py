@@ -114,7 +114,6 @@ class PageRecord:
     labels: list[dict[str, Any]] = field(default_factory=list)
     #: The counters the page declares itself (either spelling).
     page_counters: dict[str, Any] = field(default_factory=dict)
-    lowered: bool = False
 
 
 @dataclass(slots=True)
@@ -326,6 +325,21 @@ class SiteIndex:
 
     def register(self, page: SitePage) -> PageRecord | None:
         """Read one page, resolve it after the chain so far, keep its labels."""
+        record = self.scan(page)
+        if record is None:
+            return None
+        self._chain = dict(record.next_start)
+        self._records[record.src_uri] = record
+        return record
+
+    def scan(self, page: SitePage) -> PageRecord | None:
+        """Read one page and resolve it after the chain, without joining the site.
+
+        :meth:`register` is this plus the two site-wide effects: the page's
+        labels become part of the map every other page resolves against, and
+        the numbering chain moves on to where the page left it. A page the
+        site does not publish takes neither.
+        """
         path = Path(page.abs_src_path)
         try:
             text = path.read_text(encoding="utf-8-sig")
@@ -354,8 +368,6 @@ class SiteIndex:
             {**label, "location": f"{record.src_uri}#{label['key']}"}
             for label in resolved.get("book") or ()
         ]
-        self._chain = dict(record.next_start)
-        self._records[record.src_uri] = record
         return record
 
     # The site map.
@@ -386,12 +398,15 @@ class SiteIndex:
         record = self._records.get(page.src_uri)
         if record is None:
             # A page outside the navigation never went through the pre-pass:
-            # it takes the numbers after the last page.
-            record = self.register(page)
+            # it is lowered on its own, with the numbers that follow the last
+            # page of the site, and it stays out of the site map. Joining it
+            # would make the map depend on the render order — a page rendered
+            # before it would not see its labels, and one rendered after it
+            # would — where the site publishes it or does not, whoever reads.
+            record = self.scan(page)
             if record is None:
                 return None
         record.body = markdown
-        record.lowered = True
 
         files = self.emitter.sink.files
         # ``src_uri`` is the generator's own path, always POSIX (unlike an
