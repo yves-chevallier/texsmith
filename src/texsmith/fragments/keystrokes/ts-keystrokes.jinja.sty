@@ -55,3 +55,26 @@
     \group_end:
   }
 \ExplSyntaxOff
+
+% The same keys, as text, for hyperref's PDF strings (bookmarks, the document
+% outline, /Title). \pdfstringdef expands its argument: the TikZ boxes of
+% \keystroke cannot survive that, and hyperref drops \tskeys itself with a
+% "Token not allowed in a PDF string" warning, leaving a bookmark that reads
+% "Saving with Ctrl,S". So the command is swapped, inside pdfstringdef only,
+% for an expandable walk over the comma list that joins the keys with " + ".
+% Nothing else changes: \tskeys keeps its typeset form everywhere else.
+\def\ts@keys@pdfstring#1{\ts@keys@pdf@first#1,\ts@keys@pdf@stop,}
+\def\ts@keys@pdf@first#1,{%
+  \ifx\ts@keys@pdf@stop#1%
+  \else
+    #1\expandafter\ts@keys@pdf@next
+  \fi}
+\def\ts@keys@pdf@next#1,{%
+  \ifx\ts@keys@pdf@stop#1%
+  \else
+    \space+\space#1\expandafter\ts@keys@pdf@next
+  \fi}
+\AtBeginDocument{%
+  \ifcsname pdfstringdefDisableCommands\endcsname
+    \pdfstringdefDisableCommands{\let\tskeys\ts@keys@pdfstring}%
+  \fi}

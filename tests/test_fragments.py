@@ -120,6 +120,34 @@ def test_keystrokes_fragment_accepts_labels_that_are_not_csname_safe(tmp_path: P
     assert "\\exp_args:Nx \\__ts_key_typeset:nn { \\tl_to_str:n {#1} } {#1}" in fragment
 
 
+def test_keystrokes_survive_a_heading_and_reach_the_pdf_bookmarks(tmp_path: Path) -> None:
+    """A heading is a moving argument, and hyperref turns it into a PDF string.
+
+    ``\\tskeys`` typesets TikZ boxes, which ``\\pdfstringdef`` cannot expand:
+    hyperref used to drop the command with a "Token not allowed in a PDF
+    string" warning and leave a bookmark reading ``Saving with Ctrl,S``. The
+    fragment hands hyperref a text form through
+    ``\\pdfstringdefDisableCommands``, so the bookmark reads ``Ctrl + S``.
+    """
+
+    md = tmp_path / "doc.md"
+    md.write_text(
+        "# Saving with ++ctrl+s++ {#save}\n\nSee [the section](#save).\n",
+        encoding="utf-8",
+    )
+
+    session = TemplateSession(load_template_runtime("book"))
+    session.add_document(Document.from_markdown(md))
+    result = session.render(tmp_path / "build")
+
+    tex_content = result.main_tex_path.read_text(encoding="utf-8")
+    assert "\\chapter{Saving with \\tskeys{Ctrl,S}}" in tex_content
+
+    fragment = (tmp_path / "build" / "ts-keystrokes.sty").read_text(encoding="utf-8")
+    assert "\\pdfstringdefDisableCommands{\\let\\tskeys\\ts@keys@pdfstring}" in fragment
+    assert "\\space+\\space" in fragment
+
+
 def test_todolist_fragment_renders_when_used(tmp_path: Path) -> None:
     md = tmp_path / "doc.md"
     md.write_text("- [x] Task\n- [ ] Other task\n", encoding="utf-8")
