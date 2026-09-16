@@ -225,6 +225,68 @@ rather than depending on them; and every core fix lives on tmark's
 `autorefs-anchors` branch behind an unstaged `[tool.uv.sources]` override,
 which a `tmark-core` release must replace before the TeXSmith branch merges.
 
+## Tags, and the one extension point Python still has (2026-09-16)
+
+The handbook's `hooks/tags.py` did two things with `[[tag]]`: it made an index
+entry, and it appended the tag to the page's entries in lunr's
+`search_index.json`, where Material searches it and shows it. The first half is
+TMark's `#[term]` now; the second half had nowhere to go on Zensical, and
+`texsmith site search` put the terms in `text` instead. That works for typing
+and loses the *notion* of a tag. Measured on Zensical 0.0.62, here is what the
+generator actually offers, and what it would take upstream to close the gap.
+
+**What Zensical gives natively.** A page's `tags:` metadata drives three
+things, and the `tags` plugin is needed for only one of them. The chips under
+the content (`templates/partials/tags.html`, included by
+`partials/content.html`) and the `tags` list on every `search.json` item of the
+page are rendered from the metadata alone — a site that declares no `tags`
+plugin still gets both. Declaring the plugin adds the listing page (a
+`<!-- material/tags -->` directive; `tags_file` is deprecated in favour of it,
+and `_TAGS_SUPPORTED_OPTIONS` in `config.py` is the list of options Rust
+honours) and turns each chip into a link into it. In the search dialog, the
+`tags` of an item feed the *Filters* panel: a term aggregation the reader
+clicks, which narrows the results — and, with an empty query, *is* the query.
+It is a real browse-by-tag UI, and it was worth wiring to.
+
+**What it does not give.** The text index has three fields —
+`fields:[C("title",…,{weight:3}), C("text",…), C("path",…,{weight:2})]` in
+`assets/javascripts/workers/search.*.min.js` — and `tags` is not one of them.
+It is a *filter* sub-index instead (`pe({compiler:at, fields:[C("tags",
+a=>a.tags)], plugins:[se({handlers:[ie()]})]})`: a filter plugin over a term
+aggregation). Typing a word that exists only as a tag finds nothing; verified
+on a scratch site whose only occurrence of a word was a tag, the result list
+came back empty while the Filters panel listed the word with its count. So the
+two halves stay complementary: `text` for typing, `tags` for browsing, and
+TeXSmith writes both.
+
+**The extension point.** `render(content, path, url, metadata)` parses the
+front matter JSON into `meta`, hands the *same dict* to the `Page` it builds
+for the context extension, and returns it to Rust after `md.convert` — so a
+key a Python-Markdown extension writes into `page.meta` is a key the build
+reads. That is the whole of what Python can still tell Rust about a page, and
+it is enough: `texsmith.site.web` derives a page's tags from its index entries
+there and Zensical does the rest. Two cautions. It works by construction, not
+by contract — nothing upstream promises that the returned `meta` is the dict
+the page carries. And a preprocessor must do it, not a postprocessor: the `toc`
+extension replays the postprocessors over each heading and over the table of
+contents (`markdown.extensions.toc.render_inner_html`), which had our hook fire
+three to four times per page on fragments holding nothing.
+
+**What to propose upstream.** Three things, smallest first. *One*, document the
+`render()` metadata contract — that the `meta` returned to Rust is the dict a
+Markdown extension may mutate through `ContextPreprocessor.from_markdown(md)`;
+it is the only Python→Rust channel left and it deserves a line in the module
+system proposal (ZAP 007) rather than being an accident of the implementation.
+*Two*, let the text index reach the tags: either a fourth `C("tags", a=>a.tags,
+{weight:…})` field in the main compiler, or a `keywords` field carried next to
+`tags` that is searchable but not aggregated — Material's lunr index has had
+exactly this for years (`tags` is both searched and boosted there), and its
+absence is the one behaviour a site loses when it migrates. *Three*, a hook
+after the search index is written: `texsmith site search` exists only because
+`search.json` is produced in Rust after Python is done, and a `post_build`
+entry point in the module system would make it a plugin again instead of a
+second command a `Makefile` has to remember.
+
 ## Sources
 
 - [Roadmap](https://zensical.org/about/roadmap/),
@@ -237,3 +299,6 @@ which a `tmark-core` release must replace before the TeXSmith branch merges.
   [`config.py`](https://github.com/zensical/zensical/blob/master/python/zensical/config.py),
   [releases](https://github.com/zensical/zensical/releases)
 - [Backlog #25, mkdocs-with-pdf](https://github.com/zensical/backlog/issues/25)
+- [`partials/tags.html`](https://github.com/zensical/zensical/blob/master/python/zensical/templates/partials/tags.html),
+  [`partials/content.html`](https://github.com/zensical/zensical/blob/master/python/zensical/templates/partials/content.html)
+  — the chips, and where they are included

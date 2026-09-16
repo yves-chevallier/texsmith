@@ -115,7 +115,7 @@ and its fence stays literal text on the page.
 \tscodeinline{template} & Template used for the books & \tscodeinline{book} \\
 \tscodeinline{build\_dir} & Where the \tscodeinline{.tex}, the assets and the PDF land & \tscodeinline{press} \\
 \tscodeinline{declare} & Site-wide declarations (\tscodeinline{declare.counters}, \tscodeinline{declare.admonitions}, \tscodeinline{declare.glossary}) & \tscodeinline{\{\}} \\
-\tscodeinline{web} & \tscodeinline{tmark.lower\_web} options: \tscodeinline{sections} (\tscodeinline{title} | \tscodeinline{number}), \tscodeinline{citations} (\tscodeinline{inline} | \tscodeinline{passthrough}), \tscodeinline{css\_prefix} & \tscodeinline{\{\}} \\
+\tscodeinline{web} & Web-only options: \tscodeinline{sections} (\tscodeinline{title} | \tscodeinline{number}), \tscodeinline{citations} (\tscodeinline{inline} | \tscodeinline{passthrough}), \tscodeinline{css\_prefix} and \tscodeinline{tags} (\tscodeinline{index} | \tscodeinline{none}) & \tscodeinline{\{\}} \\
 \tscodeinline{inject\_markdown\_extensions} & Enable the extensions the lowering relies on & \tscodeinline{true} \\
 \tscodeinline{css} & Ship and register \tscodeinline{texsmith.css} & \tscodeinline{true} \\
 \tscodeinline{language} & Document language, else the theme's & \emph{theme} \\
@@ -317,6 +317,38 @@ boosts, and the \tscodeinline{text} of Zensical's \tscodeinline{search.json} ---
 since \tscodeinline{tags} there are the filter chips, an aggregation of exact values rather
 than something a reader types. \tscodeinline{make docs-\allowbreak{}zensical} runs the command after the
 build.
+\subsection{Index entries are the page's tags}
+Typing is only half of a search. The other half is browsing, and Zensical
+already has it: the \emph{Filters} panel of the search dialog lists the \tscodeinline{tags} of
+the matching entries, and clicking one narrows the results to the pages that
+carry it --- with no query at all, it lists them. Those tags come from a page's
+\tscodeinline{tags:} metadata, which Zensical also turns into the chips under the content
+and into the entries of a \tscodeinline{<!-\allowbreak{}-\allowbreak{} material/tags -\allowbreak{}-\allowbreak{}>} listing page.
+
+So the lowering gives a page the tags its own index entries make. \tscodeinline{\#[pointeur]}
+puts \tscodeinline{pointeur} in the page's \tscodeinline{tags}, \tscodeinline{\#[mémoire][allocation]} puts \tscodeinline{mémoire}
+and stops there --- a sub-entry is the shape of a printed index, not of a chip ---
+and the tags the page declares itself come first and stay. Set \tscodeinline{web.tags} to
+\tscodeinline{none} to leave a page's \tscodeinline{tags:} exactly as it wrote them.
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{plugins}\PY{p}{:}
+\PY{+w}{  }\PY{p+pIndicator}{\PYZhy{}}\PY{+w}{ }\PY{n+nt}{texsmith}\PY{p}{:}
+\PY{+w}{      }\PY{n+nt}{web}\PY{p}{:}
+\PY{+w}{        }\PY{n+nt}{tags}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{index}\PY{+w}{ }\PY{c+c1}{\PYZsh{} index (default) | none}
+\end{Verbatim}
+\end{tscode}
+The two halves are complementary and a site gets both: \tscodeinline{text} finds a term by
+typing, down to the section it sits in, and \tscodeinline{tags} browses by it, page by page.
+A page that would rather not show the chips says \tscodeinline{hide: [tags]} in its front
+matter; the search filters are unaffected. And since a page's metadata is part
+of its cached render, changing \tscodeinline{web.tags} calls for \tscodeinline{zensical build -\allowbreak{}c}.
+
+This is Zensical only. Under MkDocs, Material's own \tscodeinline{tags} plugin collects a
+page's tags from \tscodeinline{on\_page\_markdown} at the same priority as this plugin and is
+declared before it, so it reads the metadata before the lowering writes it;
+index entries reach MkDocs' search through the \tscodeinline{tags} field of
+\tscodeinline{search\_index.json} instead, which is where the hook this replaces put them.
 \subsection{The book is a command}
 \label{the-book-is-a-command}
 A book hangs off \tscodeinline{on\_post\_build} under MkDocs, a hook Zensical has not got, so

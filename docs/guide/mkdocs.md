@@ -79,7 +79,7 @@ and its fence stays literal text on the page.
 | `template` | Template used for the books | `book` |
 | `build_dir` | Where the `.tex`, the assets and the PDF land | `press` |
 | `declare` | Site-wide declarations (`declare.counters`, `declare.admonitions`, `declare.glossary`) | `{}` |
-| `web` | `tmark.lower_web` options: `sections` (`title` \| `number`), `citations` (`inline` \| `passthrough`), `css_prefix` | `{}` |
+| `web` | Web-only options: `sections` (`title` \| `number`), `citations` (`inline` \| `passthrough`), `css_prefix` and `tags` (`index` \| `none`) | `{}` |
 | `inject_markdown_extensions` | Enable the extensions the lowering relies on | `true` |
 | `css` | Ship and register `texsmith.css` | `true` |
 | `language` | Document language, else the theme's | *theme* |
@@ -292,6 +292,40 @@ boosts, and the `text` of Zensical's `search.json` — the field its query reads
 since `tags` there are the filter chips, an aggregation of exact values rather
 than something a reader types. `make docs-zensical` runs the command after the
 build.
+
+### Index entries are the page's tags
+
+Typing is only half of a search. The other half is browsing, and Zensical
+already has it: the *Filters* panel of the search dialog lists the `tags` of
+the matching entries, and clicking one narrows the results to the pages that
+carry it — with no query at all, it lists them. Those tags come from a page's
+`tags:` metadata, which Zensical also turns into the chips under the content
+and into the entries of a `<!-- material/tags -->` listing page.
+
+So the lowering gives a page the tags its own index entries make. `#[pointeur]`
+puts `pointeur` in the page's `tags`, `#[mémoire][allocation]` puts `mémoire`
+and stops there — a sub-entry is the shape of a printed index, not of a chip —
+and the tags the page declares itself come first and stay. Set `web.tags` to
+`none` to leave a page's `tags:` exactly as it wrote them.
+
+```yaml
+plugins:
+  - texsmith:
+      web:
+        tags: index # index (default) | none
+```
+
+The two halves are complementary and a site gets both: `text` finds a term by
+typing, down to the section it sits in, and `tags` browses by it, page by page.
+A page that would rather not show the chips says `hide: [tags]` in its front
+matter; the search filters are unaffected. And since a page's metadata is part
+of its cached render, changing `web.tags` calls for `zensical build -c`.
+
+This is Zensical only. Under MkDocs, Material's own `tags` plugin collects a
+page's tags from `on_page_markdown` at the same priority as this plugin and is
+declared before it, so it reads the metadata before the lowering writes it;
+index entries reach MkDocs' search through the `tags` field of
+`search_index.json` instead, which is where the hook this replaces put them.
 
 ### The book is a command
 
