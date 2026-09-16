@@ -265,29 +265,56 @@ def apply_pass_values(
                 )
 
 
+def _glossary_terms_referenced(resolved: Mapping[str, Any] | None) -> set[str]:
+    """The terms a ``@gls:`` of the document resolves to, as ``resolve`` folded them."""
+    wanted: set[str] = set()
+    for ref in (resolved or {}).get("refs") or ():
+        if not isinstance(ref, Mapping):
+            continue
+        resolution = ref.get("resolution")
+        if not isinstance(resolution, Mapping) or resolution.get("kind") != "glossary":
+            continue
+        term = resolution.get("term")
+        if isinstance(term, str) and term:
+            wanted.add(term)
+    return wanted
+
+
 def _declare_glossary(state: DocumentState, resolved: Mapping[str, Any] | None) -> None:
-    """Declare the document's glossary terms so ``\\tsgls{key}`` has an entry.
+    """Declare the glossary terms the document refers to, so ``\\tsgls{key}`` has an entry.
 
-    ``resolve`` returns the merged ``press.declare.glossary`` of the document
-    and its includes; the writer emits ``\\tsgls{key}`` with the key as
-    written, so the entry is declared under that exact key (no slugification)
-    and an entry a previous document of the batch declared is left alone.
+    ``resolve`` returns one table for the whole document: the merged
+    ``press.declare.glossary`` of the document and its includes **and** every
+    ``*[KEY]: …`` definition in them, keys case-folded — the form ``@gls:``
+    resolves against and the form the writer puts in ``\\tsgls{key}``. So an
+    entry is declared under that exact key (no slugification) and only when a
+    reference names it. Two reasons, one for each half of that table:
 
-    tmark case-folds those keys (``tmark-registry``'s ``collect::glossary``,
-    and ``@gls:`` resolves against the folded form), while ``\\tsacr`` keeps
-    the acronym's own spelling: an acronym that is both declared and written
-    would otherwise be declared twice — ``\\newacronym{NMR}`` beside
-    ``\\newacronym{nmr}`` — and printed twice in the glossary. So a term a
-    cased variant already declares is skipped.
+    * an abbreviation has its own path. ``apply_requires`` registers it under
+      the LaTeX key the writer computes for ``\\tsacr`` (``slugify(term, "",
+      lowercase=False)``), with the author's own spelling as the short form,
+      and drops the ones no page writes. Declaring the table wholesale emitted
+      a second, folded ``\\newacronym`` for every acronym of the document —
+      ``\\newacronym{posix}{posix}{…}`` beside ``\\newacronym{POSIX}{POSIX}{…}``,
+      forty-four of them once a site's shared abbreviation list reaches every
+      page — and a key that is not a control-sequence name,
+      ``\\newacronym{k&r}``, failed the run outright.
+    * a declared term nobody refers to needs no entry: ``glossaries`` prints
+      what is used, and the abbreviations already follow that rule.
+
+    An entry a previous document of the batch declared is left alone, and so
+    is a term whose cased variant is already an acronym: ``\\newacronym{NMR}``
+    beside ``\\newacronym{nmr}`` would print the same acronym twice.
     """
     terms = (resolved or {}).get("glossary")
     if not isinstance(terms, Mapping):
         return
+    wanted = _glossary_terms_referenced(resolved)
     folded = {name.casefold() for name in state.acronyms}
     for key, description in terms.items():
         name = str(key).strip()
         text = str(description).strip()
-        if not name or not text or name.casefold() in folded:
+        if not name or not text or name not in wanted or name.casefold() in folded:
             continue
         folded.add(name.casefold())
         state.acronyms[name] = (name, text)

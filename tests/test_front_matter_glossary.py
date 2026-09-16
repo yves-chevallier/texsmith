@@ -7,7 +7,12 @@ from tempfile import TemporaryDirectory
 
 import bs4  # noqa: F401  (ensure real BeautifulSoup is loaded for downstream imports)
 import pytest
+from tmark.ir import model
 
+from texsmith.core.context import DocumentState
+from texsmith.core.conversion.bodies import Requires
+from texsmith.core.conversion.pipeline import _declare_glossary
+from texsmith.core.fragments.activation import apply_requires
 from texsmith.core.glossary import (
     GlossaryEntry,
     GlossaryFrontMatter,
@@ -321,3 +326,53 @@ $$
         assert "f_{PWM} = 44" in tex
         # The formula must not have been escaped into literal text.
         assert "textbackslash" not in tex
+
+
+def test_an_abbreviation_is_declared_once_under_its_latex_key() -> None:
+    """``\\newacronym`` carries the writer's key and the author's spelling, once.
+
+    ``resolve``'s glossary table holds every ``*[KEY]:`` definition with its
+    key case-folded, so declaring that table wholesale used to emit a second,
+    lowercase ``\\newacronym`` for every acronym — and ``\\newacronym{k&r}``,
+    which is not a control-sequence name, failed the run.
+    """
+    state = DocumentState()
+    apply_requires(
+        state,
+        Requires(acronyms=["KR", "POSIX"]),
+        abbreviations=[
+            model.AbbrDef(key="K&R", expansion="Kernighan and Ritchie"),
+            model.AbbrDef(key="POSIX", expansion="Portable Operating System Interface"),
+            model.AbbrDef(key="ANSI", expansion="American National Standards Institute"),
+        ],
+    )
+    _declare_glossary(
+        state,
+        {
+            "glossary": {
+                "k&r": "Kernighan and Ritchie",
+                "posix": "Portable Operating System Interface",
+                "ansi": "American National Standards Institute",
+            },
+            "refs": [],
+        },
+    )
+
+    assert state.acronyms == {
+        "KR": ("K&R", "Kernighan and Ritchie"),
+        "POSIX": ("POSIX", "Portable Operating System Interface"),
+    }
+
+
+def test_a_referenced_glossary_term_is_declared_under_the_key_tsgls_uses() -> None:
+    """``@gls:ohm`` writes ``\\tsgls{ohm}``: the entry is declared under ``ohm``."""
+    state = DocumentState()
+    _declare_glossary(
+        state,
+        {
+            "glossary": {"ohm": "The law of Ohm", "unused": "Nothing refers to me"},
+            "refs": [{"key": "gls:ohm", "resolution": {"kind": "glossary", "term": "ohm"}}],
+        },
+    )
+
+    assert state.acronyms == {"ohm": ("ohm", "The law of Ohm")}

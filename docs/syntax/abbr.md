@@ -54,6 +54,12 @@ $ rg newacronym build/test.tex
 93:\newacronym{W3C}{W3C}{World Wide Web Consortium}
 ```
 
+One entry per acronym the text actually writes, keyed by the acronym with
+everything LaTeX cannot put in a control-sequence name removed — `K&R` is
+`\newacronym{KR}{K\&R}{…}`, and the short form it prints is still `K&R`. An
+acronym defined and never written is not declared: `glossaries` prints what is
+used.
+
 ## Front-matter glossary
 
 For longer documents you can declare acronyms under `press.declare.glossary` in

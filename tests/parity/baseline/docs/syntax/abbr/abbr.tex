@@ -75,6 +75,11 @@ Acronyms are collected automatically during the \LaTeX{} pass:
 93:\PYZbs{}newacronym\PYZob{}W3C\PYZcb{}\PYZob{}W3C\PYZcb{}\PYZob{}World Wide Web Consortium\PYZcb{}
 \end{Verbatim}
 \end{tscode}
+One entry per acronym the text actually writes, keyed by the acronym with
+everything \LaTeX{} cannot put in a control-sequence name removed --- \tscodeinline{K\&R} is
+\tscodeinline{\textbackslash{}newacronym\{KR\}\{K\textbackslash{}\&R\}\{…\}}, and the short form it prints is still \tscodeinline{K\&R}. An
+acronym defined and never written is not declared: \tscodeinline{glossaries} prints what is
+used.
 \section{Front-matter glossary}
 For longer documents you can declare acronyms under \tscodeinline{press.declare.glossary} in
 the YAML front matter. Each entry carries an explicit description and may be
