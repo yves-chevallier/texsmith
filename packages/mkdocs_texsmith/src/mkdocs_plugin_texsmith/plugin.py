@@ -12,7 +12,7 @@
 * ``on_page_markdown`` (priority −50, after ``macros``) resolves the page
   against the site map and lowers it with ``tmark.lower_web``;
 * ``on_page_content`` collects the ``ts-index`` tags for the search index;
-* ``on_post_page`` rewrites the snippet URLs;
+* ``on_post_page`` rewrites the snippet URLs and corrects the page's HTML;
 * ``on_post_build`` injects the tags into the lunr index and hands the
   navigation to :mod:`texsmith.site.book`, which builds every book.
 
@@ -57,6 +57,7 @@ from texsmith.site.config import (
     snippet_base_paths_from_extensions,
     web_options,
 )
+from texsmith.site.html import unescape_table_pipes
 from texsmith.site.index import SiteIndex, SitePage
 from texsmith.site.nav import (
     Navigation as SiteNavigation,
@@ -324,7 +325,9 @@ class LatexPlugin(BasePlugin):
             lambda block: self._build_snippet_urls(page, block),
             source_path=page.file.abs_src_path,
         )
-        return rewritten
+        # The same Python-Markdown wart the Zensical extension corrects, and
+        # the same correction: ``texsmith.site.html`` explains it.
+        return unescape_table_pipes(rewritten)
 
     @event_priority(-100)
     def on_post_build(self, config: MkDocsConfig) -> None:  # pragma: no cover - hook

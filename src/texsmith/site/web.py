@@ -69,6 +69,7 @@ from texsmith.site.config import (
     site_counters,
     web_options,
 )
+from texsmith.site.html import unescape_table_pipes
 from texsmith.site.index import SiteIndex, SitePage
 from texsmith.site.nav import resolve_navigation
 
@@ -92,6 +93,10 @@ SNIPPET_PRIORITY = 0
 #: already rewritten relative to the page's URL, since Zensical rewrites the
 #: links in a tree processor, which Python-Markdown runs first.
 DRAWIO_PRIORITY = 1
+
+#: Before the two above; it only reads the text of a code span, which no
+#: later rewriting touches.
+TABLE_PIPE_PRIORITY = 2
 
 #: Matches one ``<img>`` tag and the ``src`` it carries.
 RE_IMG = re.compile(r"<img\b[^>]*?\bsrc=\"([^\"]+)\"[^>]*>", re.IGNORECASE)
@@ -134,6 +139,9 @@ class TexsmithExtension(Extension):
     def extendMarkdown(self, md: Markdown) -> None:  # noqa: N802 - Python-Markdown's name
         """Register the lowering and the snippet rewriting."""
         md.preprocessors.register(LowerPreprocessor(md), "texsmith_lower", LOWER_PRIORITY)
+        md.postprocessors.register(
+            TablePipePostprocessor(md), "texsmith_table_pipes", TABLE_PIPE_PRIORITY
+        )
         md.postprocessors.register(DrawioPostprocessor(md), "texsmith_drawio", DRAWIO_PRIORITY)
         md.postprocessors.register(SnippetPostprocessor(md), "texsmith_snippets", SNIPPET_PRIORITY)
 
@@ -169,6 +177,20 @@ class LowerPreprocessor(Preprocessor):
         if not excluded:
             state.index.report(lowered)
         return lowered.text.split("\n")
+
+
+class TablePipePostprocessor(Postprocessor):
+    """Give a code span in a table cell back the pipe its ``\\|`` stands for.
+
+    :func:`texsmith.site.html.unescape_table_pipes` explains the wart; this
+    is the Zensical half of it, and the plugin's ``on_post_page`` the other.
+    """
+
+    def run(self, text: str) -> str:
+        """Return the page's HTML with the cells' code spans unescaped."""
+        if _page(self.md) is None:
+            return text
+        return unescape_table_pipes(text)
 
 
 class DrawioPostprocessor(Postprocessor):

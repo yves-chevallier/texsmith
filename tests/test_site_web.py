@@ -53,7 +53,7 @@ PAGE_B = """\
 As shown in @fig:one, it works.
 """
 
-RENDERING_EXTENSIONS = ("attr_list", "md_in_html", "pymdownx.superfences")
+RENDERING_EXTENSIONS = ("attr_list", "md_in_html", "tables", "pymdownx.superfences")
 
 
 @pytest.fixture(autouse=True)
@@ -338,6 +338,42 @@ def test_a_drawio_image_without_an_export_keeps_its_tag(
     assert 'src="../d.drawio"' in html
     assert "texsmith site assets" in caplog.text
     assert "guide/d.drawio" in caplog.text
+
+
+def test_a_pipe_in_a_code_span_of_a_table_survives_the_row(tmp_path: Path, monkeypatch) -> None:
+    """``\\|`` is how a pipe stays inside a cell; the reader must see the pipe."""
+    page = "# T\n\n| expr | note |\n|------|------|\n| `a \\| b` | text \\| more |\n"
+    config = make_site(tmp_path, {"a.md": page})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    html = render(config, "a.md", page)
+
+    assert "<code>a | b</code>" in html
+    assert "\\|" not in html
+
+
+def test_a_backslash_before_a_pipe_outside_a_table_is_left_alone(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Outside a cell the backslash is a backslash, and the code span is verbatim."""
+    page = "# T\n\nA code span `a \\| b` in a paragraph.\n"
+    config = make_site(tmp_path, {"a.md": page})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    html = render(config, "a.md", page)
+
+    assert "<code>a \\| b</code>" in html
+
+
+def test_the_table_pipes_are_left_to_mkdocs_without_a_context(tmp_path: Path, monkeypatch) -> None:
+    """Like the rest of the extension, the correction is Zensical's alone."""
+    page = "# T\n\n| expr |\n|------|\n| `a \\| b` |\n"
+    config = make_site(tmp_path, {"a.md": page})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+
+    html = render(config, "a.md", page, with_context=False)
+
+    assert "<code>a \\| b</code>" in html
 
 
 def test_a_page_the_site_excludes_is_lowered_without_reporting(
