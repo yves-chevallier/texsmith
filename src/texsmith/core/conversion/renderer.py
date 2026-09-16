@@ -77,6 +77,17 @@ class TemplateRenderResult:
 #: rendering two documents from different directories impossible.
 _PROVENANCE_KEYS = frozenset({"_source_dir", "_source_path", "source_dir"})
 
+#: Keys whose value is an aggregate over the batch rather than a template
+#: attribute: the ``scripts`` pass computes the font usage of *one* document and
+#: ``apply_pass_values`` writes it under ``fonts``, so two documents of a batch
+#: disagree as soon as they are not written in the same scripts. They are merged
+#: here the way ``_aggregate`` merges them onto the shared ``DocumentState``,
+#: rather than raising a conflict the author cannot act on.
+_AGGREGATE_KEYS = {
+    "script_usage": merge_script_usage,
+    "fallback_summary": merge_fallback_summaries,
+}
+
 
 class FragmentOverrideError(TemplateError):
     """Raised when fragment template overrides disagree."""
@@ -106,6 +117,11 @@ def _merge_overrides(
             continue
 
         if key in _PROVENANCE_KEYS:
+            continue
+
+        merge = _AGGREGATE_KEYS.get(key)
+        if merge is not None and isinstance(existing, list) and isinstance(value, list):
+            target[key] = merge(existing, value)
             continue
         conflict_path = f"{namespace}.{key}" if namespace else key
         raise FragmentOverrideError(
