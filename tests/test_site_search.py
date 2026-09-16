@@ -153,3 +153,29 @@ def test_a_site_without_directory_urls_names_the_file(tmp_path: Path) -> None:
 
     assert tags.tokens("guide/a.html") == ["cake"]
     assert tags.tokens("guide/a.html#b") == ["cake", "chocolate", "cake::chocolate"]
+
+
+def test_index_terms_keep_the_top_level_of_each_entry_once_and_in_order() -> None:
+    assert search.index_terms(PAGE) == ["cake"]
+
+    page = (
+        '<span class="ts-index" data-tag="mémoire" data-tag1="allocation"></span>'
+        '<span class="ts-index" data-tag="pointeur"></span>'
+        '<span class="ts-index" data-tag="mémoire"></span>'
+    )
+
+    assert search.index_terms(page) == ["mémoire", "pointeur"]
+
+
+def test_index_terms_read_the_lowered_markdown_and_the_legacy_hashtag() -> None:
+    lowered = (
+        'Un <span class="ts-index" data-tag=" byte order "></span> et un '
+        '<span class="ts-hashtag" data-tag="endianness" data-main></span>.'
+    )
+
+    assert search.index_terms(lowered) == ["byte order", "endianness"]
+
+
+def test_a_page_without_an_entry_has_no_terms() -> None:
+    assert search.index_terms("<p>Nothing to see.</p>") == []
+    assert search.index_terms('<span class="ts-index"></span>') == []

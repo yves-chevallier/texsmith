@@ -15,11 +15,19 @@ Two generators, two index formats, one difference that matters:
   carries a ``tags`` list on every entry. Its front end does *not* search
   that field: the query is parsed against ``title``, ``text`` and ``path``
   (``assets/javascripts/workers/search.*.min.js``), while ``tags`` feeds the
-  filter chips, an aggregation of exact values the reader clicks. Index
-  terms put there would not be found by typing them, and would flood the
-  filter list with one chip per term. They go into ``text`` instead, the
-  field the query does read, wrapped in a ``ts-index`` span so a second run
-  replaces them rather than appending them twice.
+  *Filters* panel of the search dialog, an aggregation of exact values the
+  reader clicks. Terms put there alone would not be found by typing them, so
+  they go into ``text`` as well, the field the query does read, wrapped in a
+  ``ts-index`` span so a second run replaces them rather than appending them
+  twice.
+
+The two halves are complementary, and a site gets both. Typing is what
+``text`` answers, down to the section a term sits in; browsing is what the
+``tags`` of an entry answer, and those do not come from here at all —
+Zensical fills them from the page's ``tags`` metadata, which the web
+extension derives with :func:`index_terms` while the page is rendered. A
+term is therefore a chip on the page, an entry of the tags listing and a
+filter of the search, on top of being a word the query finds.
 
 Both generators spell a location the same way — ``""`` for the home page,
 ``guide/mkdocs/`` for a page, ``guide/mkdocs/#anchor`` for a heading — so one
@@ -49,6 +57,7 @@ __all__ = [
     "collect_site",
     "expand_search_terms",
     "extract_tags",
+    "index_terms",
 ]
 
 #: MkDocs' lunr index, relative to the site directory.
@@ -60,6 +69,9 @@ DISCO_INDEX = "search.json"
 RE_HEADERLINK = re.compile(r'<a\s+[^>]*headerlink[^>]*href="(#[^"]+)"[^>]*>')
 RE_HASHTAG = re.compile(r"<span\s+[^>]*class=\"[^\"]*ts-(?:hashtag|index)[^\"]*\"[^>]*>")
 RE_DATA_TAG = re.compile(r"data-tag\d*=\"([^\"]+)\"")
+
+#: The top level of one entry: ``data-tag``, never a numbered ``data-tag1``.
+RE_TOP_TAG = re.compile(r"data-tag=\"([^\"]+)\"")
 
 #: What a previous injection left in an entry's ``text``, replaced on the next one.
 RE_INJECTED = re.compile(r"\s*<span class=\"ts-index\">[^<]*</span>")
@@ -86,6 +98,37 @@ def expand_search_terms(tags: Iterable[str]) -> list[str]:
 def extract_tags(fragment: str) -> list[str]:
     """The ``data-tag`` values of one ``ts-index`` span, in order."""
     return [value.strip() for value in RE_DATA_TAG.findall(fragment) if value.strip()]
+
+
+def index_terms(text: str) -> list[str]:
+    """The page's index terms as tags: one per entry, its top level only.
+
+    ``text`` is a lowered page — the Markdown ``tmark.lower_web`` returned or
+    the HTML it became, since the ``ts-index`` spans read the same in both.
+    A sub-entry (``#[mémoire][allocation]``) contributes its top level and
+    nothing else: ``mémoire`` is what a reader browses by, where
+    ``mémoire::allocation`` is the shape of a printed index, not of a chip.
+
+    Terms keep the author's spelling — accents, case and spaces — because a
+    tag is shown as it is written and Zensical slugifies it itself for the
+    anchor. They come back deduplicated in first-appearance order, so a page
+    lists its terms the way it introduces them, and all of them: a page's
+    index is what it is, and a page that would rather not show the chips
+    says ``hide: [tags]`` in its front matter, which leaves the search
+    filters alone.
+    """
+    terms: list[str] = []
+    seen: set[str] = set()
+    for match in RE_HASHTAG.findall(text):
+        found = RE_TOP_TAG.search(match)
+        if found is None:
+            continue
+        term = found.group(1).strip()
+        if not term or term in seen:
+            continue
+        seen.add(term)
+        terms.append(term)
+    return terms
 
 
 def normalise_location(location: str) -> str:

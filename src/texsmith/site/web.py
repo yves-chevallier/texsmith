@@ -43,6 +43,14 @@ What does not carry over: the PDF books and ``mike`` versioning. The search
 index is not written here either — Zensical writes it in Rust once Python is
 done — but it is not lost: ``texsmith site search`` patches the index the
 build wrote, after the build.
+
+Half of it, at least. What a reader *types* is patched in after the build;
+what a reader *browses* is decided here, while the page renders: the index
+entries of the page become its ``tags`` metadata (:func:`_tag_page`), and
+Zensical turns those into the chips under the content, the entries of a tags
+listing and the ``tags`` of the page's search entries — its *Filters* panel.
+A page's metadata is part of its cached render, so changing ``web.tags``
+calls for ``zensical build -c``.
 """
 
 from __future__ import annotations
@@ -68,10 +76,12 @@ from texsmith.site.config import (
     load_site_config,
     site_declarations,
     web_options,
+    web_tags,
 )
 from texsmith.site.html import unescape_table_pipes
 from texsmith.site.index import SiteIndex, SitePage
 from texsmith.site.nav import resolve_navigation
+from texsmith.site.search import index_terms
 
 
 __all__ = ["TexsmithExtension", "makeExtension"]
@@ -120,6 +130,9 @@ class SiteState:
     config: Any
     #: ``page -> (mtime, size)`` when the pre-pass ran, so an edit invalidates it.
     mtimes: dict[str, tuple[int, int]]
+    #: ``web.tags``: ``index`` derives a page's tags from its index entries,
+    #: ``none`` leaves the page's own ``tags:`` alone.
+    tags: str = "index"
 
 
 _lock = threading.Lock()
@@ -176,6 +189,8 @@ class LowerPreprocessor(Preprocessor):
             return lines
         if not excluded:
             state.index.report(lowered)
+        if state.tags == "index":
+            _tag_page(page, lowered.text)
         return lowered.text.split("\n")
 
 
@@ -320,6 +335,35 @@ def _page(md: Markdown) -> Any | None:
     return None if context is None else context.page
 
 
+def _tag_page(page: Any, lowered: str) -> None:
+    """Give the page the tags its index entries make, under its own ``tags:``.
+
+    ``zensical.markdown.render`` builds its ``Page`` around the very dict it
+    hands back to Rust once the page is converted, so a key written here is a
+    key the build reads: the chips under the content, the tags listing and
+    the ``tags`` of every ``search.json`` entry of the page all come from it.
+    A page that declares tags itself keeps them, and keeps them first.
+
+    This is the preprocessor's job rather than a postprocessor's because the
+    ``toc`` extension replays the postprocessors over each heading and over
+    the table of contents (``markdown.extensions.toc.render_inner_html``),
+    where a page's metadata would be written three or four times from
+    fragments that hold no entry at all.
+    """
+    meta = getattr(page, "meta", None)
+    if not isinstance(meta, dict):  # pragma: no cover - Zensical always passes one
+        return
+    declared = meta.get("tags")
+    tags = [str(tag) for tag in declared] if isinstance(declared, list) else []
+    seen = set(tags)
+    for term in index_terms(lowered):
+        if term not in seen:
+            seen.add(term)
+            tags.append(term)
+    if tags:
+        meta["tags"] = tags
+
+
 def site_state() -> SiteState | None:
     """The site's pre-pass, built once and rebuilt when a page changes.
 
@@ -382,6 +426,7 @@ def _build_state() -> SiteState | None:
         use_directory_urls=bool(config.get("use_directory_urls", True)),
         config=config,
         mtimes=_page_mtimes(docs_dir),
+        tags=web_tags(plugin, logger=_log),
     )
 
     navigation = resolve_navigation(docs_dir, nav or None, exclude_docs=config.get("exclude_docs"))

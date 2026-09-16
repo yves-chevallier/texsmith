@@ -92,9 +92,13 @@ def render(
     url: str | None = None,
     outer: bool = True,
     with_context: bool = True,
+    page: Any = None,
 ) -> str:
     """Render one page the way ``zensical.markdown.render`` does."""
-    page = context.Page(url=src_uri.removesuffix(".md") + "/" if url is None else url, path=src_uri)
+    if page is None:
+        page = context.Page(
+            url=src_uri.removesuffix(".md") + "/" if url is None else url, path=src_uri
+        )
     extensions: list[Any] = [web.makeExtension(), *RENDERING_EXTENSIONS]
     if with_context:
         extensions.insert(0, context.ContextExtension(page=page, config=config))
@@ -473,3 +477,63 @@ def test_a_reference_style_link_is_left_to_autorefs(tmp_path: Path, monkeypatch)
     lowered = lower(REFERRING_PAGE, "b.md")
 
     assert "[Plus haut][opengl-coordinates], we defined them." in lowered
+
+
+PAGE_TAGS = """\
+# Tagged
+
+A #[pointeur] and some #[mémoire][allocation], then #[pointeur] again.
+"""
+
+
+def _page(src_uri: str, meta: dict[str, Any] | None = None) -> Any:
+    """Zensical's page, with the metadata dict it hands back to Rust."""
+    return context.Page(
+        url=src_uri.removesuffix(".md") + "/", path=src_uri, meta=meta if meta is not None else {}
+    )
+
+
+def test_the_index_entries_of_a_page_become_its_tags(tmp_path: Path, monkeypatch) -> None:
+    config = make_site(tmp_path, {"a.md": PAGE_TAGS})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    page = _page("a.md")
+
+    render(config, "a.md", PAGE_TAGS, page=page)
+
+    assert page.meta["tags"] == ["pointeur", "mémoire"]
+
+
+def test_the_tags_a_page_declares_come_first_and_stay(tmp_path: Path, monkeypatch) -> None:
+    config = make_site(tmp_path, {"a.md": PAGE_TAGS})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    page = _page("a.md", {"tags": ["cours", "pointeur"]})
+
+    render(config, "a.md", PAGE_TAGS, page=page)
+
+    assert page.meta["tags"] == ["cours", "pointeur", "mémoire"]
+
+
+def test_a_page_without_an_index_entry_gains_no_tags(tmp_path: Path, monkeypatch) -> None:
+    config = make_site(tmp_path, {"a.md": PAGE_A})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    page = _page("a.md")
+
+    render(config, "a.md", PAGE_A, page=page)
+
+    assert "tags" not in page.meta
+
+
+def test_web_tags_none_leaves_the_page_metadata_alone(tmp_path: Path, monkeypatch) -> None:
+    config = make_site(tmp_path, {"a.md": PAGE_TAGS})
+    (tmp_path / "mkdocs.yml").write_text(
+        MKDOCS_YML.replace("  - texsmith:\n", "  - texsmith:\n      web:\n        tags: none\n"),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    page = _page("a.md")
+
+    render(config, "a.md", PAGE_TAGS, page=page)
+
+    assert web._state is not None
+    assert web._state.tags == "none"
+    assert "tags" not in page.meta

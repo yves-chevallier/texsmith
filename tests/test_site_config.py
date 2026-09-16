@@ -13,10 +13,13 @@ import pytest
 
 from texsmith.site import load_site_config
 from texsmith.site.config import (
+    WEB_TAGS_DEFAULT,
     language_from_mapping,
     plugin_options,
     snippet_auto_append_from_extensions,
     snippet_base_paths_from_extensions,
+    web_options,
+    web_tags,
 )
 
 
@@ -273,3 +276,25 @@ def test_snippet_auto_append_is_empty_without_the_option(tmp_path: Path) -> None
         )
         == []
     )
+
+
+def test_web_options_keep_only_what_the_lowering_accepts() -> None:
+    options = {"web": {"sections": " title ", "citations": "inline", "tags": "index"}}
+
+    assert web_options(options) == {"sections": "title", "citations": "inline"}
+
+
+def test_web_tags_defaults_to_the_index_entries_of_a_page() -> None:
+    assert web_tags({}) == WEB_TAGS_DEFAULT
+    assert web_tags({"web": {}}) == WEB_TAGS_DEFAULT
+    assert web_tags({"web": {"tags": "none"}}) == "none"
+    assert web_tags({"web": {"tags": " index "}}) == "index"
+
+
+def test_an_unknown_web_tags_value_warns_and_keeps_the_default(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with caplog.at_level("WARNING", logger="texsmith.site"):
+        assert web_tags({"web": {"tags": "everything"}}) == WEB_TAGS_DEFAULT
+
+    assert "web.tags" in caplog.text

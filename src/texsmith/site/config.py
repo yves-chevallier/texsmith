@@ -19,9 +19,9 @@ The MkDocs plugin does not come through here: at build time the live
 ``MkDocsConfig`` is the generator's truth. What both paths share are the
 pure functions below — :func:`language_from_mapping`,
 :func:`snippet_base_paths_from_extensions`,
-:func:`snippet_auto_append_from_extensions`, :func:`site_declarations` and
-:func:`web_options` — which read a theme mapping, an extension list and the
-``texsmith`` options whatever produced them.
+:func:`snippet_auto_append_from_extensions`, :func:`site_declarations`,
+:func:`web_options` and :func:`web_tags` — which read a theme mapping, an
+extension list and the ``texsmith`` options whatever produced them.
 """
 
 from __future__ import annotations
@@ -44,6 +44,8 @@ except ImportError:  # pragma: no cover - Python 3.10
 
 __all__ = [
     "CONFIG_NAMES",
+    "WEB_TAGS_CHOICES",
+    "WEB_TAGS_DEFAULT",
     "SiteConfig",
     "config_file_in",
     "language_from_mapping",
@@ -54,6 +56,7 @@ __all__ = [
     "snippet_auto_append_from_extensions",
     "snippet_base_paths_from_extensions",
     "web_options",
+    "web_tags",
 ]
 
 _log = logging.getLogger("texsmith.site")
@@ -64,6 +67,13 @@ SNIPPETS_EXTENSION = "pymdownx.snippets"
 
 #: The configuration files a site generator reads, most specific first.
 CONFIG_NAMES = ("mkdocs.yml", "mkdocs.yaml", "zensical.toml")
+
+#: What ``web.tags`` accepts: derive a page's tags from its index entries,
+#: or derive none and leave the page's own ``tags:`` as it is.
+WEB_TAGS_CHOICES = frozenset({"index", "none"})
+
+#: A site with index entries browses by them unless it says otherwise.
+WEB_TAGS_DEFAULT = "index"
 
 
 def config_file_in(project_dir: Path) -> Path | None:
@@ -349,6 +359,32 @@ def web_options(
         if isinstance(value, str) and value.strip():
             resolved[key] = value.strip()
     return resolved
+
+
+def web_tags(options: Mapping[str, Any], *, logger: logging.Logger | None = None) -> str:
+    """``web.tags``: which index entries of a page become tags of the page.
+
+    ``index`` (the default) turns every entry's top level into a tag, and
+    ``none`` leaves the page's own ``tags:`` alone. This is TeXSmith's own
+    option, not one :func:`web_options` hands to ``tmark.lower_web``: the
+    terms reach the generator as page metadata, never as a lowering setting.
+    """
+    log = logger or _log
+    raw = options.get("web") or {}
+    if not isinstance(raw, Mapping):
+        return WEB_TAGS_DEFAULT
+    value = raw.get("tags")
+    if value is None:
+        return WEB_TAGS_DEFAULT
+    if isinstance(value, str) and value.strip() in WEB_TAGS_CHOICES:
+        return value.strip()
+    log.warning(
+        "texsmith: 'web.tags' must be one of %s; ignoring %r and keeping '%s'.",
+        ", ".join(sorted(WEB_TAGS_CHOICES)),
+        value,
+        WEB_TAGS_DEFAULT,
+    )
+    return WEB_TAGS_DEFAULT
 
 
 @dataclass(frozen=True, slots=True)
