@@ -55,7 +55,9 @@ from texsmith.core.exceptions import (
 )
 from texsmith.core.templates import (
     TemplateError,
+    TemplateRuntime,
     TemplateSlot,
+    TemplateWrapResult,
     load_template_runtime,
     normalise_template_language,
     wrap_template_document,
@@ -209,7 +211,7 @@ class _Slots:
     missing: set[str] = field(default_factory=set)
 
     @classmethod
-    def of(cls, runtime: Any, *, base_level: int) -> _Slots:
+    def of(cls, runtime: TemplateRuntime, *, base_level: int) -> _Slots:
         """The empty buffers of a template's slots, its default slot included."""
         names = (*runtime.slots, runtime.default_slot)
         template = runtime.base_level or 0
@@ -767,7 +769,7 @@ class BookBuilder:
             pdf_path=self._run_pdf_build(
                 output_root=output_root,
                 tex_path=written.tex_path,
-                template_context=wrap_result.template_context or {},
+                template_context=wrap_result.template_context,
                 document_state=final_state,
                 bibliography_present=bool(bibliography_output),
             ),
@@ -778,7 +780,7 @@ class BookBuilder:
         book: Book,
         slots: _Slots,
         *,
-        template_runtime: Any,
+        template_runtime: TemplateRuntime,
         bibliography_files: Sequence[Path],
         overrides: Mapping[str, Any],
         language: str | None,
@@ -897,7 +899,7 @@ class BookBuilder:
     def _publish_bundle(
         self,
         book: Book,
-        wrap_result: Any,
+        wrap_result: TemplateWrapResult,
         converted: _Converted,
         *,
         output_root: Path,
@@ -913,10 +915,10 @@ class BookBuilder:
             self._write_assets_manifest(output_root, converted.assets)
 
         if settings.latex.clean_assets and settings.copy_assets:
-            template_assets: list[Path] = list(wrap_result.asset_paths or [])
-            template_assets.extend(
-                Path(destination) for _, destination in getattr(wrap_result, "asset_pairs", [])
-            )
+            template_assets = [
+                *wrap_result.asset_paths,
+                *(destination for _, destination in wrap_result.asset_pairs),
+            ]
             _prune_unused_assets(output_root, [*converted.assets.values(), *template_assets])
 
         self._copy_extra_files(book.config, output_root)
