@@ -7,6 +7,7 @@ group is reached only by its own name.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import textwrap
 from typing import Any
 
@@ -16,6 +17,9 @@ from typer.testing import CliRunner
 from texsmith.adapters.plugins import snippet
 from texsmith.site import assets
 from texsmith.ui.cli import app
+
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
 MKDOCS_YML = """\
@@ -95,9 +99,12 @@ def test_the_group_does_not_take_the_root_command_away() -> None:
     """``texsmith doc.md`` is still the whole command line it has always been."""
     result = CliRunner().invoke(app, ["--help"], prog_name="texsmith")
 
+    # Typer colours its usage box when the terminal claims colour (CI sets
+    # FORCE_COLOR); the assertions read the plain text.
+    output = _ANSI.sub("", result.output)
     assert result.exit_code == 0
-    assert "Usage: texsmith [OPTIONS] [INPUT...]" in result.output
-    assert "texsmith site" in result.output
+    assert "Usage: texsmith [OPTIONS] [INPUT...]" in output
+    assert "texsmith site" in output
 
 
 def test_the_build_command_writes_the_book_and_says_where_it_landed(site: Path) -> None:
