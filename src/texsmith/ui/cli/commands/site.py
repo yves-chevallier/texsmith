@@ -8,10 +8,13 @@ before a build and replays cached pages without calling Python, so nothing a
 render writes can be relied upon. MkDocs does not need it, and does not mind
 it: it copies the files it finds and skips generating its own.
 
-``texsmith site search`` is what cannot be done before the build either: the
-index entries of the pages go into the search index the generator wrote, which
-Zensical writes in Rust once Python is done. Under MkDocs the plugin does it
-from ``on_post_build``, through the same :mod:`texsmith.site.search` code.
+``texsmith site search`` puts the index entries of the pages into the lunr
+index of a site already built — the only index that searches them, and the one
+MkDocs writes. The plugin does the same from ``on_post_build``, through the
+same :mod:`texsmith.site.search` code, so the command is for an index written
+without it. A Zensical site has no lunr index and needs none: its search reads
+the terms as a page's ``tags``, which the web extension writes while the page
+renders.
 
 ``texsmith site build`` is the other half of what a generator without plugin
 hooks cannot do: the PDF book of the site, which MkDocs builds from
@@ -134,8 +137,8 @@ def site_search(config: ConfigArgument = None) -> None:
     patched = tags.inject(site_dir)
     if not patched:
         emit_warning(
-            f"No search index under {site_dir}; expected {search.LUNR_INDEX} "
-            f"or {search.DISCO_INDEX}, and the index entries reach nothing."
+            f"No lunr index under {site_dir}; expected {search.LUNR_INDEX}, "
+            "and the index entries reach nothing."
         )
         return
     console.print(f"{patched} search entries gained the index entries of their page.")

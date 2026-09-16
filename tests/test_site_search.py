@@ -1,8 +1,9 @@
-"""The index entries of a site, in the search index its generator wrote.
+"""The index entries of a site, in the lunr index MkDocs wrote.
 
-Two formats: MkDocs' lunr index, which has a searchable ``tags`` field, and
-Zensical's, whose ``tags`` are filter chips and whose ``text`` is what a query
-reads. One collector fills both.
+One format only: lunr has a ``tags`` field the query reads and Material
+boosts. Zensical's ``search.json`` is left exactly as its build wrote it —
+the terms reach its search as a page's ``tags``, derived by
+:func:`texsmith.site.search.index_terms` while the page renders.
 """
 
 from __future__ import annotations
@@ -32,7 +33,7 @@ def lunr_index(site_dir: Path, *locations: str) -> Path:
 
 def disco_index(site_dir: Path, *locations: str) -> Path:
     """A Zensical search index holding one entry per location."""
-    path = site_dir / search.DISCO_INDEX
+    path = site_dir / "search.json"
     items = [
         {
             "location": location,
@@ -76,42 +77,33 @@ def test_the_lunr_index_gains_the_tags_material_searches(tmp_path: Path) -> None
     assert "tags" not in found["other/"]
 
 
-def test_the_disco_index_gains_the_tags_in_the_text_it_searches(tmp_path: Path) -> None:
-    """``tags`` there is a filter facet; the query reads ``title``, ``text``, ``path``."""
+def test_the_index_zensical_wrote_is_left_exactly_as_it_is(tmp_path: Path) -> None:
+    """Its ``text`` is what the excerpt of a result is built from, in a shadow root.
+
+    Terms put there showed as a tail of unrelated words under the excerpt, and
+    no stylesheet a site ships reaches inside that root to hide them. The
+    terms go to the ``tags`` of the page instead, which the *Filters* panel
+    reads and which the extension writes while the page renders.
+    """
     index = disco_index(tmp_path, "guide/a/", "guide/a/#b")
+    before = index.read_text(encoding="utf-8")
     tags = search.SearchTags()
     tags.collect(PAGE, "guide/a/")
 
-    assert tags.inject(tmp_path) == 2
-
-    found = entries(index, "items")
-    assert found["guide/a/"]["text"] == '<p>Body.</p> <span class="ts-index">cake</span>'
-    assert found["guide/a/"]["tags"] == []
-    assert "cake::chocolate" in found["guide/a/#b"]["text"]
+    assert tags.inject(tmp_path) == 0
+    assert index.read_text(encoding="utf-8") == before
 
 
-def test_a_second_run_replaces_what_the_first_one_wrote(tmp_path: Path) -> None:
-    index = disco_index(tmp_path, "guide/a/")
-    tags = search.SearchTags()
-    tags.collect(PAGE, "guide/a/")
-
-    tags.inject(tmp_path)
-    tags.inject(tmp_path)
-
-    text = entries(index, "items")["guide/a/"]["text"]
-    assert text.count("ts-index") == 1
-    assert text == '<p>Body.</p> <span class="ts-index">cake</span>'
-
-
-def test_both_indexes_of_one_directory_are_patched(tmp_path: Path) -> None:
+def test_only_the_lunr_index_of_a_directory_holding_both_is_patched(tmp_path: Path) -> None:
     lunr = lunr_index(tmp_path, "guide/a/")
     disco = disco_index(tmp_path, "guide/a/")
+    before = disco.read_text(encoding="utf-8")
     tags = search.SearchTags()
     tags.collect(PAGE, "guide/a/")
 
-    assert tags.inject(tmp_path) == 2
+    assert tags.inject(tmp_path) == 1
     assert entries(lunr, "docs")["guide/a/"]["tags"] == ["cake"]
-    assert "cake" in entries(disco, "items")["guide/a/"]["text"]
+    assert disco.read_text(encoding="utf-8") == before
 
 
 def test_a_site_without_an_index_is_left_alone(tmp_path: Path) -> None:
@@ -179,3 +171,39 @@ def test_index_terms_read_the_lowered_markdown_and_the_legacy_hashtag() -> None:
 def test_a_page_without_an_entry_has_no_terms() -> None:
     assert search.index_terms("<p>Nothing to see.</p>") == []
     assert search.index_terms('<span class="ts-index"></span>') == []
+
+
+def test_an_inverted_entry_is_tagged_by_the_head_it_files_under() -> None:
+    """``Boole, George`` files under ``Boole``; a chip reading the whole is a mistake."""
+    page = (
+        '<span class="ts-index" data-tag="Boole, George"></span>'
+        '<span class="ts-index" data-tag="Hanoï, tours de"></span>'
+        '<span class="ts-index" data-tag="EOL, fin de ligne"></span>'
+        '<span class="ts-index" data-tag="bit, le"></span>'
+        '<span class="ts-index" data-tag="pointeur"></span>'
+    )
+
+    assert search.index_terms(page) == ["Boole", "Hanoï", "EOL", "bit", "pointeur"]
+
+
+def test_a_comma_with_nothing_after_it_is_not_an_inversion() -> None:
+    assert search.entry_tag("virgule,") == "virgule,"
+    assert search.entry_tag("Boole,  George") == "Boole"
+    assert search.entry_tag("un, deux, trois") == "un"
+
+
+def test_two_entries_that_file_under_one_head_make_one_tag() -> None:
+    page = (
+        '<span class="ts-index" data-tag="Boole, George"></span>'
+        '<span class="ts-index" data-tag="Boole"></span>'
+    )
+
+    assert search.index_terms(page) == ["Boole"]
+
+
+def test_a_term_written_with_entities_is_the_term_the_author_wrote() -> None:
+    """``#[<complex.h>]`` lowers to ``&lt;complex.h&gt;``; the tag is not that."""
+    page = '<span class="ts-index" data-tag="&lt;complex.h&gt;" data-tag1="C&amp;C"></span>'
+
+    assert search.index_terms(page) == ["<complex.h>"]
+    assert search.extract_tags(page) == ["<complex.h>", "C&C"]

@@ -108,12 +108,14 @@ SEARCH_PAGE = """\
 
 
 def built_site(root: Path) -> Path:
-    """A built site holding one page with an index entry and Zensical's index."""
+    """A built site holding one page with an index entry and MkDocs' lunr index."""
     site_dir = root / "site"
     (site_dir / "guide" / "a").mkdir(parents=True)
     (site_dir / "guide" / "a" / "index.html").write_text(SEARCH_PAGE, encoding="utf-8")
-    (site_dir / "search.json").write_text(
-        json.dumps({"config": {}, "items": [{"location": "guide/a/", "text": "<p>Body.</p>"}]}),
+    lunr = site_dir / "search" / "search_index.json"
+    lunr.parent.mkdir(parents=True)
+    lunr.write_text(
+        json.dumps({"config": {}, "docs": [{"location": "guide/a/", "text": "Body."}]}),
         encoding="utf-8",
     )
     return site_dir
@@ -126,8 +128,27 @@ def test_the_search_command_patches_the_index_of_the_built_site(site: Path) -> N
 
     assert result.exit_code == 0, result.output
     assert "1 search entries" in result.output
-    index = json.loads((site_dir / "search.json").read_text(encoding="utf-8"))
-    assert "cake" in index["items"][0]["text"]
+    index = json.loads((site_dir / "search" / "search_index.json").read_text(encoding="utf-8"))
+    assert index["docs"][0]["tags"] == ["cake"]
+
+
+def test_the_index_a_zensical_build_wrote_is_not_touched(site: Path) -> None:
+    """``search.json`` carries the terms as a page's ``tags``, written at render time."""
+    site_dir = site / "site"
+    (site_dir / "guide" / "a").mkdir(parents=True)
+    (site_dir / "guide" / "a" / "index.html").write_text(SEARCH_PAGE, encoding="utf-8")
+    index = site_dir / "search.json"
+    index.write_text(
+        json.dumps({"config": {}, "items": [{"location": "guide/a/", "text": "<p>Body.</p>"}]}),
+        encoding="utf-8",
+    )
+    before = index.read_text(encoding="utf-8")
+
+    result = CliRunner().invoke(app, ["site", "search", str(site / "mkdocs.yml")])
+
+    assert result.exit_code == 0, result.output
+    assert "No lunr index" in result.output
+    assert index.read_text(encoding="utf-8") == before
 
 
 def test_the_search_command_needs_a_built_site(site: Path) -> None:

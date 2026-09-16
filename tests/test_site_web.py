@@ -503,6 +503,18 @@ def test_the_index_entries_of_a_page_become_its_tags(tmp_path: Path, monkeypatch
     assert page.meta["tags"] == ["pointeur", "mémoire"]
 
 
+def test_an_inverted_index_entry_is_tagged_by_its_head(tmp_path: Path, monkeypatch) -> None:
+    """An index files ``Boole, George`` under ``Boole``; the chip is ``Boole``."""
+    source = "# Inverted\n\nLa logique de #[Boole, George] et les #[Hanoï, tours de].\n"
+    config = make_site(tmp_path, {"a.md": source})
+    monkeypatch.setattr("zensical.config.get_config", lambda: config)
+    page = _page("a.md")
+
+    render(config, "a.md", source, page=page)
+
+    assert page.meta["tags"] == ["Boole", "Hanoï"]
+
+
 def test_the_tags_a_page_declares_come_first_and_stay(tmp_path: Path, monkeypatch) -> None:
     config = make_site(tmp_path, {"a.md": PAGE_TAGS})
     monkeypatch.setattr("zensical.config.get_config", lambda: config)

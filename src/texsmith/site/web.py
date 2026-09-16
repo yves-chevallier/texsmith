@@ -41,16 +41,13 @@ configuration, which is what its Rust side uses.
 
 What does not carry over: the PDF books and ``mike`` versioning. The search
 index is not written here either — Zensical writes it in Rust once Python is
-done — but it is not lost: ``texsmith site search`` patches the index the
-build wrote, after the build.
-
-Half of it, at least. What a reader *types* is patched in after the build;
-what a reader *browses* is decided here, while the page renders: the index
-entries of the page become its ``tags`` metadata (:func:`_tag_page`), and
-Zensical turns those into the chips under the content, the entries of a tags
-listing and the ``tags`` of the page's search entries — its *Filters* panel.
-A page's metadata is part of its cached render, so changing ``web.tags``
-calls for ``zensical build -c``.
+done — and nothing is patched into it afterwards. What a page's index entries
+give its search is decided here instead, while the page renders: they become
+its ``tags`` metadata (:func:`_tag_page`), and Zensical turns those into the
+chips under the content, the entries of a tags listing and the ``tags`` of the
+page's search entries — its *Filters* panel. :mod:`texsmith.site.search` says
+why that is the whole of it. A page's metadata is part of its cached render,
+so changing ``web.tags`` calls for ``zensical build -c``.
 """
 
 from __future__ import annotations
