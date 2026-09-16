@@ -104,6 +104,27 @@ aside.ts-aside > :last-child {
   scroll-margin-top: 4rem;
 }
 
+/* The front matter's `epigraph: {quote, source}`, set under the page's
+   opening heading. Italic, set in from the left and ranged right, with an
+   em dash before the source — the shape `\tsepigraph` gives the book. */
+blockquote.ts-epigraph {
+  margin: 1.2em 0 1.6em;
+  padding: 0 0 0 30%;
+  border-left: none;
+  font-style: italic;
+  text-align: right;
+  color: var(--md-default-fg-color--light, inherit);
+}
+blockquote.ts-epigraph > footer {
+  display: block;
+  margin-top: 0.3em;
+  font-style: normal;
+  font-size: 0.85em;
+}
+blockquote.ts-epigraph > footer::before {
+  content: "— ";
+}
+
 /* Citations and the appended `References` list */
 .ts-cite {
   text-decoration: none;
