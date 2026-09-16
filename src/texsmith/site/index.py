@@ -433,10 +433,10 @@ class SiteIndex:
         if record is None:
             # A page outside the navigation never went through the pre-pass:
             # it is lowered on its own, with the numbers that follow the last
-            # page of the site, and it stays out of the site map. Joining it
-            # would make the map depend on the render order — a page rendered
-            # before it would not see its labels, and one rendered after it
-            # would — where the site publishes it or does not, whoever reads.
+            # page of the site, and its labels stay out of the site map.
+            # Joining it there would make the map depend on the render order —
+            # a page rendered before it would not see its labels and a page
+            # rendered after it would.
             record = self.scan(page)
             if record is None:
                 return None
