@@ -14,21 +14,30 @@ The resolver reproduces three behaviours, in this order of precedence:
 3. MkDocs' default navigation — every page, nested by directory, index first.
 
 Neither ``mkdocs`` nor ``mkdocs_awesome_nav`` is imported: under Zensical both
-are absent. The globbing, the natural sort, the gitignore matching of
-``exclude_docs`` and the page-title rules are therefore reimplemented here,
-faithfully enough that ``pages()`` equals the page list of a real MkDocs build
-(``tests/test_site_nav.py`` pins that against a recorded fixture).
+are absent. What those two *use*, though, this module uses as well, so that a
+pattern resolves through the same code and not through a second reading of it:
+``wcmatch.glob.globmatch`` matches a nav pattern with the flags the plugin
+passes it, ``natsort`` builds the key the plugin sorts a pattern's matches
+with, and ``pathspec``'s ``GitIgnoreSpec`` matches the gitignore lines of
+MkDocs' ``exclude_docs`` the way ``mkdocs.structure.files`` matches them. The
+three are pure Python and know nothing of MkDocs. Only the page-title rules
+and the tree walk are TeXSmith's own, faithfully enough that ``pages()``
+equals the page list of a real MkDocs build (``tests/test_site_nav.py`` pins
+that against a recorded fixture).
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 import logging
 from pathlib import Path, PurePosixPath
 import re
 from typing import Any
 
+from natsort import natsort_keygen, ns
+import pathspec.gitignore
+from wcmatch import glob as wcmatch_glob
 import yaml
 
 from texsmith.core.front_matter import split_front_matter
@@ -131,9 +140,9 @@ def resolve_navigation(
         The navigation, plus the pages it leaves out.
     """
     docs_dir = Path(docs_dir)
-    excluder = _GitIgnoreSpec.from_text(exclude_docs, defaults=DEFAULT_EXCLUDED)
+    excluder = _excluder(exclude_docs)
     every_page = _collect_pages(docs_dir)
-    pages = [path for path in every_page if not excluder.match(path.as_posix())]
+    pages = [path for path in every_page if not excluder.match_file(path.as_posix())]
 
     if _has_nav_config(docs_dir):
         items = _resolve_awesome_nav(docs_dir, pages)
@@ -275,164 +284,21 @@ def _has_nav_config(docs_dir: Path) -> bool:
 # Glob patterns, as wcmatch matches them for mkdocs-awesome-nav
 
 
-_EXTGLOB_PREFIXES = "?*+@!"
+#: The flags ``NavPattern._find_matches`` matches with, and no others: ``**``
+#: spans directories, ``@(a|b)`` is an alternation. No ``DOTGLOB``, so a
+#: wildcard never matches a leading dot; no ``BRACE``, no ``IGNORECASE``.
+_GLOB_FLAGS = wcmatch_glob.GLOBSTAR | wcmatch_glob.EXTGLOB
 
 
-_SEGMENT = "[^/]+"
-_DOTLESS_SEGMENT = r"(?!\.)[^/]+"
+def _matches_glob(subject: str, pattern: str, ignore: Sequence[str] = ()) -> bool:
+    """Whether ``subject`` matches ``pattern`` and none of ``ignore``.
 
-
-@dataclass(frozen=True, slots=True)
-class _Glob:
-    """A compiled navigation glob, matched against a path relative to the docs."""
-
-    file_regex: re.Pattern[str]
-    directory_regex: re.Pattern[str]
-    directories_only: bool
-
-    def match(self, subject: str) -> bool:
-        """Match ``subject``, a POSIX path with a trailing slash for directories."""
-        is_directory = subject.endswith("/")
-        if self.directories_only and not is_directory:
-            return False
-        regex = self.directory_regex if is_directory else self.file_regex
-        return regex.match(subject.removesuffix("/")) is not None
-
-
-def _compile_glob(pattern: str) -> _Glob:
-    """Compile a ``*``/``**``/``?``/``[…]``/``@(…)`` pattern anchored at the docs root.
-
-    A trailing slash restricts the pattern to directories, and, as in a shell,
-    a wildcard never matches a leading dot.
+    ``subject`` is a POSIX path relative to the documentation root carrying a
+    trailing slash when it names a directory, and every pattern is anchored at
+    that root — the shape the plugin matches in, ``ignore`` included, which it
+    hands wcmatch as ``exclude`` rather than testing separately.
     """
-    directories_only = pattern.endswith("/")
-    body = pattern.removesuffix("/")
-    return _Glob(
-        re.compile(_translate_glob(body, dot_rule=True) + "$"),
-        re.compile(_translate_glob(body, dot_rule=True, directory_subject=True) + "$"),
-        directories_only,
-    )
-
-
-def _translate_glob(pattern: str, *, dot_rule: bool, directory_subject: bool = False) -> str:
-    """Translate a glob into a regular expression over a path without a trailing slash.
-
-    ``directory_subject`` lets a trailing ``**`` match nothing at all, so that
-    ``guide/**`` matches the ``guide`` directory itself, as wcmatch does.
-    """
-    any_segment = _DOTLESS_SEGMENT if dot_rule else _SEGMENT
-    segments = pattern.split("/")
-    parts: list[str] = []
-    separator = ""
-    for index, segment in enumerate(segments):
-        last = index == len(segments) - 1
-        if segment == "**":
-            if not last:
-                parts.append(f"{separator}(?:{any_segment}/)*")
-                separator = ""
-            elif separator:
-                repeat = "*" if directory_subject else "+"
-                parts.append(f"(?:/{any_segment}){repeat}")
-            else:
-                parts.append(f"{any_segment}(?:/{any_segment})*")
-            continue
-        parts.append(separator + _translate_segment(segment, dot_rule=dot_rule))
-        separator = "/"
-    return "".join(parts)
-
-
-def _translate_segment(segment: str, *, dot_rule: bool = False) -> str:
-    """Translate one path segment of a glob into a regular expression."""
-    out: list[str] = []
-    if dot_rule and not segment.startswith("."):
-        out.append(r"(?!\.)")
-    index = 0
-    length = len(segment)
-    while index < length:
-        char = segment[index]
-        if char in _EXTGLOB_PREFIXES and segment[index + 1 : index + 2] == "(":
-            body, index = _read_group(segment, index + 2)
-            alternatives = "|".join(
-                _translate_segment(alternative) for alternative in _split_alternatives(body)
-            )
-            if char == "!":
-                rest = _translate_segment(segment[index:])
-                negative = f"(?:(?!(?:{alternatives}){rest}(?:/|$))[^/]*)"
-                return "".join(out) + negative + rest
-            quantifier = {"?": "?", "*": "*", "+": "+", "@": ""}[char]
-            out.append(f"(?:{alternatives}){quantifier}")
-            continue
-        if char == "*":
-            out.append("[^/]*")
-        elif char == "?":
-            out.append("[^/]")
-        elif char == "[":
-            character_class, index = _read_character_class(segment, index)
-            out.append(character_class)
-            continue
-        elif char == "\\" and index + 1 < length:
-            out.append(re.escape(segment[index + 1]))
-            index += 2
-            continue
-        else:
-            out.append(re.escape(char))
-        index += 1
-    return "".join(out)
-
-
-def _read_group(pattern: str, start: int) -> tuple[str, int]:
-    """Read a parenthesised extglob body, returning it and the index after it."""
-    depth = 1
-    index = start
-    while index < len(pattern):
-        char = pattern[index]
-        if char == "\\":
-            index += 2
-            continue
-        if char == "(":
-            depth += 1
-        elif char == ")":
-            depth -= 1
-            if depth == 0:
-                return pattern[start:index], index + 1
-        index += 1
-    return pattern[start:], len(pattern)
-
-
-def _split_alternatives(body: str) -> list[str]:
-    alternatives: list[str] = []
-    depth = 0
-    current: list[str] = []
-    for char in body:
-        if char == "(":
-            depth += 1
-        elif char == ")":
-            depth -= 1
-        elif char == "|" and depth == 0:
-            alternatives.append("".join(current))
-            current = []
-            continue
-        current.append(char)
-    alternatives.append("".join(current))
-    return alternatives
-
-
-def _read_character_class(pattern: str, start: int) -> tuple[str, int]:
-    """Read a ``[…]`` class, returning its regular expression and the next index."""
-    index = start + 1
-    negated = pattern[index : index + 1] in ("!", "^")
-    if negated:
-        index += 1
-    if pattern[index : index + 1] == "]":
-        index += 1
-    while index < len(pattern) and pattern[index] != "]":
-        index += 1
-    if index >= len(pattern):
-        return re.escape("["), start + 1
-    body = pattern[start + 1 : index]
-    if negated:
-        body = "^" + body[1:]
-    return f"[{body.replace('/', '')}]", index + 1
+    return wcmatch_glob.globmatch(subject, pattern, flags=_GLOB_FLAGS, exclude=list(ignore))
 
 
 def _absolute_pattern(path: PurePosixPath, pattern: str) -> str:
@@ -443,45 +309,16 @@ def _absolute_pattern(path: PurePosixPath, pattern: str) -> str:
 # exclude_docs, as pathspec matches gitignore patterns for MkDocs
 
 
-@dataclass(frozen=True, slots=True)
-class _GitIgnoreSpec:
-    """A gitignore-style list of patterns, last match winning."""
+def _excluder(exclude_docs: str | None) -> pathspec.gitignore.GitIgnoreSpec:
+    """MkDocs' ``exclude_docs`` spec: its built-in patterns, then the configured ones.
 
-    patterns: tuple[tuple[re.Pattern[str], bool], ...] = ()
-
-    @staticmethod
-    def from_text(text: str | None, *, defaults: Sequence[str] = ()) -> _GitIgnoreSpec:
-        lines = list(defaults) + (text.splitlines() if text else [])
-        patterns = [_compile_gitignore(line) for line in lines]
-        return _GitIgnoreSpec(tuple(pattern for pattern in patterns if pattern is not None))
-
-    def match(self, path: str) -> bool:
-        matched = False
-        for regex, negated in self.patterns:
-            if regex.match(path) is not None:
-                matched = not negated
-        return matched
-
-
-def _compile_gitignore(line: str) -> tuple[re.Pattern[str], bool] | None:
-    pattern = line.strip()
-    if not pattern or pattern.startswith("#"):
-        return None
-    negated = pattern.startswith("!")
-    if negated or pattern.startswith("\\"):
-        pattern = pattern[1:]
-    directories_only = pattern.endswith("/")
-    body = pattern.rstrip("/")
-    if not body:
-        return None
-    if body.startswith("/"):
-        anchored = True
-        body = body.lstrip("/")
-    else:
-        anchored = "/" in body
-    prefix = "" if anchored else "(?:.*/)?"
-    suffix = "/.*" if directories_only else "(?:/.*)?"
-    return re.compile(prefix + _translate_glob(body, dot_rule=False) + suffix + "$"), negated
+    ``set_exclusions`` composes them in that order, so a ``!`` line in the
+    configuration can bring back a page the defaults hid.
+    """
+    spec = pathspec.gitignore.GitIgnoreSpec.from_lines(DEFAULT_EXCLUDED)
+    if exclude_docs:
+        spec += pathspec.gitignore.GitIgnoreSpec.from_lines(exclude_docs.splitlines())
+    return spec
 
 
 # Sorting, as natsort orders the matches of a nav pattern
@@ -498,47 +335,36 @@ class _SortConfig:
     ignore_case: bool = False
 
 
-_DIGITS = re.compile(r"(\d+)")
+def _sort_key(sort: _SortConfig, context: _Context) -> Callable[[Any], Any]:
+    """The key ``NavPattern._sort_items`` orders a pattern's matches with.
 
+    ``natural`` is natsort's, over the value :func:`_node_sort_value` reads
+    off the node: letters grouped and digit runs compared as numbers, the
+    value split into path components unless the sort is by title — a title is
+    prose, and its dots are not suffixes. ``alphabetical`` is the value
+    itself, casefolded when ``ignore_case`` asks for it.
+    """
 
-def _chunk_key(text: str, *, ignore_case: bool) -> tuple[str | int, ...]:
-    """Split ``text`` into alternating text and number chunks, letters grouped."""
-    tokens = _DIGITS.split(text.casefold() if ignore_case else text)
-    while len(tokens) > 1 and tokens[-1] == "":
-        tokens.pop()
-    return tuple(
-        int(token) if position % 2 else _group_letters(token)
-        for position, token in enumerate(tokens)
-    )
+    def value(node: Any) -> str | tuple[str, ...]:
+        return _node_sort_value(node, sort, context)
 
-
-def _group_letters(text: str) -> str:
-    """Interleave each character with its casefolded form, as natsort does."""
-    return "".join(character.casefold() + character for character in text)
-
-
-def _path_components(value: str) -> tuple[str, ...]:
-    """Split a path into directories, the stem and each suffix, as natsort does."""
-    parts = [part for part in value.split("/") if part not in ("", ".")]
-    if not parts:
-        return (value,)
-    base = PurePosixPath(parts[-1])
-    suffixes = base.suffixes
-    stem = parts[-1][: len(parts[-1]) - sum(len(suffix) for suffix in suffixes)]
-    return (*parts[:-1], stem, *suffixes)
-
-
-def _natural_key(value: str, *, split_path: bool, ignore_case: bool) -> tuple[Any, ...]:
-    components = _path_components(value) if split_path else (value,)
-    return tuple(_chunk_key(component, ignore_case=ignore_case) for component in components)
-
-
-def _sort_key(value: str | tuple[str, ...], sort: _SortConfig) -> Any:
-    if isinstance(value, tuple):
-        return tuple(_sort_key(item, sort) for item in value)
     if sort.type == "natural":
-        return _natural_key(value, split_path=sort.by != "title", ignore_case=sort.ignore_case)
-    return value.casefold() if sort.ignore_case else value
+        algorithm = ns.GROUPLETTERS | ns.INT
+        if sort.by != "title":
+            algorithm |= ns.PATH
+        if sort.ignore_case:
+            algorithm |= ns.IGNORECASE
+        return natsort_keygen(key=value, alg=algorithm)
+    if sort.ignore_case:
+        return lambda node: _casefold(value(node))
+    return value
+
+
+def _casefold(value: str | tuple[str, ...]) -> str | tuple[str, ...]:
+    """Casefold a sort value, element by element when it is a tuple."""
+    if isinstance(value, str):
+        return value.casefold()
+    return tuple(item.casefold() for item in value)
 
 
 # The navigation tree, as mkdocs-awesome-nav resolves it
@@ -690,21 +516,21 @@ class _NavConfig:
             ignore_case=bool(data.get("ignore_case") or inherited.ignore_case),
         )
 
-    def _resolve_ignore(self, data: Any, parent: _NavConfig | None) -> tuple[_Glob, ...]:
+    def _resolve_ignore(self, data: Any, parent: _NavConfig | None) -> tuple[str, ...]:
         if data is None:
             return parent.ignore if parent is not None else ()
         patterns = [data] if isinstance(data, str) else list(data)
-        globs: list[_Glob] = []
+        resolved: list[str] = []
         for pattern in patterns:
             if not isinstance(pattern, str) or not pattern:
                 continue
             if pattern == "$inherit":
                 if parent is not None:
-                    globs.extend(parent.ignore)
+                    resolved.extend(parent.ignore)
                 continue
             base = self.directory if pattern.startswith("/") else self.directory / "**"
-            globs.append(_compile_glob(_absolute_pattern(base, pattern.removeprefix("/"))))
-        return tuple(globs)
+            resolved.append(_absolute_pattern(base, pattern.removeprefix("/")))
+        return tuple(resolved)
 
     def _resolve_items(self, data: Any) -> tuple[_ConfigItem, ...]:
         if isinstance(data, list):
@@ -862,13 +688,10 @@ class _PatternNode:
     ignore_no_matches: bool = False
 
     def resolve(self, context: _Context) -> list[Any]:
-        glob = _compile_glob(_absolute_pattern(self.config.directory, self.pattern))
+        pattern = _absolute_pattern(self.config.directory, self.pattern)
         matches: list[Any] = []
         for entry in list(context.unvisited.values()):
-            subject = entry.subject
-            if not glob.match(subject):
-                continue
-            if any(ignored.match(subject) for ignored in self.config.ignore):
+            if not _matches_glob(entry.subject, pattern, self.config.ignore):
                 continue
             if entry.is_dir:
                 node = _DirNode(entry, parent_config=self.config)
@@ -921,11 +744,7 @@ def _flatten(nodes: list[Any]) -> list[Any]:
 
 def _sort_nodes(nodes: list[Any], sort: _SortConfig, context: _Context) -> None:
     """Order a pattern's matches, keeping sections apart unless they are mixed."""
-
-    def key(node: Any) -> Any:
-        return _sort_key(_node_sort_value(node, sort, context), sort)
-
-    nodes.sort(key=key, reverse=sort.direction == "desc")
+    nodes.sort(key=_sort_key(sort, context), reverse=sort.direction == "desc")
     if sort.sections != "mixed":
         nodes.sort(
             key=lambda node: 2 if isinstance(node, _SectionNode) else 1,

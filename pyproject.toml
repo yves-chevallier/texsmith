@@ -38,6 +38,16 @@ dependencies = [
     "cairosvg>=2.8.2",
     "emoji>=2.12.1",
     "jinja2>=3.1.6",
+    # site/nav.py resolves the documentation navigation the way
+    # mkdocs-awesome-nav and MkDocs resolve it, and those two do it with these
+    # three: wcmatch matches a nav pattern's globs, natsort orders its matches,
+    # pathspec matches the gitignore lines of `exclude_docs`. The floors are
+    # the ones `mkdocs-awesome-nav` (natsort, wcmatch) and `mkdocs` (pathspec)
+    # declare, so a site whose environment has the plugins resolves through one
+    # copy of each library rather than two.
+    "natsort>=8.1.0",
+    "pathspec>=0.11.1",
+    "wcmatch>=8.4",
     "pillow>=12.0.0",
     "pint>=0.24",
     "pybtex>=0.24.0",
