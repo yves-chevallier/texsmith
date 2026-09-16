@@ -417,7 +417,6 @@ on their way to the HTML. \tscodeinline{make docs-\allowbreak{}zensical} runs it
 
 What does not carry over yet:
 \begin{itemize}
-\item \textbf{\tscodeinline{mike}.} Versioning is not supported: there is no version selector.
 \item \textbf{\tscodeinline{exclude\_docs}.} Zensical builds the pages MkDocs excludes, so a file
 under \tscodeinline{docs/} that only exists to be included somewhere else becomes a page
 of its own; nothing on the TeXSmith side can prevent that. Each is lowered
@@ -434,4 +433,33 @@ honour:
 \end{Verbatim}
 \end{tscode}
 \end{itemize}
+\subsection{The versioned site is published by a script}
+The version selector is Material's own bundle, which Zensical ships too: it
+builds itself from the \tscodeinline{versions.json} at the root of the \tscodeinline{gh-\allowbreak{}pages} branch as
+soon as the page carries a version, which \tscodeinline{mkdocs.yml} declares once for both
+generators:
+\begin{tscode}[lang=yaml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{n+nt}{extra}\PY{p}{:}
+\PY{+w}{  }\PY{n+nt}{version}\PY{p}{:}
+\PY{+w}{    }\PY{n+nt}{provider}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{mike}
+\end{Verbatim}
+\end{tscode}
+What \tscodeinline{mike} cannot do is publish a site it did not build --- \tscodeinline{mike deploy} takes
+a configuration file and runs MkDocs itself, with no way to be handed the
+directory Zensical wrote. \tscodeinline{scripts/publish\_docs.py} takes that directory
+instead and writes the branch layout \tscodeinline{mike} wrote:
+\begin{tscode}[lang=console, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{g+gp}{\PYZdl{} }uv\PY{+w}{ }run\PY{+w}{ }zensical\PY{+w}{ }build\PY{+w}{ }\PYZhy{}f\PY{+w}{ }mkdocs.yml
+\PY{g+gp}{\PYZdl{} }uv\PY{+w}{ }run\PY{+w}{ }python\PY{+w}{ }scripts/publish\PYZus{}docs.py\PY{+w}{ }\PY{l+m}{0}.8.0\PY{+w}{ }\PYZhy{}\PYZhy{}alias\PY{+w}{ }latest
+\end{Verbatim}
+\end{tscode}
+The site goes under \tscodeinline{0.8.0/}, \tscodeinline{latest/} becomes one redirect page per page of
+that version, \tscodeinline{versions.json} gains the entry and loses the alias from its
+previous holder, and the root \tscodeinline{index.html} redirects to the alias. It checks
+\tscodeinline{origin/gh-\allowbreak{}pages} out as a git worktree under \tscodeinline{build/gh-\allowbreak{}pages} --- \tscodeinline{-\allowbreak{}-\allowbreak{}worktree
+DIR} uses a checkout of yours --- and stops at the commit, so a run is there to
+read before anything leaves the machine. \tscodeinline{-\allowbreak{}-\allowbreak{}push} publishes it, which is what
+the release workflow adds. The script needs nothing but Python.
 \end{document}

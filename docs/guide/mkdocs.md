@@ -391,7 +391,6 @@ on their way to the HTML. `make docs-zensical` runs it after the site.
 
 What does not carry over yet:
 
-- **`mike`.** Versioning is not supported: there is no version selector.
 - **`exclude_docs`.** Zensical builds the pages MkDocs excludes, so a file
   under `docs/` that only exists to be included somewhere else becomes a page
   of its own; nothing on the TeXSmith side can prevent that. Each is lowered
@@ -406,3 +405,34 @@ What does not carry over yet:
     exclude: true
   ---
   ```
+
+### The versioned site is published by a script
+
+The version selector is Material's own bundle, which Zensical ships too: it
+builds itself from the `versions.json` at the root of the `gh-pages` branch as
+soon as the page carries a version, which `mkdocs.yml` declares once for both
+generators:
+
+```yaml
+extra:
+  version:
+    provider: mike
+```
+
+What `mike` cannot do is publish a site it did not build — `mike deploy` takes
+a configuration file and runs MkDocs itself, with no way to be handed the
+directory Zensical wrote. `scripts/publish_docs.py` takes that directory
+instead and writes the branch layout `mike` wrote:
+
+```console
+$ uv run zensical build -f mkdocs.yml
+$ uv run python scripts/publish_docs.py 0.8.0 --alias latest
+```
+
+The site goes under `0.8.0/`, `latest/` becomes one redirect page per page of
+that version, `versions.json` gains the entry and loses the alias from its
+previous holder, and the root `index.html` redirects to the alias. It checks
+`origin/gh-pages` out as a git worktree under `build/gh-pages` — `--worktree
+DIR` uses a checkout of yours — and stops at the commit, so a run is there to
+read before anything leaves the machine. `--push` publishes it, which is what
+the release workflow adds. The script needs nothing but Python.
