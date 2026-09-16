@@ -213,6 +213,10 @@ on its own cover and with a printed index). What it taught, by layer:
   site-wide).
 
 Still open after this round: `mike` versioning has no Zensical equivalent;
+`mkdocs-caption` is a plugin, so a plain `![alt](img)` is a bare `<img>` on the
+web with no numbered caption (the PDF numbers its figures itself); an
+abbreviation key such as `UTF-8`, `EOF`, `W3C` does not reach the glossary
+(4 of the handbook's 44);
 `<p class="admonition-title">` carries no `markdown` attribute, so Markdown
 inside a rewritten callout title does not render; box-drawing glyphs in code
 blocks have no coverage in the monospace font (7 831 missing characters in
