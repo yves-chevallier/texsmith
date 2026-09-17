@@ -1,0 +1,8 @@
+nav:
+  - Home: index.md
+  - Guide: guide/
+  - Syntax: syntax/
+  - Examples: examples/
+  - CLI: cli/
+  - API: api/
+  - About: about/
