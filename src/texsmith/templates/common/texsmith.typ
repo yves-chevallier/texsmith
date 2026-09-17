@@ -327,7 +327,8 @@
   if type(it) == str { it }
   else if type(it) == content {
     if it.has("text") { it.text }
-    else if it.has("children") { it.children.map(ts-plain).join("") }
+    // `().join("")` is `none`, not `""`: an empty sequence is empty text.
+    else if it.has("children") { it.children.map(ts-plain).join("", default: "") }
     else if it.has("body") { ts-plain(it.body) }
     else if it.func() == smartquote { "'" }
     else { "" }

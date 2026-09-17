@@ -9,6 +9,7 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 
+- **`ts-plain` of an empty sequence is `""`, not `none`.** `().join("")` is `none` in Typst, so a choice or title whose content was an empty sequence (a `- 0.` item, read as an empty enum item) made `#exam-choices`-style width computations fail with `type none has no method len`.
 - **A Typst template's declared assets are copied next to the `.typ`.** `TypstTemplate.copy_assets` existed but nothing called it, so a `[typst.template.assets]` section silently copied nothing; `render_typst_documents` now copies them into the output directory, as the LaTeX wrapper does for `[latex.template.assets]`.
 
 ### Added
