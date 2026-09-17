@@ -5,12 +5,17 @@ records in emission order and answers ``strict_failed()`` for ``--strict``.
 :func:`format_diagnostic` prints the ``tmark-cli`` line —
 ``{path}:{line}:{col}: {severity} {code}: {message}`` — so both tools print
 identical lines for identical findings.
+
+The sink is also where the container names the active template declares are
+held (:meth:`DiagnosticSink.declare_containers`): every stage's records meet
+here, so one declaration covers the parse, the includes and the JSON dump.
 """
 
 from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Iterator, Mapping
+import re
 from typing import Any
 
 from .codes import default_severity
@@ -22,6 +27,22 @@ from .model import NO_SPAN, Diagnostic, Fix, Severity, Span, from_tmark
 #: exception is rendering context (``-v`` shows it), never part of the record.
 OnEmit = Callable[[Diagnostic, BaseException | None], None]
 
+#: tmark's code for ``::: name`` with a name no construct claims.
+CONTAINER_UNKNOWN = "container-unknown"
+
+#: The name in tmark's ``container-unknown`` message, which spells the fence
+#: back with three colons whatever the source used: ``\`::: solution\` is not a
+#: known container``.
+_CONTAINER_UNKNOWN_NAME = re.compile(r"^`:{3,}\s*([^`\s]+)`")
+
+
+def unknown_container(diagnostic: Diagnostic) -> str | None:
+    """The container name a ``container-unknown`` record names, else ``None``."""
+    if diagnostic.code != CONTAINER_UNKNOWN:
+        return None
+    match = _CONTAINER_UNKNOWN_NAME.match(diagnostic.message)
+    return match.group(1) if match is not None else None
+
 
 class DiagnosticSink:
     """Collects diagnostics for one run.
@@ -31,17 +52,45 @@ class DiagnosticSink:
     file's name.
     """
 
-    __slots__ = ("_index", "_on_emit", "_records", "files")
+    __slots__ = ("_containers", "_index", "_on_emit", "_records", "files")
 
-    def __init__(self, files: FileTable | None = None, *, on_emit: OnEmit | None = None) -> None:
+    def __init__(
+        self,
+        files: FileTable | None = None,
+        *,
+        on_emit: OnEmit | None = None,
+        containers: Iterable[str] = (),
+    ) -> None:
         self.files = files if files is not None else FileTable()
         self._records: list[Diagnostic] = []
         self._index: set[tuple[str, Span, str]] = set()
         self._on_emit = on_emit
+        self._containers: set[str] = set()
+        self.declare_containers(containers)
+
+    @property
+    def declared_containers(self) -> frozenset[str]:
+        """The container names the active template reads (``containers``)."""
+        return frozenset(self._containers)
+
+    def declare_containers(self, names: Iterable[str]) -> None:
+        """Declare container names a template's passes consume.
+
+        ``::: solution`` is a construct of the template, not of the language:
+        tmark reports it as ``container-unknown`` when it parses the document,
+        long before the pass that rewrites it runs, and a pass cannot take a
+        record back. Declaring the name here drops that record where every
+        stage's findings are collected, so it is absent from the terminal,
+        from the counts and from ``--diagnostics-json`` — and every other name
+        still warns.
+        """
+        self._containers.update(name.strip() for name in names if name and name.strip())
 
     def add(self, diagnostic: Diagnostic, *, cause: BaseException | None = None) -> bool:
-        """Record ``diagnostic``; ``False`` when an identical record exists."""
+        """Record ``diagnostic``; ``False`` when it is a duplicate or a declared container."""
         if diagnostic.key in self._index:
+            return False
+        if self._containers and unknown_container(diagnostic) in self._containers:
             return False
         self._index.add(diagnostic.key)
         self._records.append(diagnostic)
@@ -172,10 +221,12 @@ def summary_line(counts: Mapping[Severity, int]) -> str:
 
 
 __all__ = [
+    "CONTAINER_UNKNOWN",
     "DiagnosticSink",
     "OnEmit",
     "format_diagnostic",
     "locate",
     "sort_key",
     "summary_line",
+    "unknown_container",
 ]

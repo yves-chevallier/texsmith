@@ -828,6 +828,11 @@ class TemplateInfo(BaseModel):
     #: references resolved at load time; they run only while this template
     #: renders (:meth:`pass_specs`).
     passes: list[str] = Field(default_factory=list)
+    #: Container names those passes read (``::: solution``). tmark reports a
+    #: name no construct claims as ``container-unknown`` while it *parses*, so
+    #: a declared name is muted for the run this template renders; every other
+    #: name still warns.
+    containers: list[str] = Field(default_factory=list)
 
     _attribute_resolver: TemplateAttributeResolver = PrivateAttr()
     _attribute_defaults: dict[str, Any] = PrivateAttr(default_factory=dict)
@@ -870,6 +875,31 @@ class TemplateInfo(BaseModel):
 
         updated = dict(data)
         updated["attributes"] = normalised
+        return updated
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_containers(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Check ``containers`` on the raw section, where the bad entry is still readable."""
+        if not isinstance(data, Mapping) or "containers" not in data:
+            return data
+        payload = data["containers"]
+        owner = data.get("name") or "<unnamed>"
+        if isinstance(payload, (str, bytes)) or not isinstance(payload, Sequence):
+            raise TemplateError(
+                f"Template '{owner}' declares 'containers' as "
+                f"'{type(payload).__name__}'; expected a list of container names."
+            )
+        names: list[str] = []
+        for entry in payload:
+            if not isinstance(entry, str) or not entry.strip():
+                raise TemplateError(
+                    f"Template '{owner}' declares an invalid container name {entry!r}; "
+                    "expected a non-empty string."
+                )
+            names.append(entry.strip())
+        updated = dict(data)
+        updated["containers"] = names
         return updated
 
     @model_validator(mode="after")

@@ -158,6 +158,22 @@ environment for a name it knows:
 A container name the registry does not know raises `container-unknown` and
 renders its content transparently.
 
+A template whose own IR pass reads such a name declares it, next to the pass
+that claims it, and the warning stops for that name alone:
+
+```toml
+[latex.template]
+passes = ["my_exam_pkg.questions:run"]
+containers = ["solution"]
+```
+
+The names are read from the manifest before the documents are parsed — tmark
+reports an unknown container while it parses, and no pass can take a record
+back — so `::: solution` is a known container for the whole run, on both the
+#ts-logo("LaTeX") and the Typst path, and every undeclared name still warns. Bad entries
+(not a list, not a string, empty) raise `TemplateError` when the manifest
+loads.
+
 = Contract macros
 
 The writers emit a fixed macro or environment per construct, and a fragment must

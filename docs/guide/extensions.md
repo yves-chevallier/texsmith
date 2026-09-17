@@ -80,6 +80,20 @@ template loads, with a `TemplateError` naming the template and the entry. The
 pass reads the template's attributes from its context:
 `ctx.attribute("solution", False)` is `True` under `-a solution=true`.
 
+A pass that claims a container of its own says so next to it, because the parse
+decides long before the pass runs:
+
+```toml
+[latex.template]
+passes = ["my_exam_pkg.questions:run"]
+containers = ["solution"]
+```
+
+`::: solution` is then a known container while that template renders — no
+`container-unknown` warning on the terminal, in the counts or in
+`--diagnostics-json`, for that name and no other. An entry that is not a
+non-empty string is a `TemplateError` when the manifest loads.
+
 The full contract — ordering, diagnostics, the rules a pass must not break — is
 in [IR passes and fragment contracts](../api/handlers.md).
 

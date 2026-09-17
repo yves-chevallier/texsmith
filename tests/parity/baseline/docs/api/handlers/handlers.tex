@@ -171,6 +171,22 @@ environment for a name it knows:
 \end{tscode}
 A container name the registry does not know raises \tscodeinline{container-\allowbreak{}unknown} and
 renders its content transparently.
+
+A template whose own IR pass reads such a name declares it, next to the pass
+that claims it, and the warning stops for that name alone:
+\begin{tscode}[lang=toml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{passes}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.questions:run}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{containers}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{solution}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\end{Verbatim}
+\end{tscode}
+The names are read from the manifest before the documents are parsed --- tmark
+reports an unknown container while it parses, and no pass can take a record
+back --- so \tscodeinline{::: solution} is a known container for the whole run, on both the
+\LaTeX{} and the Typst path, and every undeclared name still warns. Bad entries
+(not a list, not a string, empty) raise \tscodeinline{TemplateError} when the manifest
+loads.
 \section{Contract macros}
 The writers emit a fixed macro or environment per construct, and a fragment must
 define every macro the writer can name. Naming is regular: macros are

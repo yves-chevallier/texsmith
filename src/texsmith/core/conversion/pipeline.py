@@ -157,7 +157,12 @@ def _forwarding_sink(document: Document, emitter: DiagnosticEmitter) -> Diagnost
         del cause
         emitter.diagnostic(record)
 
-    return DiagnosticSink(document.files, on_emit=forward)
+    # The run's declarations travel with it: a pass sink collects into
+    # ``Document.diagnostics`` as well, and a template's container is not an
+    # unknown one there either.
+    return DiagnosticSink(
+        document.files, on_emit=forward, containers=emitter.sink.declared_containers
+    )
 
 
 def build_pass_context(

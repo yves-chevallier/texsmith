@@ -17,6 +17,7 @@ from texsmith.diagnostics import DiagnosticEmitter, ensure_emitter
 
 from ..documents import Document, TitleStrategy, front_matter_has_title
 from ..front_matter import split_front_matter
+from ..templates.runtime import declared_containers
 from ..templates.session import TemplateRenderResult, TemplateSession, get_template
 from .core import ConversionBundle, convert_documents
 from .inputs import (
@@ -130,6 +131,9 @@ class ConversionService:
     def prepare_documents(self, request: ConversionRequest) -> _PreparedBatch:
         """Normalise input sources into :class:`Document` instances so conversion steps operate on consistent objects."""
         emitter = ensure_emitter(request.emitter)
+        # Before the first parse: the containers the template's passes read are
+        # known constructs for this run, and tmark decides that while it parses.
+        emitter.sink.declare_containers(declared_containers(request.template))
         documents: list[Document] = []
         mapping: dict[Path, Document] = {}
         shared_front_matter = _normalise_front_matter(request.front_matter)

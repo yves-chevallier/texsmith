@@ -19,11 +19,20 @@ from .emitters import (
 )
 from .files import FileId, FileTable, LineCol, LineIndex, SourceFile
 from .model import NO_SPAN, Diagnostic, Fix, Severity, Span, from_tmark
-from .sink import DiagnosticSink, format_diagnostic, locate, sort_key, summary_line
+from .sink import (
+    CONTAINER_UNKNOWN,
+    DiagnosticSink,
+    format_diagnostic,
+    locate,
+    sort_key,
+    summary_line,
+    unknown_container,
+)
 
 
 __all__ = [
     "CODES",
+    "CONTAINER_UNKNOWN",
     "NO_SPAN",
     "CodeInfo",
     "Diagnostic",
@@ -51,4 +60,5 @@ __all__ = [
     "record_event",
     "sort_key",
     "summary_line",
+    "unknown_container",
 ]

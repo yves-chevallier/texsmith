@@ -223,6 +223,34 @@ def resolve_template_language(
     return DEFAULT_TEMPLATE_LANGUAGE
 
 
+def declared_containers(template: str | None) -> frozenset[str]:
+    """The container names ``template`` declares (``containers``), for both backends.
+
+    Read straight from the manifest, because it has to be known *before* the
+    documents are parsed: tmark reports ``::: solution`` as
+    ``container-unknown`` while it parses, and no pass — not even the
+    template's own, which rewrites that very container — can take a record
+    back. The parse is one for both backends (``prepare_documents`` runs before
+    the LaTeX binding is resolved and before the Typst template is loaded), so
+    the names of ``[latex.template]`` and ``[typst.template]`` are read
+    together.
+
+    A template that cannot be loaded declares nothing: that failure belongs to
+    the render, which reports it with its own message.
+    """
+    if not template:
+        return frozenset()
+    try:
+        instance = load_template(template)
+    except TemplateError:
+        return frozenset()
+    manifest = instance.manifest
+    names = set(manifest.latex.template.containers)
+    if manifest.typst is not None:
+        names.update(manifest.typst.template.containers)
+    return frozenset(names)
+
+
 def load_template_runtime(template: str) -> TemplateRuntime:
     """Resolve template metadata for repeated conversions."""
     template_instance = load_template(template)
@@ -331,6 +359,7 @@ __all__ = [
     "TemplateRuntime",
     "build_template_overrides",
     "coerce_base_level",
+    "declared_containers",
     "extract_base_level_override",
     "extract_language_from_front_matter",
     "load_template_runtime",

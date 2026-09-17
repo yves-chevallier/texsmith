@@ -119,6 +119,20 @@ template loads, with a \tscodeinline{TemplateError} naming the template and the 
 pass reads the template's attributes from its context:
 \tscodeinline{ctx.attribute("solution", False)} is \tscodeinline{True} under \tscodeinline{-\allowbreak{}a solution=true}.
 
+A pass that claims a container of its own says so next to it, because the parse
+decides long before the pass runs:
+\begin{tscode}[lang=toml, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{k}{[}\PY{k}{latex}\PY{k}{.}\PY{k}{template}\PY{k}{]}
+\PY{n}{passes}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{my\PYZus{}exam\PYZus{}pkg.questions:run}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\PY{n}{containers}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{p}{[}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{solution}\PY{l+s+s2}{\PYZdq{}}\PY{p}{]}
+\end{Verbatim}
+\end{tscode}
+\tscodeinline{::: solution} is then a known container while that template renders --- no
+\tscodeinline{container-\allowbreak{}unknown} warning on the terminal, in the counts or in
+\tscodeinline{-\allowbreak{}-\allowbreak{}diagnostics-\allowbreak{}json}, for that name and no other. An entry that is not a
+non-empty string is a \tscodeinline{TemplateError} when the manifest loads.
+
 The full contract --- ordering, diagnostics, the rules a pass must not break --- is
 in IR passes and fragment contracts.
 \section{Fragments and contract macros}

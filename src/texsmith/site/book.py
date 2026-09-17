@@ -706,6 +706,10 @@ class BookBuilder:
         except TemplateError as exc:
             raise BookError(f"Failed to load template '{template_name}': {exc}") from exc
 
+        # Before the pages are read: the containers the template's passes read
+        # are known constructs, and the parse is what decides that.
+        self.emitter.sink.declare_containers(template_runtime.instance.info.containers)
+
         self._resolve_base_level(book, template_runtime)
 
         raw_language = book.config.language or settings.latex.language
