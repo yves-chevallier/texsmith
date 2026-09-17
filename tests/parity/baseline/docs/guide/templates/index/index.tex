@@ -217,6 +217,26 @@ The \tscodeinline{manifest.toml} file describes the template and its metadata.
 \PY{n}{entrypoint}\PY{+w}{ }\PY{o}{=}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{template/template.typ}\PY{l+s+s2}{\PYZdq{}}
 \end{Verbatim}
 \end{tscode}
+\subsubsection{The Typst scaffolding's own variables}
+Besides the attributes and the slots, a \tscodeinline{template.typ} receives:
+\begin{itemize}
+\item \tscodeinline{mainmatter} --- the \tscodeinline{texsmith.typ} contract definitions, the document's
+callout-style choice, and the body of the default slot, in one piece. A
+scaffolding with nothing to say about the contracts emits just this.
+\item \tscodeinline{prelude} and \tscodeinline{body} --- the same two halves separately. A \tscodeinline{\#let ts-\allowbreak{}…}
+redefinition only reaches the calls that follow it, so a template that
+restyles a construct (\tscodeinline{texsmith.typ} says it may) writes its own definitions
+between them:
+\begin{tscode}[lang=jinja, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+\PY{c+cp}{\PYZob{}\PYZob{}} \PY{n+nv}{prelude} \PY{c+cp}{\PYZcb{}\PYZcb{}}
+
+\PY{x}{\PYZsh{}let ts\PYZhy{}code(..args) = block(stroke: 0.4pt, args.pos().at(0, default: []))}
+
+\PY{c+cp}{\PYZob{}\PYZob{}} \PY{n+nv}{body} \PY{c+cp}{\PYZcb{}\PYZcb{}}
+\end{Verbatim}
+\end{tscode}
+\end{itemize}
 \subsubsection{Attribute schema}
 Each attribute table accepts the following keys:
 \begin{itemize}

@@ -516,7 +516,8 @@ def render_typst_documents(
     has_index = bool(requires.index) or "ts-index" in requires.fragments
     # The contract definitions, then the document's choices among them.
     preamble = f"{typst_prelude()}\n\n#ts-callout-style.update({_typst_string(callout_style)})"
-    mainmatter = f"{preamble}\n\n{slot_text(default_slot)}"
+    body = slot_text(default_slot)
+    mainmatter = f"{preamble}\n\n{body}"
 
     if typst_template is None:
         return render_document(
@@ -577,6 +578,14 @@ def render_typst_documents(
     template_context["front_matter"] = first.front_matter
     template_context["asset"] = lambda value: _copy_template_asset(value, source_dir, output_dir)
     template_context["mainmatter"] = mainmatter
+    # ``mainmatter`` is the prelude and the body in one piece, which is what a
+    # scaffolding that has nothing to say about the contracts wants. The two
+    # halves are offered as well: a `#let ts-…` redefinition only reaches the
+    # calls that follow it, so a template that restyles a construct —
+    # ``texsmith.typ`` says it may — has to place its own definitions *between*
+    # them.
+    template_context["prelude"] = preamble
+    template_context["body"] = body
     template_context["abstract"] = slot_text("abstract")
     for name in first.declared_slots:
         if name in (default_slot, "abstract"):

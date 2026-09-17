@@ -185,6 +185,26 @@ strip_heading = true
 entrypoint = "template/template.typ"
 ```
 
+#### The Typst scaffolding's own variables
+
+Besides the attributes and the slots, a `template.typ` receives:
+
+- `mainmatter` — the `texsmith.typ` contract definitions, the document's
+  callout-style choice, and the body of the default slot, in one piece. A
+  scaffolding with nothing to say about the contracts emits just this.
+- `prelude` and `body` — the same two halves separately. A `#let ts-…`
+  redefinition only reaches the calls that follow it, so a template that
+  restyles a construct (`texsmith.typ` says it may) writes its own definitions
+  between them:
+
+  ```jinja
+  {{ prelude }}
+
+  #let ts-code(..args) = block(stroke: 0.4pt, args.pos().at(0, default: []))
+
+  {{ body }}
+  ```
+
 #### Attribute schema
 
 Each attribute table accepts the following keys:
