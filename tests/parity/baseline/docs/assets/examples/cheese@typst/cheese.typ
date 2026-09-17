@@ -123,7 +123,7 @@ moisture gradients.
 
 #figure(
 table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Cheese Type], [Age (months)], [Moisture Content (%)], [Fat Content (%)]),
 [Parmigiano-Reggiano], [24], [29], [31],
@@ -143,7 +143,7 @@ table #ref(<mechanical-results>, supplement: none) summarizes the measured modul
 
 #figure(
 table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, right, right, right),
 table.header([Cheese Type], [Strain Rate (s⁻¹)], [Temperature (°C)], [Elastic Modulus E (MPa)]),
 [Parmigiano-Reggiano], [0.1], [10], [52.1],

@@ -240,7 +240,7 @@ Other synonyms: tiny, scriptsize, footnotesize, small, normalsize, large, Large,
 Other english synonyms: tiny, very small, small, normal, big, very big, huge, enormous]
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Adjective(s) (EN)], [LaTeX], [HTML correspondance (CSS)]),
 [tiny, very tiny], [\\tiny   (#ts-script("mathematics")[≈ ]5 pt)], [`<span style="font-size:0.5em">...</span>`],

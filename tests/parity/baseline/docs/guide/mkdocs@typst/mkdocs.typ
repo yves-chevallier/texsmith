@@ -74,7 +74,7 @@ sort, so the rendered page carries the characters. Once the site's language is
 `language` — the rendered HTML goes through those two rules:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Written], [Published]),
 [`Attention : ceci`], [`Attention` U+202F `: ceci`],
@@ -134,7 +134,7 @@ and its fence stays literal text on the page.
 = Options
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Option], [Description], [Default]),
 [`enabled`], [Turn the plugin off entirely], [`true`],

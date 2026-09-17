@@ -67,7 +67,7 @@ break there would tear the container in two.
 = Cheat sheet
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Feature], [Canonical spelling], [Class]),
 [Definition lists], [Term: Definition], [E],

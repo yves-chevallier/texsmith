@@ -36,7 +36,7 @@ There are therefore two extension points, and the `@reads` / `@writes`
 decorators of 0.6 map onto them:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([0.6 hook], [0.7 replacement]),
 [`@reads` lowering (HTML #ts-script("symbols")[→ ]IR)], [a TMark *container* (`::: name`) plus, when it computes something, an *IR pass*],

@@ -35,7 +35,7 @@ you parse with must be the emitter you render with, or a span will name the
 wrong file.
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Emitter], [Description], [Typical usage]),
 [`CliEmitter` (`texsmith.ui.cli.diagnostics`)], [Rich-powered emitter used by the Typer CLI. Respects `-v` and `–debug`, paints warnings as panels, and streams structured events to the diagnostics sidebar.], [Default when running `texsmith`. Import it in automation scripts when you want human-friendly output.],

@@ -80,7 +80,7 @@ Rendered:
 
 #figure(
 table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Fruit], [Geneva], [Zurich], [Basel]),
 [Apples], [120], [180], [90],
@@ -142,7 +142,7 @@ Rendered:
 
 #figure(
 table(
-columns: 9,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left, left, left, left, left),
 table.header(table.cell(rowspan: 2)[Product], table.cell(colspan: 4, align: center)[FY23], table.cell(colspan: 4, align: center)[FY24], [Q1], [Q2], [Q3], [Q4], [Q1], [Q2], [Q3], [Q4]),
 [Apples], [120], [135], [150], [140], [130], [145], [160], [150],
@@ -193,7 +193,7 @@ Rendered:
 
 #figure(
 table(
-columns: 9,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left, left, left, left, left),
 table.header(table.cell(rowspan: 2)[Product], table.cell(colspan: 4, align: center)[FY23], table.cell(colspan: 4, align: center)[FY24], [Q1], [Q2], [Q3], [Q4], [Q1], [Q2], [Q3], [Q4]),
 [Apples], [120], [135], [150], [140], [130], [145], [160], [150],
@@ -237,7 +237,7 @@ Rendered:
 
 #figure(
 table(
-columns: 7,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left, left, left),
 table.header(table.cell(rowspan: 3)[Product], table.cell(colspan: 6, align: center)[2024], table.cell(colspan: 3, align: center)[Q1], table.cell(colspan: 3, align: center)[Q2], [Jan], [Feb], [Mar], [Apr], [May], [Jun]),
 [Alpha], [10], [12], [15], [18], [20], [22],
@@ -274,7 +274,7 @@ Rendered:
 
 #figure(
 table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Article], [Editor], [Status], [Pages]),
 [Alpha], table.cell(rowspan: 2)[Maria], [Draft], [12],
@@ -313,7 +313,7 @@ Rendered:
 
 #figure(
 table(
-columns: 5,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left),
 table.header(table.cell(rowspan: 2)[Metric], table.cell(colspan: 4, align: center)[2024], [Q1], [Q2], [Q3], [Q4]),
 [Revenue], [120], [130], [150], [170],
@@ -349,7 +349,7 @@ Rendered:
 
 #figure(
 table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([A], [B], [C], [D]),
 [r1], table.cell(colspan: 3, rowspan: 2, align: center)[Merged 2x3],
@@ -447,7 +447,7 @@ Rendered:
 
 #figure(
 table(
-columns: 5,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left),
 table.header([Category], [Q1], [Q2], [Q3], [Q4]),
 [Salaries], [120000], [122000], [121000], [125000],
@@ -587,7 +587,7 @@ rows:
 Rendered:
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([A], [B], [C], [D]),
 [x], [1], [2], [],
@@ -610,7 +610,7 @@ rows:
 Rendered:
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header(table.cell(rowspan: 2)[Year], table.cell(colspan: 2, align: center)[Actual], [H1], [H2]),
 [2024], [], [],
@@ -631,7 +631,7 @@ rows:
 Rendered:
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([A], [B], [C], [D]),
 [r1], table.cell(colspan: 2, rowspan: 2)[Block], [],

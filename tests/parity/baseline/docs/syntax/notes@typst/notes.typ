@@ -97,7 +97,7 @@ hint of the same standing as `width=` on an image; the default lives in
 `press.aside` (right in `oneside`, outer in `twoside`).
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([`side=`], [Semantics]),
 [(none)], [document default],

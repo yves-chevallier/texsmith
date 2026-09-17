@@ -40,7 +40,7 @@ renders as
 Copyright #ts-emoji[©] 2025, tea #ts-emoji[™], reg #ts-emoji[®], #ts-script("symbols")[℅ ]Ada: ½ a cup, ± 3, 4 #ts-script("mathematics")[≠ ]5, a #ts-script("symbols")[→ ]b.]
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Group], [Spellings], [Result]),
 [Marks], [`(c)` `(tm)` `(r)`], [#ts-emoji[©] #ts-emoji[™] #ts-emoji[®]],

@@ -30,7 +30,7 @@ seen is still readable, and a document still renders somewhere else.
 So "writing an extension" is not "adding syntax". It is one of four things:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([You want to…], [Do this]),
 [add a new _kind_ of callout (Solution, Exercise, Risk)], [declare it under `press.declare.admonitions`],

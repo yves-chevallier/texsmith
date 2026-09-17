@@ -69,7 +69,7 @@ or Pandoc renders it natively.
 == Inline constructs
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Legacy], [Canonical], [Horizon]),
 [`[^key]` citation], [`@key`], [fmt; `[^1]` stays a _footnote_; meaning-preserving — both are the short, parenthetical citation, and `–fix` inserts a space when the `[^key]` hugs the word before it],
@@ -92,7 +92,7 @@ table.header([Legacy], [Canonical], [Horizon]),
 == Blocks
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Legacy], [Canonical], [Horizon]),
 [`/// latex … ///`], [a ```` ```latex raw ```` fence], [fmt],
@@ -111,7 +111,7 @@ table.header([Legacy], [Canonical], [Horizon]),
 == Front matter
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Legacy], [Canonical], [Horizon]),
 [top-level `bibliography:`], [`press.sources.bibliography`], [fmt],
@@ -169,7 +169,7 @@ press:
 == MkDocs plugin options
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Legacy], [Canonical], [Horizon]),
 [`save_html: true`], [—], [removed in 0.7],

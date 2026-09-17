@@ -150,7 +150,7 @@ diagnostics, shown by default and promotable to hard
 failures with `–strict` (or `press.features.strict: true`):
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Situation], [Behaviour]),
 [the key is not published by the declared inventory], [warning, and the citation renders as `[?fwrev:fw:disparu]`],

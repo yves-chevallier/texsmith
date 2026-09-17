@@ -48,7 +48,7 @@ Smile in every circumstance (@n:joy) and do no harm to others (@n:respect).
 renders as
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Id], [Requirement]),
 [N-01], [Everyone shall be happy],
@@ -67,7 +67,7 @@ its prefix. The built-in prefixes are simply predeclared entries; there is no
 second mechanism for "reserved prefixes".
 
 #table(
-columns: 5,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left),
 table.header([Prefix], [Name], [Scope], [Numbered by], [Applies to]),
 [`part` `chap` `sec` `app`], [Part, Chapter, Section, Appendix], [document], [backend], [headings],
@@ -204,7 +204,7 @@ yourself, as you would for a section, or declare `ref: "{name} {number}"`.
 = Diagnostics
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Situation], [Code]),
 [`@n:missing` — no such item], [`ref-unresolved`, and a visible `[?n:missing]`],
@@ -231,7 +231,7 @@ planned but not implemented yet.]
 = Backend mapping
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([], [Definition], [Reference]),
 [#ts-logo("LaTeX")], [`\phantomsection\label{n:joy}N-01`], [`\hyperref[n:joy]{N-01}`],

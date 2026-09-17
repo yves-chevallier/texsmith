@@ -79,7 +79,7 @@ footer:
 Top-level keys:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Key], [Purpose]),
 [`table`], [Optional table-level settings: width, placement, long-table mode.],
@@ -120,7 +120,7 @@ columns:
 Column attributes:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Attribute], [Values]),
 [`align`], [`l`, `c`, `r`, `j`, or long forms: `left`, `center`, `centre`, `right`, `justify`, `justified`.],

@@ -27,7 +27,7 @@ delimiters. Every inline node has a *role* as its canonical spelling, and most
 have a familiar shorthand as sugar; both produce the same node.
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Node], [Canonical], [Sugar], [LaTeX]),
 [Emphasis], [`*x*`], [`_x_`], [`\emph`],

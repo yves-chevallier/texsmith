@@ -257,7 +257,7 @@ Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning
 === Built-in normalisers
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Name], [Purpose]),
 [`paper_option`], [Validates paper sizes and emits `<size>paper` strings (for example `letterpaper`).],
@@ -378,7 +378,7 @@ The `book` template takes three attributes so a project can keep its own front
 matter without forking the template:
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Attribute], [Value], [Where it lands]),
 [`press.preamble`], [#ts-logo("LaTeX"), inline], [the end of the preamble, after the fragments — load a package, redefine a contract macro, override anything above],

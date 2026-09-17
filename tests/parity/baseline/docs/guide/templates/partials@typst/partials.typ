@@ -39,7 +39,7 @@ are ignored, so an older fragment survives a newer writer.
 = The macros
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Fragment], [Macro / environment], [Keys], [Notes]),
 [`ts-typesetting`], [`\tslead{…}`], [—], [lead-in of a paragraph (run-in bold line)],
@@ -116,7 +116,7 @@ Until 0.6 the #ts-logo("LaTeX") came from Jinja partials under
 writer names a macro and a fragment defines it. The mapping:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Former partial], [Replacement]),
 [`italic`, `strong`, `smallcaps`, `subscript`, `superscript`, `strikethrough`, `underline`, `enquote`, `blockquote`], [structural #ts-logo("LaTeX") from the writer],

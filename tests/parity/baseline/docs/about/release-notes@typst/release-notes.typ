@@ -66,7 +66,7 @@ Templates for the former-partial #ts-script("symbols")[→ ]macro map.
 = TeXSmith releases
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Version], [Highlights], [Notes]),
 [`0.1.0`], [Unified conversion engine (`ConversionService`, slot assignments, diagnostics emitters), Typer CLI with `render`\/`bibliography`, initial template catalog (article, book), diagram adapters (Mermaid, Draw.io, Svgbob), MkDocs integration hooks.], [Requires Python 3.10+, MkDocs #ts-script("mathematics")[≥ ]1.6 for docs. Templates target #ts-logo("TeX") Live 2023.],
@@ -108,7 +108,7 @@ the day the writers emit them.
 = Template compatibility matrix
 
 #table(
-columns: 6,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left, left),
 table.header([Template], [Version], [TeX Live year], [Shell escape], [Key `tlmgr` packages], [Notes]),
 [`article`], [0.1.0], [2023], [Only with `code.engine: minted`], [`babel`, `geometry`, `hyperref`, `microtype`, `lmodern`, `textcomp`, `fontspec`, `biblatex`], [Provides `mainmatter` + `abstract` slots, ships a custom `.latexmkrc`.],

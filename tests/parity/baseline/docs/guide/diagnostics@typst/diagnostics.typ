@@ -34,7 +34,7 @@ report.md:12:5: warning ref-unresolved: Counter reference '@n:missing' has no ma
 ```
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Part], [Meaning]),
 [`report.md`], [the file the finding belongs to],
@@ -55,7 +55,7 @@ a duplicate key) follow, indented under the line.
 = Severities
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Severity], [Meaning], [`–strict`]),
 [`hint`], [a style nit; nothing is wrong with the output], [ignored],

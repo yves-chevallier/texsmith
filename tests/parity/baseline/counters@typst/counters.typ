@@ -51,7 +51,7 @@ the first column is a definition marker, `#{prefix:key}`: it prints the
 formatted number and becomes the anchor every later reference links to.
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Id], [Requirement], [Verification]),
 [REQ-100<req:watchdog-reset>], [The watchdog shall reset the node within two seconds of a stalled main loop.], [Fault injection],
@@ -72,7 +72,7 @@ As in the requirement table, the identifiers are defined right in the first
 column.
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Id], [Severity], [Component], [Summary]),
 [FW-01<fw:watchdog>], [Blocking], [`hal/watchdog.c`], [The watchdog is fed from the I2C completion handler.],

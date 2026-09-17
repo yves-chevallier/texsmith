@@ -73,7 +73,7 @@ author writing for print knows the icon is not there. Icons are decoration;
 a symbol that must reach print is an *emoji* or an *image*.]
 
 #table(
-columns: 5,
+columns: (1fr, 1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left, left),
 table.header([Construct], [Canonical], [Print], [Web], [Class]),
 [`:smile:`], [the character], [the character], [the character], [E],
