@@ -26,7 +26,7 @@ TeXSmith finds templates from multiple locations in a deterministic order:
 
 + *Built-ins*: shipped with TeXSmith (`article`, `book`, `letter`, `snippet`).
 + *Installed packages*: PyPI distributions named `texsmith-template-*` (or exposing the `texsmith.templates` entry point).
-+ *Local tree*: current working directory and any ancestor `templates/` folder. Any `manifest.toml`/`template/manifest.toml` or `__init__.py` counts as a template root.
++ *Local tree*: current working directory and any ancestor `templates/` folder. Any `manifest.toml`\/`template/manifest.toml` or `__init__.py` counts as a template root.
 + *User directory*: `~/.texsmith/templates/<name>` (same structure as local).
 
 Use the CLI to inspect what was found:

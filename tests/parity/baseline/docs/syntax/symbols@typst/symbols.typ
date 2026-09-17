@@ -86,15 +86,12 @@ paragraph.
 - *`\"` escapes.* A backslash before the opening quote leaves the phrase
 alone.
 
-#ts-callout(kind: "tip", title: [Why this matters for print])[]
-
-```
+#ts-callout(kind: "tip", title: [Why this matters for print])[
 Straight quotes in a PDF are a typographic error, and no template can fix
-them after the fact: by the time the text reaches LaTeX, the language is
+them after the fact: by the time the text reaches #ts-logo("LaTeX"), the language is
 the only thing that knows which glyphs to use. Writing `"…"` and letting
 the substitution run is what puts `\enquote{…}` — and therefore the right
-glyphs — in the output.
-```
+glyphs — in the output.]
 
 = Language-driven spacing
 

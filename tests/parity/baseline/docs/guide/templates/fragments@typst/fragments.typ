@@ -38,7 +38,7 @@ a body that emits `\begin{tscallout}` names `ts-callouts` in its
 sniffing the emitted #ts-logo("LaTeX") for a macro name. The remaining fragments are
 configuration and render when their options say so.
 
-/ `ts-geometry`: page size/orientation glue that mirrors `press.paper`/`press.geometry` options. Configuration, not a contract.
+/ `ts-geometry`: page size/orientation glue that mirrors `press.paper`\/`press.geometry` options. Configuration, not a contract.
 / `ts-typesetting`: paragraph spacing, leading and line numbers (when configured), and the
 
 contract macros `\tslead`, `\tsmark`, `\tsdivider`, `\tsrule`, `\tsepigraph`,
@@ -135,8 +135,8 @@ press:
 ```
 
 All three keys are optional. Omitted keys leave the corresponding part of the
-default list unchanged. `disable` is applied first (before `prepend`/`append`),
-so the same fragment cannot appear in both `disable` and `prepend`/`append`.
+default list unchanged. `disable` is applied first (before `prepend`\/`append`),
+so the same fragment cannot appear in both `disable` and `prepend`\/`append`.
 `–enable-fragment` / `-f` and `–disable-fragment` / `-F` apply the same two
 operations from the command line.
 

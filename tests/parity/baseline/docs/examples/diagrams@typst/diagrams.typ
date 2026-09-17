@@ -86,4 +86,4 @@ caption: [Vegetable harvesting algorithm],
 
 = Draw.io backend choice
 
-TeXSmith now tries a Playwright-based exporter first (cached under `~/.cache/texsmith/playwright`), falling back to the local `drawio`/`mmdc` CLI and finally the Docker image. Force a specific path with `–diagrams-backend=playwright|local|docker` if needed.
+TeXSmith now tries a Playwright-based exporter first (cached under `~/.cache/texsmith/playwright`), falling back to the local `drawio`\/`mmdc` CLI and finally the Docker image. Force a specific path with `–diagrams-backend=playwright|local|docker` if needed.

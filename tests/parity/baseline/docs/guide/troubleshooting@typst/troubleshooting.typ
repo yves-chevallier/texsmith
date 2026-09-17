@@ -22,7 +22,7 @@ align(center)[#counter(page).get().first()]
 
 #ts-callout-style.update("fancy")
 
-Running `texsmith –build` shells out to your selected engine (Tectonic by default, `latexmk` when `–engine` is set to `xelatex`/`lualatex`), `bibtex`/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
+Running `texsmith –build` shells out to your selected engine (Tectonic by default, `latexmk` when `–engine` is set to `xelatex`\/`lualatex`), `bibtex`\/`biber`, and any template assets declared in `manifest.toml`. When those tools fail, the CLI will highlight the failing step and (optionally) open the log file. Use this page to decode the most common issues.
 
 = Enable rich diagnostics
 
@@ -41,7 +41,7 @@ Running `texsmith –build` shells out to your selected engine (Tectonic by defa
 
 *Symptom:* `tectonic: command not found` or TeXSmith reports missing dependencies before starting the build.
 
-*Fix:* Install Tectonic from your package manager (`brew install tectonic`, `apt install tectonic`, or `cargo install tectonic`) or download a prebuilt binary from #link("https://tectonic-typesetting.github.io/"). Ensure the `tectonic` executable is on `PATH` before re-running TeXSmith. You can also switch to `–engine lualatex`/`xelatex` to keep using `latexmk`.
+*Fix:* Install Tectonic from your package manager (`brew install tectonic`, `apt install tectonic`, or `cargo install tectonic`) or download a prebuilt binary from #link("https://tectonic-typesetting.github.io/"). Ensure the `tectonic` executable is on `PATH` before re-running TeXSmith. You can also switch to `–engine lualatex`\/`xelatex` to keep using `latexmk`.
 
 = Missing tlmgr packages
 
@@ -53,11 +53,11 @@ Running `texsmith –build` shells out to your selected engine (Tectonic by defa
 
 *Symptom:* `shell escape feature is not enabled` when templates run `minted`, `gnuplot`, or diagram converters.
 
-*Fix:* `texsmith –template-info` indicates whether `shell_escape` is required. Re-run `texsmith –build –classic-output` to confirm the flag. With `–engine lualatex`/`xelatex`, edit your #ts-logo("TeX") Live config or pass `latexmk -shell-escape` by exporting `LATEXMKOPT="-shell-escape"`. If you're using Tectonic, switch to `–engine lualatex` when you need tighter control over `-shell-escape`.
+*Fix:* `texsmith –template-info` indicates whether `shell_escape` is required. Re-run `texsmith –build –classic-output` to confirm the flag. With `–engine lualatex`\/`xelatex`, edit your #ts-logo("TeX") Live config or pass `latexmk -shell-escape` by exporting `LATEXMKOPT="-shell-escape"`. If you're using Tectonic, switch to `–engine lualatex` when you need tighter control over `-shell-escape`.
 
 = Bibliography failures
 
-*Symptom:* `biber`/`bibtex` errors such as `I couldn't open database file` or duplicate citation keys.
+*Symptom:* `biber`\/`bibtex` errors such as `I couldn't open database file` or duplicate citation keys.
 
 #ts-lead[Fix:]
 

@@ -62,7 +62,7 @@ Enable numbering and each document gets its own sequence starting at 1.
 
 = #ts-logo("LaTeX")
 
-#ts-logo("LaTeX") wraps figures/tables in `figure`/`table` environments, uses `\caption{}` for the text, and `\label{}` for cross-references:
+#ts-logo("LaTeX") wraps figures/tables in `figure`\/`table` environments, uses `\caption{}` for the text, and `\label{}` for cross-references:
 
 ```latex
 As seen in Figure \ref{fig:results}, the results are significant.

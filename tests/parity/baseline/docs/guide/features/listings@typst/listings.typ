@@ -26,7 +26,7 @@ TeXSmith bundles a single fragment, `ts-code`, that can render fenced code block
 
 / `pygments` (default): highlights code with Pygments at render time and injects the generated macros into `ts-code.sty`. No shell escape is required and the output works with #ts-logo("XeLaTeX") and Tectonic. Not suited for editing the #ts-logo("LaTeX") output directly.
 / `listings`: uses the #ts-logo("LaTeX") `listings` package inside a `tcolorbox`. Good for pure #ts-logo("LaTeX") workflows without shell escape, but no automatic line highlighting.
-/ `verbatim`: plain `fvextra`/`Verbatim` output wrapped in a tcolorbox. Useful when you want zero styling or external dependencies.
+/ `verbatim`: plain `fvextra`\/`Verbatim` output wrapped in a tcolorbox. Useful when you want zero styling or external dependencies.
 / `minted`: Enhanced version of listings that shells out to `pygmentize`. This needs `–shell-escape` and is disabled by default for compatibility with sandboxed engines such as Tectonic.
 
 = Choosing an engine
@@ -45,7 +45,7 @@ press:
 texsmith input.md -a code.engine=verbatim
 ```
 
-The choice is global for a render. Inline code spans follow the engine too: `pygments` highlights them in place, `minted` wraps them in `\mintinline`, and `listings`/`verbatim` fall back to plain `\texttt{…}`.
+The choice is global for a render. Inline code spans follow the engine too: `pygments` highlights them in place, `minted` wraps them in `\mintinline`, and `listings`\/`verbatim` fall back to plain `\texttt{…}`.
 
 = Inline code wrapping
 

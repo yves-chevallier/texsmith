@@ -36,13 +36,10 @@ listed as sugar for a link to the project file of that name.
 `getting-started.md`).
 - Anything after `|` is the link text.
 
-#ts-callout(kind: "warning", title: [Not implemented yet])[]
-
-```
+#ts-callout(kind: "warning", title: [Not implemented yet])[
 The parser recognises the spelling and reports `compat-unsupported`: the
 text stays literal rather than becoming a link. Do not rely on it in a
-document meant for print.
-```
+document meant for print.]
 
 The canonical spelling is the link itself, which every renderer understands and
 whose broken targets are visible rather than silent:

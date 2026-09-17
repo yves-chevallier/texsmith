@@ -105,16 +105,12 @@ paragraph.
 alone.
 \end{itemize}
 \begin{tscallout}[kind=tip, title={Why this matters for print}]
-\end{tscallout}
-\begin{tscode}[lang=text, engine=pygments]
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 Straight quotes in a PDF are a typographic error, and no template can fix
-them after the fact: by the time the text reaches LaTeX, the language is
-the only thing that knows which glyphs to use. Writing `\PYZdq{}…\PYZdq{}` and letting
-the substitution run is what puts `\PYZbs{}enquote\PYZob{}…\PYZcb{}` — and therefore the right
-glyphs — in the output.
-\end{Verbatim}
-\end{tscode}
+them after the fact: by the time the text reaches \LaTeX{}, the language is
+the only thing that knows which glyphs to use. Writing \tscodeinline{"…"} and letting
+the substitution run is what puts \tscodeinline{\textbackslash{}enquote\{…\}} --- and therefore the right
+glyphs --- in the output.
+\end{tscallout}
 \section{Language-driven spacing}
 Punctuation spacing is not a substitution and never a construct in the body:
 the narrow no-break space before \tscodeinline{;}, \tscodeinline{:}, \tscodeinline{?} and \tscodeinline{!} in French, and the

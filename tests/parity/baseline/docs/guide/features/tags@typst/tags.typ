@@ -34,7 +34,7 @@ Traditional #ts-logo("LaTeX") editing relies on `\index{term}` commands sprinkle
 the source. After compilation you run `makeindex` or `xindy`, which produces the
 final index file included near the end of the document. TeXSmith mirrors that
 workflow: it turns Markdown annotations into #ts-logo("LaTeX") `\index{...}` calls and
-triggers `makeindex`/`xindy` while building the PDF.
+triggers `makeindex`\/`xindy` while building the PDF.
 
 That run is the build driver's, not `imakeidx`'s: the package can only call the
 index program through shell-escape, which TeXSmith does not enable. Between two

@@ -46,5 +46,5 @@ After installation, run `tectonic –version` to confirm the binary is available
 - API: call `ConversionService.build_pdf(render_result, engine="tectonic")` after
 rendering a template.
 
-TeXSmith still checks for optional helpers – `biber`, `makeindex`/`texindy`,
+TeXSmith still checks for optional helpers – `biber`, `makeindex`\/`texindy`,
 `makeglossaries` – and reports anything missing before the engine runs.

@@ -51,14 +51,10 @@ listed as sugar for a link to the project file of that name.
 \item Anything after \tscodeinline{|} is the link text.
 \end{itemize}
 \begin{tscallout}[kind=warning, title={Not implemented yet}]
-\end{tscallout}
-\begin{tscode}[lang=text, engine=pygments]
-\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
-The parser recognises the spelling and reports `compat\PYZhy{}unsupported`: the
+The parser recognises the spelling and reports \tscodeinline{compat-\allowbreak{}unsupported}: the
 text stays literal rather than becoming a link. Do not rely on it in a
 document meant for print.
-\end{Verbatim}
-\end{tscode}
+\end{tscallout}
 The canonical spelling is the link itself, which every renderer understands and
 whose broken targets are visible rather than silent:
 \begin{tscode}[lang=md, engine=pygments]

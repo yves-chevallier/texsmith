@@ -75,7 +75,7 @@ table.header([Concern], [Owner]),
 + *Collect and classify inputs.*
 The CLI and `ConversionService` accept Markdown documents, optional
 front matter YAML, and bibliography files. `split_inputs` peels off
-`.bib`/`.bibtex`, treats a lone YAML file as the only document when needed,
+`.bib`\/`.bibtex`, treats a lone YAML file as the only document when needed,
 and normalises any provided front matter. When documents share front matter,
 it is deep-merged into each `Document`, with `press.*` metadata validated up
 front to avoid surprises later.
