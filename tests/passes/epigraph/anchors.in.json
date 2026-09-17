@@ -1,0 +1,130 @@
+{
+  "tmark": "0.2.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      98
+    ],
+    "raw": "---\ntitle: Les données\nepigraph:\n  quote: Tout devrait être rendu aussi simple que possible.\n---",
+    "keys": {
+      "title": "Les données",
+      "epigraph": {
+        "quote": "Tout devrait être rendu aussi simple que possible."
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        100,
+        125
+      ],
+      "content": [
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            100,
+            115
+          ],
+          "attrs": {
+            "id": "numeration",
+            "id_span": [
+              0,
+              104,
+              114
+            ]
+          }
+        },
+        {
+          "type": "Str",
+          "id": 4,
+          "span": [
+            0,
+            115,
+            116
+          ],
+          "text": " "
+        },
+        {
+          "type": "Span",
+          "id": 5,
+          "span": [
+            0,
+            116,
+            125
+          ],
+          "attrs": {
+            "id": "data",
+            "id_span": [
+              0,
+              120,
+              124
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Comment",
+      "id": 6,
+      "span": [
+        0,
+        127,
+        180
+      ],
+      "text": " The page names its targets before its title. "
+    },
+    {
+      "type": "Header",
+      "id": 7,
+      "span": [
+        0,
+        182,
+        196
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 8,
+          "span": [
+            0,
+            184,
+            196
+          ],
+          "text": "Les données"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 9,
+      "span": [
+        0,
+        198,
+        210
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 10,
+          "span": [
+            0,
+            198,
+            210
+          ],
+          "text": "Le chapitre."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}

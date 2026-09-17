@@ -10,6 +10,7 @@ from texsmith.passes.epigraph import (
     block,
     epigraph_of,
     insertion_index,
+    prints_nothing,
     splice_web,
     web_html,
 )
@@ -30,6 +31,46 @@ def test_the_epigraph_is_set_under_the_opening_heading(harness) -> None:
     # The input is untouched, and the section further down took none.
     assert len(document.ir.blocks) == len(out.ir.blocks) - 1
     assert harness.structural(out) == harness.expected("epigraph", "heading")
+
+
+def test_an_anchor_paragraph_is_read_past_to_the_heading_under_it(harness) -> None:
+    """``[]{#numeration}`` then ``# Les données``: the quote goes under the title.
+
+    The anchor names the chapter for the links that point at it and prints
+    nothing, so the heading it precedes is the page's opening heading and
+    the anchor keeps the first line its author gave it.
+    """
+    document = harness.load("epigraph", "anchor")
+
+    out = harness.run("epigraph", document)
+
+    assert out.ir is not None
+    assert [node.type for node in out.ir.blocks[:3]] == ["Para", "Header", "BlockQuote"]
+
+
+def test_several_anchors_and_a_comment_are_read_past_as_one(harness) -> None:
+    """Two anchors in a paragraph and an HTML comment still print nothing."""
+    document = harness.load("epigraph", "anchors")
+
+    out = harness.run("epigraph", document)
+
+    assert out.ir is not None
+    assert [node.type for node in out.ir.blocks[:4]] == [
+        "Para",
+        "Comment",
+        "Header",
+        "BlockQuote",
+    ]
+
+
+def test_an_anchor_paragraph_with_nothing_after_it_takes_the_top(harness) -> None:
+    """Nothing the page prints, so nothing to sit under: the quote opens it."""
+    document = harness.load("epigraph", "anchor-only")
+
+    out = harness.run("epigraph", document)
+
+    assert out.ir is not None
+    assert [node.type for node in out.ir.blocks] == ["BlockQuote", "Para"]
 
 
 def test_a_document_with_no_opening_heading_takes_it_at_the_top(harness) -> None:
@@ -82,10 +123,37 @@ def test_the_nodes_carry_the_front_matter_span_and_fresh_ids(harness) -> None:
     assert min(quote.id, para.id, para.content[0].id) > ceiling
 
 
-def test_the_placement_rule_reads_the_first_block_only() -> None:
-    assert insertion_index("Header") == 1
-    assert insertion_index("Para") == 0
-    assert insertion_index(None) == 0
+def test_the_placement_rule_reads_the_first_block_that_prints() -> None:
+    """The rule, read off the raw parse the site lowering hands it."""
+    header = {"type": "Header", "level": 1, "content": [{"type": "Str", "text": "T"}]}
+    para = {"type": "Para", "content": [{"type": "Str", "text": "Body."}]}
+    anchor = {"type": "Para", "content": [{"type": "Span", "attrs": {"id": "a"}}]}
+    comment = {"type": "Comment", "text": " hi "}
+
+    assert insertion_index([header, para]) == 1
+    assert insertion_index([para, header]) == 0
+    assert insertion_index([]) == 0
+    assert insertion_index([anchor, header, para]) == 2
+    assert insertion_index([anchor, comment, header, para]) == 3
+    assert insertion_index([anchor, para]) == 0
+    # Nothing printed at all: the top.
+    assert insertion_index([anchor, comment]) == 0
+
+
+def test_what_prints_nothing_is_the_anchor_the_comment_and_the_table_config() -> None:
+    """A paragraph prints when one of its inlines does."""
+    space = {"type": "Str", "text": "  "}
+    anchor = {"type": "Span", "attrs": {"id": "a"}}
+
+    assert prints_nothing({"type": "Comment", "text": "x"})
+    assert prints_nothing({"type": "TableConfig"})
+    assert prints_nothing({"type": "Para", "content": [anchor, space, anchor]})
+    assert prints_nothing({"type": "Para", "content": [{"type": "SoftBreak"}]})
+    assert prints_nothing({"type": "Para", "content": []})
+    assert not prints_nothing({"type": "Para", "content": [anchor, {"type": "Str", "text": "T"}]})
+    assert prints_nothing({"type": "Para", "content": [{"type": "Span", "content": [space]}]})
+    assert not prints_nothing({"type": "Header", "content": []})
+    assert not prints_nothing({"type": "CodeBlock"})
 
 
 def test_a_blank_source_is_no_source() -> None:
@@ -129,3 +197,25 @@ def test_the_web_text_is_spliced_after_the_heading_line() -> None:
     assert splice_web("\n\n# T\n\nBody.\n", epigraph, 1) == f"\n\n# T\n\n{html}\n\nBody.\n"
     # A heading with nothing under it.
     assert splice_web("# T", epigraph, 1) == f"# T\n\n{html}"
+
+
+def test_the_web_text_is_spliced_past_what_the_page_prints_nothing_for() -> None:
+    """The lowered anchor (``[](){#id}``) and a comment sit before the heading."""
+    epigraph = model.Epigraph(quote="Q")
+    html = web_html(epigraph)
+
+    assert (
+        splice_web("[](){#numeration}\n\n# T\n\nBody.\n", epigraph, 2)
+        == f"[](){{#numeration}}\n\n# T\n\n{html}\n\nBody.\n"
+    )
+    assert (
+        splice_web("[](){#a} [](){#b}\n\n<!-- c -->\n\n# T\n", epigraph, 3)
+        == f"[](){{#a}} [](){{#b}}\n\n<!-- c -->\n\n# T\n\n{html}\n"
+    )
+    # A setext heading under an anchor keeps its underline.
+    assert (
+        splice_web("[](){#a}\n\nT\n===\n\nBody.\n", epigraph, 2)
+        == f"[](){{#a}}\n\nT\n===\n\n{html}\n\nBody.\n"
+    )
+    # Index 0 is the top, in front of the anchor the page opens with.
+    assert splice_web("[](){#a}\n", epigraph, 0) == f"{html}\n\n[](){{#a}}\n"

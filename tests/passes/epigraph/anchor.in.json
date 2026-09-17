@@ -1,0 +1,94 @@
+{
+  "tmark": "0.2.0",
+  "file": 0,
+  "front_matter": {
+    "id": 1,
+    "span": [
+      0,
+      0,
+      124
+    ],
+    "raw": "---\ntitle: Les données\nepigraph:\n  quote: Tout devrait être rendu aussi simple que possible.\n  source: Albert Einstein\n---",
+    "keys": {
+      "title": "Les données",
+      "epigraph": {
+        "quote": "Tout devrait être rendu aussi simple que possible.",
+        "source": "Albert Einstein"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "Para",
+      "id": 2,
+      "span": [
+        0,
+        126,
+        141
+      ],
+      "content": [
+        {
+          "type": "Span",
+          "id": 3,
+          "span": [
+            0,
+            126,
+            141
+          ],
+          "attrs": {
+            "id": "numeration",
+            "id_span": [
+              0,
+              130,
+              140
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "Header",
+      "id": 4,
+      "span": [
+        0,
+        143,
+        157
+      ],
+      "level": 1,
+      "content": [
+        {
+          "type": "Str",
+          "id": 5,
+          "span": [
+            0,
+            145,
+            157
+          ],
+          "text": "Les données"
+        }
+      ]
+    },
+    {
+      "type": "Para",
+      "id": 6,
+      "span": [
+        0,
+        159,
+        171
+      ],
+      "content": [
+        {
+          "type": "Str",
+          "id": 7,
+          "span": [
+            0,
+            159,
+            171
+          ],
+          "text": "Le chapitre."
+        }
+      ]
+    }
+  ],
+  "diagnostics": []
+}
