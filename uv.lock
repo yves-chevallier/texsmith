@@ -1916,7 +1916,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },
-    { name = "tmark-core", specifier = ">=0.2,<0.3" },
+    { name = "tmark-core", specifier = ">=0.3,<0.4" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
     { name = "typst", marker = "extra == 'typst'", specifier = ">=0.15" },
@@ -1965,14 +1965,14 @@ wheels = [
 
 [[package]]
 name = "tmark-core"
-version = "0.2.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8c/45/f9c838eea417081cda172b8a3417d93b31437d63e3ea5ed0a6b477b6846d/tmark_core-0.2.0.tar.gz", hash = "sha256:bc4c58c447e2fa6b46cbab39654fb19233e2ca4a33f12b3d25dc752e1f317311", size = 762937, upload-time = "2026-09-16T12:21:03.778Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/c0/c0cb6328577c9d0b06c0a4e2d88d34fa632f37768f77ed2d796169ea7ef9/tmark_core-0.3.0.tar.gz", hash = "sha256:611f0bba823038311a16f77bc1d920a05d543450f09215b79c56c78e5bde93c1", size = 767777, upload-time = "2026-09-17T08:26:27.114Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/8f/da6a351ee3e757f11c3edcc93d2e1ebdbfbece639bddabaa8b4846a11e1b/tmark_core-0.2.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:add18f0e2b19c129243d8c44c098b0def7312f31e680b932da2eb35c3f174492", size = 5001449, upload-time = "2026-09-16T12:20:55.893Z" },
-    { url = "https://files.pythonhosted.org/packages/24/07/093abd7468a9b4e22f9f341912c2b78a73d5f26498d4a68946e140e3f9c6/tmark_core-0.2.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:27e1f97d4d85ed15d3c8587c130504e14bf183598ca043b2de8f385b2d21fce2", size = 2758736, upload-time = "2026-09-16T12:20:58.277Z" },
-    { url = "https://files.pythonhosted.org/packages/00/91/e28fb609d69d055036d105d7bc497680a8a08afb51d4c99fd9a9dc627f26/tmark_core-0.2.0-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:12566859b0f61df0314c31eecd287a10c5aa6243296708b90ff88e5f550ecdd9", size = 2756943, upload-time = "2026-09-16T12:21:00.09Z" },
-    { url = "https://files.pythonhosted.org/packages/7f/af/b6f29690c5d13429c47f5b9904e49c7afb3287b9ce787d4bddcf83461ec1/tmark_core-0.2.0-cp310-abi3-win_amd64.whl", hash = "sha256:c7f16bbb89f298db6d2a11194f4cccd1ff4e26a591811eda47287445e8ec1cbb", size = 2507629, upload-time = "2026-09-16T12:21:02.091Z" },
+    { url = "https://files.pythonhosted.org/packages/27/a7/cf863cfef0fb73f9c4a99e4ea0ee8f385053d28660622a9ae7909919deb6/tmark_core-0.3.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:7f7572dfb5fd3890106145fd8adb33baab48051cc2e69eea1b42c2197cab76c8", size = 5006819, upload-time = "2026-09-17T08:26:20.143Z" },
+    { url = "https://files.pythonhosted.org/packages/88/f6/7139de9b90719c16b45280f3b291497647782c21ee9808025a9c7eaa4848/tmark_core-0.3.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:5855792a09464c16c617c217e56b3d3dfa37c8b6d4cfc7775f76388d1b005236", size = 2758152, upload-time = "2026-09-17T08:26:22.158Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/f8/2e0a1b6977bde7603a7b3c1c26c9f6a7fe200f78ba0ef4d0f0d797f121ab/tmark_core-0.3.0-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:5e55d647fd39563677979c58dba6ceb825ec38486822f1ca8012568406121441", size = 2758735, upload-time = "2026-09-17T08:26:23.809Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/22/1d9978178364e413c98c5e2cb089d434c7db25a8d065e5f88a5df71d850c/tmark_core-0.3.0-cp310-abi3-win_amd64.whl", hash = "sha256:afd92972d1f1eef93f358d3dd20377c8cac4fd14de8cf7ffeda84d362e12d581", size = 2510379, upload-time = "2026-09-17T08:26:25.519Z" },
 ]
 
 [[package]]
