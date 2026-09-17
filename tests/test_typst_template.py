@@ -127,3 +127,48 @@ def test_the_scaffolding_can_place_its_own_definitions_between_prelude_and_body(
 
     assert out.index("#let ts-divider() = [BREAK]") > out.index("#let ts-callout-style")
     assert out.index("#ts-divider()") > out.index("#let ts-divider() = [BREAK]")
+
+
+def test_the_declared_typst_assets_are_copied_next_to_the_source(tmp_path) -> None:
+    """``[typst.template.assets]`` lands in the output directory, as the LaTeX assets do."""
+    from pathlib import Path
+
+    from texsmith.core.conversion import ConversionRequest
+    from texsmith.core.conversion.typst import render_typst_document
+    from texsmith.core.documents import Document
+
+    root = tmp_path / "tpl"
+    root.mkdir()
+    (root / "manifest.toml").write_text(
+        "\n".join(
+            [
+                "[latex.template]",
+                'name = "assets"',
+                'version = "0.0.1"',
+                'entrypoint = "template.tex"',
+                "",
+                "[typst.template]",
+                'name = "assets"',
+                'version = "0.0.1"',
+                'entrypoint = "template.typ"',
+                "",
+                "[typst.template.assets]",
+                '"logo.svg" = { source = "logo.svg" }',
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (root / "template.tex").write_text("\\VAR{mainmatter}\n", encoding="utf-8")
+    (root / "template.typ").write_text("{{ mainmatter }}\n", encoding="utf-8")
+    (root / "logo.svg").write_text("<svg/>", encoding="utf-8")
+    source = tmp_path / "doc.md"
+    source.write_text("One\n", encoding="utf-8")
+
+    document = Document.from_markdown(source).prepare_for_conversion()
+    render_typst_document(
+        document,
+        ConversionRequest(documents=[Path(source)], template=str(root)),
+        output_dir=tmp_path / "out",
+    )
+
+    assert (tmp_path / "out" / "logo.svg").read_text(encoding="utf-8") == "<svg/>"

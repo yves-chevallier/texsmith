@@ -608,6 +608,10 @@ def render_typst_documents(
     )
     template_context["uses_mitex"] = _uses_mitex(requires)
     template_context["uses_eqnref"] = _uses_eqnref(requires)
+    # The declared ``[typst.template.assets]`` go next to the ``.typ``, as the
+    # LaTeX wrapper copies its template's assets next to ``main.tex``.
+    if output_dir is not None:
+        typst_template.copy_assets(output_dir)
     return typst_template.render(template_context)
 
 
