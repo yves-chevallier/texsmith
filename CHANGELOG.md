@@ -7,6 +7,12 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-17
+
+### Changed
+
+- **Needs the `tmark-core` 0.3 wheel.** TMark 0.3 keeps the indented body of a `!!!` callout that follows a list (it was re-read as an indented code block), reads `{attrs}` on a `!!!` title line as an attribute list, closes a `$$` display on the line its content ends, and escapes a number at a Typst line start so a `- 0.` item stays text rather than an empty enum item. The pin follows the minor: `tmark-core>=0.3,<0.4`.
+
 ### Fixed
 
 - **`ts-plain` of an empty sequence is `""`, not `none`.** `().join("")` is `none` in Typst, so a choice or title whose content was an empty sequence (a `- 0.` item, read as an empty enum item) made `#exam-choices`-style width computations fail with `type none has no method len`.
