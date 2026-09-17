@@ -73,7 +73,7 @@ dependencies = [
     # The TMark core (parser, IR, printer, registries, writers): the PyPI
     # project `tmark-core`, import name `tmark`. The IR models TeXSmith reads
     # ship in the wheel, so the minor version is part of the contract.
-    "tmark-core>=0.3,<0.4",
+    "tmark-core>=0.3.2,<0.4",
 ]
 [project.optional-dependencies]
 typst = ["typst>=0.15"]

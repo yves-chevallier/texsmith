@@ -511,7 +511,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -1327,10 +1327,10 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "flexcache", marker = "python_full_version < '3.11'" },
-    { name = "flexparser", marker = "python_full_version < '3.11'" },
-    { name = "platformdirs", marker = "python_full_version < '3.11'" },
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "flexcache" },
+    { name = "flexparser" },
+    { name = "platformdirs" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/20/bb/52b15ddf7b7706ed591134a895dbf6e41c8348171fb635e655e0a4bbb0ea/pint-0.24.4.tar.gz", hash = "sha256:35275439b574837a6cd3020a5a4a73645eb125ce4152a73a2f126bf164b91b80", size = 342225, upload-time = "2024-11-07T16:29:46.061Z" }
 wheels = [
@@ -1346,10 +1346,10 @@ resolution-markers = [
     "python_full_version >= '3.11' and python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "flexcache", marker = "python_full_version >= '3.11'" },
-    { name = "flexparser", marker = "python_full_version >= '3.11'" },
-    { name = "platformdirs", marker = "python_full_version >= '3.11'" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.11'" },
+    { name = "flexcache" },
+    { name = "flexparser" },
+    { name = "platformdirs" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5f/74/bc3f671997158aef171194c3c4041e549946f4784b8690baa0626a0a164b/pint-0.25.2.tar.gz", hash = "sha256:85a45d1da8fe9c9f7477fed8aef59ad2b939af3d6611507e1a9cbdacdcd3450a", size = 254467, upload-time = "2025-11-06T22:08:09.184Z" }
 wheels = [
@@ -1916,7 +1916,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "rich", specifier = ">=13.9.0" },
-    { name = "tmark-core", specifier = ">=0.3,<0.4" },
+    { name = "tmark-core", specifier = ">=0.3.2,<0.4" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typer", specifier = ">=0.12.5" },
     { name = "typst", marker = "extra == 'typst'", specifier = ">=0.15" },
@@ -1965,14 +1965,14 @@ wheels = [
 
 [[package]]
 name = "tmark-core"
-version = "0.3.0"
+version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/38/c0/c0cb6328577c9d0b06c0a4e2d88d34fa632f37768f77ed2d796169ea7ef9/tmark_core-0.3.0.tar.gz", hash = "sha256:611f0bba823038311a16f77bc1d920a05d543450f09215b79c56c78e5bde93c1", size = 767777, upload-time = "2026-09-17T08:26:27.114Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/82/81e19b6c1768aaa09a6e0da9239c1d335bbf6d453734c62f851a11e74e5d/tmark_core-0.3.2.tar.gz", hash = "sha256:3612935bfa57d1797e2731e8a3fa76cfa2cab503432ae5bc51aacdd389feb14d", size = 767974, upload-time = "2026-09-17T19:49:28.863Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/a7/cf863cfef0fb73f9c4a99e4ea0ee8f385053d28660622a9ae7909919deb6/tmark_core-0.3.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:7f7572dfb5fd3890106145fd8adb33baab48051cc2e69eea1b42c2197cab76c8", size = 5006819, upload-time = "2026-09-17T08:26:20.143Z" },
-    { url = "https://files.pythonhosted.org/packages/88/f6/7139de9b90719c16b45280f3b291497647782c21ee9808025a9c7eaa4848/tmark_core-0.3.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:5855792a09464c16c617c217e56b3d3dfa37c8b6d4cfc7775f76388d1b005236", size = 2758152, upload-time = "2026-09-17T08:26:22.158Z" },
-    { url = "https://files.pythonhosted.org/packages/6e/f8/2e0a1b6977bde7603a7b3c1c26c9f6a7fe200f78ba0ef4d0f0d797f121ab/tmark_core-0.3.0-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:5e55d647fd39563677979c58dba6ceb825ec38486822f1ca8012568406121441", size = 2758735, upload-time = "2026-09-17T08:26:23.809Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/22/1d9978178364e413c98c5e2cb089d434c7db25a8d065e5f88a5df71d850c/tmark_core-0.3.0-cp310-abi3-win_amd64.whl", hash = "sha256:afd92972d1f1eef93f358d3dd20377c8cac4fd14de8cf7ffeda84d362e12d581", size = 2510379, upload-time = "2026-09-17T08:26:25.519Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/57/07f4cb0d8e24b21e04e4437a48802afc20ac2874f8900be7d45d64ead02b/tmark_core-0.3.2-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:d401d0493f2765cc46c7ef40a044e7e331a0fa6e76413633d9abb7df9653d26b", size = 5007006, upload-time = "2026-09-17T19:49:22.706Z" },
+    { url = "https://files.pythonhosted.org/packages/96/83/4d36a45e045465ab80385b90be538f22a6e03eda721c80609d3ea2401052/tmark_core-0.3.2-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:384e322964badabfd85066f2aa3735eba903499b811f3317851ac67130542081", size = 2757676, upload-time = "2026-09-17T19:49:24.403Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/4b/15549c2cd11c51131f7fe88b9fcd3ac243a05650bfcacd83e6e44c09a14d/tmark_core-0.3.2-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:817db3209c8df53cf2819a244d428ca24c6dd96f94abb51607546240dfbc872b", size = 2760102, upload-time = "2026-09-17T19:49:25.862Z" },
+    { url = "https://files.pythonhosted.org/packages/37/d5/a04aa695b495ed0fb24598882bce61aa59d914a1a96595423c88452c0dec/tmark_core-0.3.2-cp310-abi3-win_amd64.whl", hash = "sha256:bb612e4869be5fd8d4814654ea85106950d20a7a8c9e62acf3557334c23907cc", size = 2510522, upload-time = "2026-09-17T19:49:27.351Z" },
 ]
 
 [[package]]

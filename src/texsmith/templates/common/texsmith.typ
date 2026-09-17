@@ -166,10 +166,19 @@
 // header row. The writer only passes `columns`, `align` and the cells.
 #set table(
   stroke: (x, y) => if y == 0 { (bottom: 0.4pt + black) } else { none },
-  inset: (x: 0.6em, y: 0.35em),
+  // `booktabs` leaves more air under \midrule than it does between two rows,
+  // and the rows themselves stand taller than the text they hold — a table a
+  // reader writes into needs the room.
+  inset: (x, y) => if y == 0 {
+    (x: 0.6em, top: 0.35em, bottom: 0.65em)
+  } else {
+    (x: 0.6em, y: 0.55em)
+  },
 )
+// The LaTeX tables are `tabularx` over `\linewidth`: they fill the measure,
+// so these fill it too rather than sitting narrow and left of the text.
 #show table: it => block(
-  width: auto,
+  width: 100%,
   inset: 0pt,
   stroke: (top: 0.8pt + black, bottom: 0.8pt + black),
   it,
