@@ -41,7 +41,7 @@ _VENDORED: tuple[FragmentContract, ...] = (
             "\\tslogo",
             "tsdiv",
         ),
-        ("xcolor", "epigraph", "marginnote", "multicol", "progressbar", "graphicx"),
+        ("xcolor", "epigraph", "marginnote", "multicol", "pdflscape", "progressbar", "graphicx"),
         False,
         "lead-ins, highlight, divider, epigraph, asides, progress bars, generic containers",
     ),

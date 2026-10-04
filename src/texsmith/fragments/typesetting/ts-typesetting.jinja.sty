@@ -13,6 +13,7 @@
 \RequirePackage{pgfkeys}
 \RequirePackage{epigraph}
 \RequirePackage{multicol}
+\RequirePackage{pdflscape}
 \RequirePackage{marginnote}
 \RequirePackage{progressbar}
 \ifLuaTeX
@@ -229,6 +230,9 @@
 % with a tsdiv@<name> environment (defined with \NewDocumentEnvironment and
 % one optional argument, the raw key list) is dispatched to it; any other
 % name is transparent. Keys: cols (multicolumn, default 2), title (tab), id.
+% landscape sets its body on pages of their own turned to landscape
+% (pdflscape: the viewer shows them rotated); a longtable inside turns every
+% page it runs over.
 \pgfkeys{/ts/div/.cd,
   cols/.store in=\ts@div@cols,
   title/.store in=\ts@div@title,
@@ -255,6 +259,11 @@
   \begin{multicols}{\ts@div@cols}%
 }{%
   \end{multicols}%
+}
+\NewDocumentEnvironment{tsdiv@landscape}{O{}}{%
+  \begin{landscape}%
+}{%
+  \end{landscape}%
 }
 \NewDocumentEnvironment{tsdiv@tab}{O{}}{%
   \ifx\ts@div@title\@empty\else

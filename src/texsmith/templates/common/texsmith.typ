@@ -145,12 +145,16 @@
 #let ts-icon(path) = box(image(path), height: 1em)
 
 // #ts-div("name", key: value)[body]: the generic container. Known names:
-// multicolumn (cols:), tab (title:); anything else is transparent.
+// multicolumn (cols:), landscape (pages of their own, flipped), tab (title:);
+// anything else is transparent. `page` only works at the top level, which is
+// where a landscape container belongs.
 #let ts-div(name, ..args) = {
   let body = args.pos().at(0, default: [])
   let named = args.named()
   if name == "multicolumn" {
     columns(int(named.at("cols", default: 2)), body)
+  } else if name == "landscape" {
+    page(flipped: true, body)
   } else if name == "tab" {
     if "title" in named { block(above: 0.8em, below: 0.4em, strong(named.title)) }
     body

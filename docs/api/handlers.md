@@ -111,8 +111,8 @@ holding a Pygments payload, because that work is Python-only and reuses the
 ## Custom constructs
 
 The container names TMark knows are a **closed** registry: the callout types
-(built-in and declared), `aside`, `figure`, `tabs`, `tab`, `multicolumn` and
-`div`. A new *kind* of thing is a declaration under
+(built-in and declared), `aside`, `figure`, `tabs`, `tab`, `multicolumn`,
+`landscape` and `div`. A new *kind* of thing is a declaration under
 `press.declare.admonitions`, not a new container name; a wrapper the template
 styles is `::: div` with a class.
 

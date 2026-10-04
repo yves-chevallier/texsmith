@@ -365,6 +365,12 @@ of text, two columns of text, two columns of text, two columns of text.
 Tab body.
 \end{tsdiv}
 
+\begin{tsdiv}{landscape}
+\begin{tabular}{ll}
+Key & Value \\
+\end{tabular}
+\end{tsdiv}
+
 \begin{tscallout}[kind=note, title={A rule in a container}]
 Before the rule.
 
@@ -455,6 +461,10 @@ def test_contract_document_renders_every_fragment(tmp_path: Path) -> None:
     assert "\\makeindex[name=physics" in index_sty
     keys_sty = (tmp_path / "ts-keystrokes.sty").read_text(encoding="utf-8")
     assert "ts@key@ctrl" in keys_sty
+    typesetting_sty = (tmp_path / "ts-typesetting.sty").read_text(encoding="utf-8")
+    # ``::: landscape`` is a tsdiv name the contract dispatches to pdflscape.
+    assert "\\RequirePackage{pdflscape}" in typesetting_sty
+    assert "\\NewDocumentEnvironment{tsdiv@landscape}" in typesetting_sty
 
 
 def _tectonic_binary() -> Path | None:
@@ -567,6 +577,7 @@ def bubble(xs): pass
 #ts-div("gadget", x: 1)[Transparent.]
 #ts-div("multicolumn", cols: 2)[Two columns of text, two columns of text, two columns of text.]
 #ts-div("tab", title: [Tab title])[Tab body.]
+#ts-div("landscape")[A page of its own, turned to landscape.]
 
 #quote(block: true)[
 Before the rule.

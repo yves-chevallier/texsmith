@@ -54,7 +54,7 @@ break there would tear the container in two.
 | Attribute lists | `![Alt](image.png){width=50%}` | E |
 | Tables | pipe tables, ```` ```yaml table ```` | C / D |
 | Captions | `Figure: … {#fig:x}` after the float | D |
-| Containers | `::: div`, `::: multicolumn {cols=2}`, `::: figure` | D |
+| Containers | `::: div`, `::: multicolumn {cols=2}`, `::: landscape`, `::: figure` | D |
 | Content tabs | `::: tabs` + `::: tab {title=…}` (sugar `=== "…"`) | D / E |
 | Highlighted code | ```` ```py title="x.py" linenums="1" ```` | E |
 | Inline highlighting | `` `#!py print("hi")` `` or `{code py}[print(1)]` | E |

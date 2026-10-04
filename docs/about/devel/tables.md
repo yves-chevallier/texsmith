@@ -10,9 +10,10 @@ table model is specified and round-trips through `tmark fmt`, and a shape it
 cannot express is rejected with a `table-*` diagnostic rather than silently
 flattened. See [Tables](../../syntax/tables.md).
 
-What is still open from the list below is table **orientation** (rotating a
-very large table) and the width-control knobs (`tabulary` and friends); both
-are roadmap items.
+Table **orientation** is the `::: landscape` container (see
+[Landscape Tables](../../syntax/tables.md#landscape-tables)). What is still
+open from the list below is the width-control knobs (`tabulary` and
+friends), a roadmap item.
 
 ## Complex Tables
 

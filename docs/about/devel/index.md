@@ -27,7 +27,7 @@ Roadmap and development notes for TeXSmith. I keep this file as a running checkl
 - [ ] Critic markup: `{++inserted++}`, `{--deleted--}`, `{~~old~~new~~}`, `{>>comment<<}` — the `ts-critic` fragment defines `\tsins`, `\tsdel`, `\tssubst` and `\tscomment`; the parser does not lower them yet and reports `compat-unsupported`
 - [ ] Cross-references (cleveref package)
 - [ ] Enhanced tables: add with controls (auto, fixed width, `tabulary`, etc.)
-- [ ] Support table orientation (rotate very large tables)
+- [x] Support table orientation (rotate very large tables): `::: landscape`
 - [ ] CI: uv run mkdocs build #--strict not yet ready
 - [ ] Support for `tocloft` package to customize list of figures/tables
 - [ ] Support for `enumitem` package to customize lists

@@ -281,6 +281,31 @@ table:
   placement: htbp
 ```
 
+## Landscape Tables
+
+A table too wide for the portrait measure goes in a `::: landscape`
+container. Its content is ordinary Markdown, and the container sets it on
+pages of their own turned to landscape: `pdflscape`'s `landscape` in LaTeX,
+so a PDF viewer shows those pages rotated, and `#page(flipped: true)` in
+Typst. The web has no pages and renders the container transparently.
+
+```md
+::: landscape
+| Entry | Location | Finding |
+| ----- | -------- | ------- |
+| …     | …        | …       |
+
+Table: Findings on the software design specification. {#tbl:sds}
+:::
+```
+
+A long table inside turns every page it runs over. Each container starts a
+page where it opens and where it closes, so it belongs at the top level of
+the document, between paragraphs; the layout is the container's and not the
+table's, so a wide figure or listing takes it just as well. A template
+restyles it by redefining `tsdiv@landscape` (LaTeX) or the `landscape`
+branch of `ts-div` (Typst).
+
 ## Markdown Inside Cells
 
 Inline Markdown survives inside cells:

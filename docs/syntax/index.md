@@ -82,7 +82,7 @@ Figure: Watchdog traces. {#fig:traces}
 
 Nesting is by fence length (`::::` outside `:::`), as in Pandoc. The container
 names TMark knows are a **closed registry** — the callout types, `aside`,
-`figure`, `tabs`, `tab`, `multicolumn {cols=}` and `div` — so an unknown name
+`figure`, `tabs`, `tab`, `multicolumn {cols=}`, `landscape` and `div` — so an unknown name
 raises `container-unknown` and renders its content transparently, and a
 template that needs a new look uses `::: div {.class}` rather than a new name.
 A **dotted** `::: pkg.module` line is not a container at all but a foreign
