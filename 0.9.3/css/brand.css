@@ -1,0 +1,18 @@
+:root  > * {
+    --md-primary-header-bg-color: var(--md-primary-fg-color);
+}
+
+[data-md-color-scheme="slate"] {
+    --md-primary-header-bg-color: #161616;
+    --md-primary-fg-color: #f3f3f3;
+    --md-default-bg-color: #0B0C0F;
+}
+
+.md-header__button.md-logo img, .md-header__button.md-logo svg {
+    height: 2rem;
+}
+
+.md-header,
+.md-tabs {
+    background-color: var(--md-primary-header-bg-color);
+}
