@@ -241,8 +241,10 @@ class ConversionService:
 
         target_dir = (request.render_dir or Path("build")).resolve()
         render_result = session.render(target_dir, embed_documents=request.embed_documents)
+        # ``add_document`` registered copies: the resolution is on those, never
+        # on ``batch.documents``.
         _publish_reference_inventory(
-            batch.documents,
+            session.documents,
             output_dir=render_result.main_tex_path.parent,
             stem=render_result.main_tex_path.stem,
         )

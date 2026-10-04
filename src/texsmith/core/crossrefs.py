@@ -20,10 +20,15 @@ back to naming the document by its title.
 
 Reading an inventory is tmark's: its registry loads the sources a document
 declares under ``press.sources.crossrefs`` through the ``Loader`` and resolves
-``@alias:key`` at resolve time (decision D4). What stays here is the writing
-half — the payload, the anchors of a finished resolution, the page numbers
-harvested from the ``.aux`` and the relocation that keeps ``document.source``
-resolvable.
+``@alias:key`` at resolve time (decision D4). tmark therefore owns the format
+(``tmark_registry::Inventory``, design 06 §Inventory format) and this module
+writes exactly that shape: a ``refs`` map whose entries carry ``label``,
+``page``, ``kind`` and ``prefix``, under a ``document`` carrying ``hash``. tmark
+ignores the keys it does not know (``schema``, ``document.output``) but reads a
+misnamed map as an empty one, so a drift here silently unresolves every
+citation. What stays here is the writing half — the payload, the anchors of a
+finished resolution, the page numbers harvested from the ``.aux`` and the
+relocation that keeps ``document.source`` resolvable.
 """
 
 from __future__ import annotations
@@ -39,7 +44,13 @@ from typing import Any
 
 
 #: Bumped when the on-disk shape changes in a way older readers cannot handle.
-SCHEMA_VERSION = 1
+#: 2: the shape of ``tmark_registry::Inventory`` (``refs``, ``kind``/``prefix``,
+#: ``document.hash``) instead of 1's ``anchors``, which tmark never read.
+SCHEMA_VERSION = 2
+
+#: What tmark calls the host of every entry TeXSmith publishes: only declared
+#: counter series are citable across documents.
+_ENTRY_KIND = "counter"
 
 #: Suffix of the published inventory, sibling of the rendered document.
 INVENTORY_SUFFIX = ".refs.json"
@@ -74,7 +85,7 @@ def build_payload(
     anchors: Mapping[str, Anchor],
     identity: DocumentIdentity,
 ) -> dict[str, Any]:
-    """Return the JSON payload of an inventory, with anchors in key order."""
+    """Return the JSON payload of an inventory, with entries in key order."""
     return {
         "schema": SCHEMA_VERSION,
         "document": {
@@ -82,13 +93,14 @@ def build_payload(
             "title": identity.title,
             "output": identity.output,
             "source": identity.source,
-            "source_sha256": identity.source_sha256,
+            "hash": identity.source_sha256,
         },
-        "anchors": {
+        "refs": {
             key: {
-                **({"counter": anchor.counter} if anchor.counter else {}),
                 "label": anchor.label,
                 **({"page": anchor.page} if anchor.page is not None else {}),
+                "kind": _ENTRY_KIND,
+                **({"prefix": anchor.counter} if anchor.counter else {}),
             }
             for key, anchor in sorted(anchors.items())
         },
@@ -199,11 +211,11 @@ def attach_pages(inventory_path: Path | str, aux_path: Path | str) -> int:
     except (OSError, json.JSONDecodeError):  # pragma: no cover - defensive
         return 0
 
-    anchors = payload.get("anchors")
-    if not isinstance(anchors, dict):
+    entries = payload.get("refs")
+    if not isinstance(entries, dict):
         return 0
     updated = 0
-    for key, anchor in anchors.items():
+    for key, anchor in entries.items():
         page = pages.get(key)
         if page is None or not isinstance(anchor, dict) or anchor.get("page") == page:
             continue

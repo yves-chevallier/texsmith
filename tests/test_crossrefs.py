@@ -12,6 +12,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import tmark
+
 from texsmith.core.conversion.models import ConversionRequest
 from texsmith.core.conversion.service import ConversionService
 from texsmith.core.crossrefs import (
@@ -55,7 +57,7 @@ def _write_inventory(
 
 
 def _anchors(path: Path) -> dict[str, dict]:
-    return json.loads(path.read_text(encoding="utf-8"))["anchors"]
+    return json.loads(path.read_text(encoding="utf-8"))["refs"]
 
 
 # ---------------------------------------------------------------------------
@@ -68,11 +70,31 @@ def test_inventory_payload_is_stable(tmp_path: Path) -> None:
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert payload["schema"] == SCHEMA_VERSION
     assert payload["document"]["id"] == "RHE-423"
-    assert payload["anchors"]["fw:pas-de-temps"] == {
-        "counter": "fw",
+    assert payload["refs"]["fw:pas-de-temps"] == {
         "label": "FW-10",
         "page": 14,
+        "kind": "counter",
+        "prefix": "fw",
     }
+
+
+def test_inventory_payload_is_the_shape_tmark_reads(tmp_path: Path) -> None:
+    # tmark owns the format and reads a misnamed map as an empty one: an
+    # inventory TeXSmith writes must resolve a citation through tmark itself.
+    _write_inventory(tmp_path, source_sha256="abc")
+    citing = (
+        "---\n"
+        "title: Revue hardware\n"
+        "press:\n"
+        "  sources:\n"
+        "    crossrefs:\n"
+        "      fwrev: firmware-review.refs.json\n"
+        "---\n"
+        "\n"
+        "Voir @fwrev:fw:pas-de-temps.\n"
+    )
+    diagnostics = tmark.lint(citing, file=str(tmp_path / "hardware-review.md"))
+    assert [d["code"] for d in diagnostics if d["severity"] != "hint"] == []
 
 
 def test_an_anchor_without_a_page_omits_the_key(tmp_path: Path) -> None:
@@ -117,25 +139,27 @@ def test_publish_inventory_writes_nothing_without_anchors(tmp_path: Path) -> Non
     )
 
 
+_COUNTER_DOCUMENT = (
+    "---\n"
+    "id: RHE-1\n"
+    "title: Doc\n"
+    "press:\n"
+    "  declare:\n"
+    "    counters:\n"
+    "      fw:\n"
+    "        name: Constat\n"
+    '        format: "FW-{n:02d}"\n'
+    "---\n"
+    "\n"
+    "# Doc\n"
+    "\n"
+    "Constat {counter}(fw:a) puis {counter}(fw:b).\n"
+)
+
+
 def test_a_conversion_publishes_the_counters_it_allocated(tmp_path: Path) -> None:
     source = tmp_path / "doc.md"
-    source.write_text(
-        "---\n"
-        "id: RHE-1\n"
-        "title: Doc\n"
-        "press:\n"
-        "  declare:\n"
-        "    counters:\n"
-        "      fw:\n"
-        "        name: Constat\n"
-        '        format: "FW-{n:02d}"\n'
-        "---\n"
-        "\n"
-        "# Doc\n"
-        "\n"
-        "Constat {counter}(fw:a) puis {counter}(fw:b).\n",
-        encoding="utf-8",
-    )
+    source.write_text(_COUNTER_DOCUMENT, encoding="utf-8")
     out = tmp_path / "build"
     ConversionService().execute(ConversionRequest(documents=[source], render_dir=out))
 
@@ -143,7 +167,26 @@ def test_a_conversion_publishes_the_counters_it_allocated(tmp_path: Path) -> Non
     assert published.exists()
     payload = json.loads(published.read_text(encoding="utf-8"))
     assert payload["document"]["id"] == "RHE-1"
-    assert {key: anchor["label"] for key, anchor in payload["anchors"].items()} == {
+    assert {key: anchor["label"] for key, anchor in payload["refs"].items()} == {
+        "fw:a": "FW-01",
+        "fw:b": "FW-02",
+    }
+
+
+def test_a_template_conversion_publishes_the_counters_it_allocated(tmp_path: Path) -> None:
+    # A template session renders copies of the documents: the resolution must
+    # still reach the inventory, which is what ``--build`` relies on.
+    source = tmp_path / "doc.md"
+    source.write_text(_COUNTER_DOCUMENT, encoding="utf-8")
+    out = tmp_path / "build"
+    ConversionService().execute(
+        ConversionRequest(documents=[source], render_dir=out, template="article")
+    )
+
+    published = out / "doc.refs.json"
+    assert published.exists()
+    payload = json.loads(published.read_text(encoding="utf-8"))
+    assert {key: anchor["label"] for key, anchor in payload["refs"].items()} == {
         "fw:a": "FW-01",
         "fw:b": "FW-02",
     }

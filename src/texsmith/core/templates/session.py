@@ -43,16 +43,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import copy
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ..context import DocumentState
+from texsmith.diagnostics import DiagnosticEmitter, emit_diagnostic, ensure_emitter
+
 from ..conversion import ConversionRequest
-from texsmith.diagnostics import emit_diagnostic, ensure_emitter
 from ..conversion.core import convert_documents, to_template_fragments
 from ..conversion.renderer import TemplateRenderer, TemplateRenderResult
-from texsmith.diagnostics import DiagnosticEmitter
 from ..documents import Document
 from ..fragments import collect_fragment_attribute_defaults
 from .manifest import TemplateError
@@ -170,6 +168,11 @@ class TemplateSession:
             template_overrides=option_overrides or None,
             write_fragments=False,
         )
+        # The conversion resolved the prepared copies; the resolution is what
+        # the service publishes the reference inventory from, so it travels back
+        # to the registered documents (and only it: the rest stays immutable).
+        for registered, prepared in zip(self._documents, prepared_documents, strict=True):
+            registered.resolved = prepared.resolved
         fragments = to_template_fragments(bundle)
 
         renderer = TemplateRenderer(self.runtime, emitter=self.emitter)

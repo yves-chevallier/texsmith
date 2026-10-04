@@ -61,19 +61,25 @@ Each conversion writes `<document>.refs.json` beside its `.tex`:
 
 ```json
 {
-  "schema": 1,
+  "schema": 2,
   "document": {
     "id": "RHE-423",
     "title": "Revue firmware",
     "output": "firmware-review.pdf",
     "source": "../firmware-review.md",
-    "source_sha256": "8b66c613…"
+    "hash": "8b66c613…"
   },
-  "anchors": {
-    "fw:pas-de-temps": { "counter": "fw", "label": "FW-10", "page": 14 }
+  "refs": {
+    "fw:pas-de-temps": { "label": "FW-10", "page": 14, "kind": "counter", "prefix": "fw" }
   }
 }
 ```
+
+The shape is tmark's (`tmark_registry::Inventory`): tmark reads it, TeXSmith
+only writes it. Schema 1 named the map `anchors`, which tmark never read: an
+inventory written before 0.9.3 is reported as not valid
+(`crossref-inventory-missing`, "missing field `refs`") and resolves nothing.
+Rebuild the cited document.
 
 It is delivered next to the artifact you asked for: in the directory for
 `-o dir`, beside the PDF for `-o report.pdf`. Its `document.source` is stored
