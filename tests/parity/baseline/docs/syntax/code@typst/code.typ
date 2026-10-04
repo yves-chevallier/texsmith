@@ -131,7 +131,7 @@ backslash escape of its own; in a paragraph the printer escapes the literal
 marker with a backslash instead.
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([You wrote], [Normal form]),
 [`–8<– "chapters/boot.md"`], [`{include}(chapters/boot.md)`],

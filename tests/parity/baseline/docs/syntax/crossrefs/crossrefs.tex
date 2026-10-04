@@ -100,20 +100,26 @@ Each conversion writes \tscodeinline{<document>.refs.json} beside its \tscodeinl
 \begin{tscode}[lang=json, engine=pygments]
 \begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
 \PY{p}{\PYZob{}}
-\PY{+w}{  }\PY{n+nt}{\PYZdq{}schema\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{1}\PY{p}{,}
+\PY{+w}{  }\PY{n+nt}{\PYZdq{}schema\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{2}\PY{p}{,}
 \PY{+w}{  }\PY{n+nt}{\PYZdq{}document\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
 \PY{+w}{    }\PY{n+nt}{\PYZdq{}id\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}RHE\PYZhy{}423\PYZdq{}}\PY{p}{,}
 \PY{+w}{    }\PY{n+nt}{\PYZdq{}title\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}Revue firmware\PYZdq{}}\PY{p}{,}
 \PY{+w}{    }\PY{n+nt}{\PYZdq{}output\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}firmware\PYZhy{}review.pdf\PYZdq{}}\PY{p}{,}
 \PY{+w}{    }\PY{n+nt}{\PYZdq{}source\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}../firmware\PYZhy{}review.md\PYZdq{}}\PY{p}{,}
-\PY{+w}{    }\PY{n+nt}{\PYZdq{}source\PYZus{}sha256\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}8b66c613…\PYZdq{}}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}hash\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}8b66c613…\PYZdq{}}
 \PY{+w}{  }\PY{p}{\PYZcb{},}
-\PY{+w}{  }\PY{n+nt}{\PYZdq{}anchors\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
-\PY{+w}{    }\PY{n+nt}{\PYZdq{}fw:pas\PYZhy{}de\PYZhy{}temps\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n+nt}{\PYZdq{}counter\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}fw\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}label\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}FW\PYZhy{}10\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}page\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{14}\PY{+w}{ }\PY{p}{\PYZcb{}}
+\PY{+w}{  }\PY{n+nt}{\PYZdq{}refs\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}
+\PY{+w}{    }\PY{n+nt}{\PYZdq{}fw:pas\PYZhy{}de\PYZhy{}temps\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{p}{\PYZob{}}\PY{+w}{ }\PY{n+nt}{\PYZdq{}label\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}FW\PYZhy{}10\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}page\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+m+mi}{14}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}kind\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}counter\PYZdq{}}\PY{p}{,}\PY{+w}{ }\PY{n+nt}{\PYZdq{}prefix\PYZdq{}}\PY{p}{:}\PY{+w}{ }\PY{l+s+s2}{\PYZdq{}fw\PYZdq{}}\PY{+w}{ }\PY{p}{\PYZcb{}}
 \PY{+w}{  }\PY{p}{\PYZcb{}}
 \PY{p}{\PYZcb{}}
 \end{Verbatim}
 \end{tscode}
+The shape is tmark's (\tscodeinline{tmark\_registry::Inventory}): tmark reads it, TeXSmith
+only writes it. Schema 1 named the map \tscodeinline{anchors}, which tmark never read: an
+inventory written before 0.9.3 is reported as not valid
+(\tscodeinline{crossref-\allowbreak{}inventory-\allowbreak{}missing}, "missing field \tscodeinline{refs}") and resolves nothing.
+Rebuild the cited document.
+
 It is delivered next to the artifact you asked for: in the directory for
 \tscodeinline{-\allowbreak{}o dir}, beside the PDF for \tscodeinline{-\allowbreak{}o report.pdf}. Its \tscodeinline{document.source} is stored
 relative to its own location and is rewritten when it moves, so the staleness

@@ -58,7 +58,7 @@ asking for a *fragment contract*, not an option.
 What lives where:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Concern], [Owner]),
 [Parsing, the IR, resolution, the canonical printer, the linter], [tmark (Rust)],
@@ -94,7 +94,7 @@ has nothing to do, and never raises — a failure becomes a visible literal in
 the output plus a diagnostic at the node's span. Most `pre` passes need I/O,
 which is exactly why they are Python's. In their declared order:
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Pass], [I/O], [What it does]),
 [`include`], [yes], [splices `{include}(file)` and fence `include=` sources, rebasing relative paths],

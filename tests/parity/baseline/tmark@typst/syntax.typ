@@ -323,7 +323,7 @@ Pipe tables for plain 2-D data; a `yaml table` fence for spans, grouped headers 
 
 #quote(block: true)[
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([Column 1], [Column 2]),
 [Value 1], [Value 2],

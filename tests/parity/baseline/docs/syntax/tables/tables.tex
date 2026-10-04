@@ -315,6 +315,29 @@ letters such as \tscodeinline{htbp}:
 \PY{+w}{  }\PY{n+nt}{placement}\PY{p}{:}\PY{+w}{ }\PY{l+lScalar+lScalarPlain}{htbp}
 \end{Verbatim}
 \end{tscode}
+\section{Landscape Tables}
+A table too wide for the portrait measure goes in a \tscodeinline{::: landscape}
+container. Its content is ordinary Markdown, and the container sets it on
+pages of their own turned to landscape: \tscodeinline{pdflscape}'s \tscodeinline{landscape} in \LaTeX{},
+so a PDF viewer shows those pages rotated, and \tscodeinline{\#page(flipped: true)} in
+Typst. The web has no pages and renders the container transparently.
+\begin{tscode}[lang=md, engine=pygments]
+\begin{Verbatim}[commandchars=\\\{\},breaklines, breakanywhere, commandchars=\\\{\}]
+::: landscape
+| Entry | Location | Finding |
+| \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} | \PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{}\PYZhy{} |
+| …     | …        | …       |
+
+Table: Findings on the software design specification. \PYZob{}\PYZsh{}tbl:sds\PYZcb{}
+:::
+\end{Verbatim}
+\end{tscode}
+A long table inside turns every page it runs over. Each container starts a
+page where it opens and where it closes, so it belongs at the top level of
+the document, between paragraphs; the layout is the container's and not the
+table's, so a wide figure or listing takes it just as well. A template
+restyles it by redefining \tscodeinline{tsdiv@landscape} (\LaTeX{}) or the \tscodeinline{landscape}
+branch of \tscodeinline{ts-\allowbreak{}div} (Typst).
 \section{Markdown Inside Cells}
 Inline Markdown survives inside cells:
 \begin{tscode}[lang=yaml, engine=pygments]

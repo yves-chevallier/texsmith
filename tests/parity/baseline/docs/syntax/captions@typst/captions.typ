@@ -216,7 +216,7 @@ once per container rather than once per image.]
 The rest follows from the same rule:
 
 #table(
-columns: 2,
+columns: (1fr, 1fr),
 align: (left, left),
 table.header([The container holds], [What happens]),
 [only paragraphs of images], [the images are sub-figures, lettered],

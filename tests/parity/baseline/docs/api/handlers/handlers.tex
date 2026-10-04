@@ -146,8 +146,8 @@ holding a Pygments payload, because that work is Python-only and reuses the
 \tscodeinline{latex raw} path rather than making the writer Pygments-aware.
 \section{Custom constructs}
 The container names TMark knows are a \textbf{closed} registry: the callout types
-(built-in and declared), \tscodeinline{aside}, \tscodeinline{figure}, \tscodeinline{tabs}, \tscodeinline{tab}, \tscodeinline{multicolumn} and
-\tscodeinline{div}. A new \emph{kind} of thing is a declaration under
+(built-in and declared), \tscodeinline{aside}, \tscodeinline{figure}, \tscodeinline{tabs}, \tscodeinline{tab}, \tscodeinline{multicolumn},
+\tscodeinline{landscape} and \tscodeinline{div}. A new \emph{kind} of thing is a declaration under
 \tscodeinline{press.declare.admonitions}, not a new container name; a wrapper the template
 styles is \tscodeinline{::: div} with a class.
 \begin{tscode}[lang=md, engine=pygments]

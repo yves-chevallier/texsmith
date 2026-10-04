@@ -48,7 +48,7 @@ Custom counters.
 
 A container is the escape hatch for structure. The container names TMark knows
 are a *closed* registry — the callout types (built-in and declared), `aside`,
-`figure`, `tabs`, `tab`, `multicolumn` and `div` — and there is deliberately no
+`figure`, `tabs`, `tab`, `multicolumn`, `landscape` and `div` — and there is deliberately no
 mechanism to add a name: a template that renders a name the registry does not
 know has extended the language.
 

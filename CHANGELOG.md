@@ -7,6 +7,21 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-10-04
+
+### Added
+
+- **`::: landscape` sets its content on landscape pages.** A table too wide for the portrait measure had no spelling: the closed container registry left only a `latex raw` fence around `\begin{landscape}`, which the Typst and web outputs ignored. tmark 0.3.3 adds `landscape` to the registry as a layout container, rendered through the `tsdiv` / `#ts-div` contract like `multicolumn`, and this release implements the contract: `tsdiv@landscape` wraps the body in `pdflscape`'s `landscape` (the viewer shows those pages rotated, and a `longtable` inside turns every page it runs over), `ts-div("landscape")` sets it in `page(flipped: true)`, and the web renders it transparently. `ts-typesetting` loads `pdflscape` for it. A template restyles it by redefining `tsdiv@landscape` or the `landscape` branch of `ts-div`. Documented under [Tables](docs/syntax/tables.md#landscape-tables).
+
+### Changed
+
+- **Needs `tmark-core` 0.3.3**, for the `landscape` container and for cross-document labels that carry the cited document's id (`RHE-423-FW-10 p. 14`, as the spec has always said, where 0.3.2 printed `FW-10 p. 14`). tmark 0.3.3 also refuses an inventory without a `refs` map (`crossref-inventory-missing`) instead of reading it as an empty one. The pin is `tmark-core>=0.3.3,<0.4`.
+
+### Fixed
+
+- **A cross-document citation resolves.** The inventory TeXSmith wrote was not the one tmark reads: tmark owns the format (`tmark_registry::Inventory`, design 06) and looks for a `refs` map whose entries carry `label`, `page`, `kind` and `prefix`, under a `document` carrying `hash`; TeXSmith wrote `anchors`, `counter` and `source_sha256`. serde ignores unknown keys and defaults a missing map, so every inventory loaded as an empty one, without a diagnostic, and every `@alias:prefix:key` rendered as `[?…]`. `build_payload` now writes tmark's shape, `attach_pages` folds the pages into `refs`, and `SCHEMA_VERSION` is 2. An inventory written by an earlier version resolves nothing: rebuild the cited document. A test now resolves a citation through `tmark.lint` against an inventory TeXSmith wrote, so the two halves cannot drift apart again unnoticed.
+- **`--build` publishes the inventory.** A template session registers *copies* of the documents and converts copies of those; `_render_document` put the resolution on the converted copy, and the service published from `batch.documents`, whose `resolved` was still `None`. The inventory had no anchors, so `publish_inventory` wrote nothing, and `-o doc.pdf --build` (or any template render) delivered no `.refs.json`. Only a template-less conversion (`-o dir` without `--build`) published one, and without pages. `TemplateSession.render` now carries the resolution back to the registered documents and the service publishes from `session.documents`.
+
 ## [0.9.0] - 2026-09-17
 
 ### Changed

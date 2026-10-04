@@ -105,7 +105,7 @@ Figure: Watchdog traces. {#fig:traces}
 
 Nesting is by fence length (`::::` outside `:::`), as in Pandoc. The container
 names TMark knows are a *closed registry* — the callout types, `aside`,
-`figure`, `tabs`, `tab`, `multicolumn {cols=}` and `div` — so an unknown name
+`figure`, `tabs`, `tab`, `multicolumn {cols=}`, `landscape` and `div` — so an unknown name
 raises `container-unknown` and renders its content transparently, and a
 template that needs a new look uses `::: div {.class}` rather than a new name.
 A *dotted* `::: pkg.module` line is not a container at all but a foreign
@@ -135,7 +135,7 @@ The node words are `code`, `table`, `table-config`, `image` and `raw`.
 TMark reserves two inline sigils, each with one meaning.
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([Sigil], [Meaning], [In braces (attribute)], [Before brackets (node)]),
 [`#`], [define], [`{#id}` names an existing host element], [`#[term]` an index entry (content), `#(fw:key)` a counter item (argument)],
@@ -163,7 +163,7 @@ literal `!!! note` line, a `Table:` paragraph.
 listed below.
 
 #table(
-columns: 4,
+columns: (1fr, 1fr, 1fr, 1fr),
 align: (left, left, left, left),
 table.header([\#], [Syntax], [GFM meaning], [TMark meaning]),
 [X1], [`__text__`], [bold], [small caps],
@@ -183,7 +183,7 @@ sources on GitHub.
 #link("https://commonmark.org/help/")[CommonMark] is the standardized, modern version of Markdown, and TMark's substrate.
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Feature], [Syntax], [Supported]),
 [Italic], [`*x*`], [Yes],
@@ -209,7 +209,7 @@ These are the extensions that define class E: they are what MkDocs, MkDocs
 Material and Zensical already load, and TMark never redefines what they do.
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Package], [Extensions], [Constructs]),
 [Python-Markdown], [`extra` (`abbr`, `attr_list`, `def_list`, `fenced_code`, `footnotes`, `md_in_html`, `tables`), `admonition`, `toc`], [acronyms, attributes, definition lists, footnotes, pipe tables, `!!!` callouts, `<div markdown>`, `[TOC]`],
@@ -221,7 +221,7 @@ table.header([Package], [Extensions], [Constructs]),
 == What TMark adds
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Feature], [Canonical spelling], [Page]),
 [Headings, implicit ids], [`## Title {#sec:x}`, `{.unnumbered}`], [Headings],
@@ -299,7 +299,7 @@ Every switchable behaviour has a dotted name and a default; `press.features` in
 the front matter flips entries, and nothing else does.
 
 #table(
-columns: 3,
+columns: (1fr, 1fr, 1fr),
 align: (left, left, left),
 table.header([Feature], [Default], [Effect]),
 [`paragraph.lead`], [on], [promote a leading short strong span to `{lead}[…]`],
