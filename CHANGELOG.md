@@ -7,6 +7,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Fixed
+
+- **Callout icons render.** The icons of the built-in callouts are emoji that `ts-callouts.sty` writes outside any scanned body, so the font scan never saw them: unless the document itself held an emoji, the emoji font was not loaded and every icon fell back to `\texsmithEmoji`'s bold `!`. When a document uses callouts, the renderer now adds their icons (the defaults merged with `callouts` overrides) to the metadata it scans, so the emoji font is loaded with them. A document without callouts still loads no emoji font.
+
 ## [0.9.3] - 2026-10-04
 
 ### Added

@@ -176,3 +176,25 @@ def test_callouts_fragment_renders_when_used(tmp_path: Path) -> None:
     tex_content = result.main_tex_path.read_text(encoding="utf-8")
     assert "\\usepackage{ts-callouts}" in tex_content
     assert (tmp_path / "build" / "ts-callouts.sty").exists()
+
+
+def _requests_emoji_font(md_text: str, tmp_path: Path) -> bool:
+    md = tmp_path / "doc.md"
+    md.write_text(md_text, encoding="utf-8")
+    session = TemplateSession(load_template_runtime("article"))
+    session.add_document(Document.from_markdown(md))
+    result = session.render(tmp_path / "build")
+    return any(
+        "emoji" in str((entry.get("font") or {}).get("name", "")).lower()
+        for entry in result.document_state.fallback_summary
+    )
+
+
+def test_callout_icons_request_the_emoji_font(tmp_path: Path) -> None:
+    # The icons live in ts-callouts.sty, never in the body: the font scan has
+    # to see them anyway, or every icon renders as the ``!`` fallback.
+    assert _requests_emoji_font("!!! question\n    Plain text only.\n", tmp_path)
+
+
+def test_no_callout_requests_no_emoji_font(tmp_path: Path) -> None:
+    assert not _requests_emoji_font("Plain text only.\n", tmp_path)
