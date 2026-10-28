@@ -21,6 +21,7 @@ from texsmith.fonts import FallbackManager, FontCache, FontPipelineLogger
 from texsmith.fonts.fallback import FallbackPlan, merge_fallback_summaries
 from texsmith.fonts.scripts import fallback_summary_to_usage, merge_script_usage
 
+from ..callouts import DEFAULT_CALLOUTS, merge_callouts
 from ..context import DocumentState
 from ..templates import TemplateError, TemplateRuntime, wrap_template_document
 from ..templates.context_usage import summarise_context_usage
@@ -567,6 +568,18 @@ class TemplateRenderer:
                 metadata_strings.extend(_iter_strings(front_matter))
         if template_overrides:
             metadata_strings.extend(_iter_strings(template_overrides))
+        # The callout icons are emoji the fragment writes into its style file,
+        # outside any scanned body: without them here, the emoji font is never
+        # loaded and every icon falls back to ``\texsmithEmoji``'s ``!``.
+        if getattr(shared_state, "callouts_used", False):
+            callout_overrides = (template_overrides or {}).get("callouts")
+            callouts = merge_callouts(
+                DEFAULT_CALLOUTS,
+                callout_overrides if isinstance(callout_overrides, Mapping) else None,
+            )
+            metadata_strings.extend(
+                str(config["icon"]) for config in callouts.values() if config.get("icon")
+            )
 
         aggregated_script_usage, aggregated_fallback_summary = self._merge_font_scan(
             " ".join(part for part in metadata_strings if part.strip()),
