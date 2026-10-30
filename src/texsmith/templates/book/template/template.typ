@@ -18,6 +18,10 @@
 #set text(font: "New Computer Modern", size: 10pt, lang: "{{ language | default('en') }}")
 #set par(justify: true)
 #set heading(numbering: "1.1")
+{# What the document's fragments inject: imports, set and show rules. #}
+{% if extra_packages %}
+{{ extra_packages }}
+{% endif %}
 
 // Chapter-style level-1 headings: start on a fresh page with a large title.
 #show heading.where(level: 1): it => [

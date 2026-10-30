@@ -7,6 +7,12 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-10-30
+
+### Added
+
+- **Fragments serve the Typst output.** A fragment piece names the `backend` it is written for, `latex` (the default) or `typst`, in `fragment.toml` (`backend = "typst"`) or on `FragmentPiece`. A LaTeX render renders the `latex` pieces only, as before; a Typst render now renders the `typst` pieces of the fragments the document names (`press.fragments`, `-f`, `-F`) — a `package` piece is written next to the `.typ` and imported, an `input` piece included, an `inline` piece injected — into the scaffolding's `{{ extra_packages }}`, which the `article`, `book` and `letter` Typst templates and the standalone wrapper now place after their set rules. A fragment such as a letterhead logo can so draw itself in both outputs from one front matter. Documented under [Template fragments](docs/guide/templates/fragments.md#typst-pieces).
+
 ### Fixed
 
 - **Callout icons render.** The icons of the built-in callouts are emoji that `ts-callouts.sty` writes outside any scanned body, so the font scan never saw them: unless the document itself held an emoji, the emoji font was not loaded and every icon fell back to `\texsmithEmoji`'s bold `!`. When a document uses callouts, the renderer now adds their icons (the defaults merged with `callouts` overrides) to the metadata it scans, so the emoji font is loaded with them. A document without callouts still loads no emoji font.

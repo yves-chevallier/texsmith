@@ -39,6 +39,10 @@
 {% else %}
 #set heading(numbering: none)
 {% endif %}
+{# What the document's fragments inject: imports, set and show rules. #}
+{% if extra_packages %}
+{{ extra_packages }}
+{% endif %}
 
 {% if title %}
 #align(center)[

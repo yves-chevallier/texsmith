@@ -163,11 +163,55 @@ stem of the file unless it is a built-in registered name.
 With the front matter above, the generated build will contain `foo.sty` and the
 document preamble will include `\usepackage{foo}`.
 
+= Typst pieces
+
+A fragment can serve the Typst output too. Each piece of `fragment.toml`
+(or each `FragmentPiece` of a Python fragment) names the `backend` it is
+written for: `latex`, the default, or `typst`. A #ts-logo("LaTeX") render only renders the
+`latex` pieces, a Typst render (`–format typst`) only the `typst` ones, and a
+fragment with no piece for the current backend is skipped whole.
+
+```toml
+# fragments/stamp/fragment.toml
+name = "stamp"
+
+[[files]]                 # LaTeX: stamp.sty, loaded with \usepackage{stamp}
+path = "stamp.jinja.sty"
+output = "stamp"
+
+[[files]]                 # Typst: stamp.typ, loaded with #import "stamp.typ": *
+path = "stamp.typ"
+output = "stamp"
+backend = "typst"
+
+[[files]]                 # Typst: inlined where the template asks for it
+path = "stamp.jinja.typ"
+type = "inline"
+backend = "typst"
+```
+
+A Typst piece is a Jinja template with the standard `{{ }}` / `{% %}`
+delimiters, like the Typst scaffoldings. A `package` piece is written next to
+the `.typ` and imported with `#import "<name>.typ": *`, an `input` piece is
+included with `#include`, and an `inline` piece is injected as is. The
+injections land in the Typst template's `{{ extra_packages }}`, which the
+built-in `article`, `book` and `letter` scaffoldings place after their set
+rules and before any content, so a piece may hold `#set` and `#show` rules or
+a `#set page(background: …)`. Without a template, the standalone wrapper puts
+them at the same place.
+
+A Typst render renders the fragments the document names (`press.fragments`,
+`-f`, `-F`), not the template's default fragments: those are the #ts-logo("LaTeX")
+contract and configuration fragments, whose Typst side is `texsmith.typ`.
+
 = Template authors: allowing fragments
 
 To consume fragments, a template needs a placeholder where TeXSmith can inject
 the `\usepackage` lines. Add `\VAR{extra_packages}` near the top of your
-preamble—typically next to other package imports. No TOML manifest changes are
+preamble—typically next to other package imports. A Typst scaffolding that
+accepts fragments places `{{ extra_packages }}` after its set rules and before
+any content; a fragment whose Typst piece targets a variable the scaffolding
+does not use is refused, as on the #ts-logo("LaTeX") side. No TOML manifest changes are
 required; the core runtime resolves fragments before rendering.
 
 Built-in templates already include this placeholder and declare their default

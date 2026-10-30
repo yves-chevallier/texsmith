@@ -11,6 +11,17 @@ from texsmith.diagnostics import DiagnosticEmitter
 
 
 FragmentKind = Literal["package", "input", "inline"]
+#: The output a piece is written for. A LaTeX piece is a Jinja template with
+#: the ``\VAR{}``/``\BLOCK{}`` delimiters; a Typst piece uses the standard
+#: ``{{ }}``/``{% %}`` ones, as the Typst scaffoldings do.
+FragmentBackend = Literal["latex", "typst"]
+FRAGMENT_BACKENDS: tuple[FragmentBackend, ...] = ("latex", "typst")
+_SUFFIXES: dict[tuple[FragmentBackend, FragmentKind], str] = {
+    ("latex", "package"): ".sty",
+    ("latex", "input"): ".tex",
+    ("typst", "package"): ".typ",
+    ("typst", "input"): ".typ",
+}
 
 
 @dataclass(slots=True)
@@ -28,6 +39,9 @@ class FragmentPiece:
     #: Context key that must be truthy for the piece to render; ``None``
     #: renders the piece whenever the fragment renders.
     condition: str | None = None
+    #: The output the piece belongs to: a LaTeX render only renders the
+    #: ``latex`` pieces, a Typst render only the ``typst`` ones.
+    backend: FragmentBackend = "latex"
 
     def is_enabled(self, context: Mapping[str, Any]) -> bool:
         """Whether the piece renders under ``context``."""
@@ -61,6 +75,13 @@ class FragmentPiece:
                 f"Unknown fragment file type '{kind_raw}'. Expected one of: package, input, inline."
             )
 
+        backend_raw = payload.get("backend", "latex")
+        if backend_raw not in FRAGMENT_BACKENDS:
+            raise TemplateError(
+                f"Unknown fragment file backend '{backend_raw}'. "
+                f"Expected one of: {', '.join(FRAGMENT_BACKENDS)}."
+            )
+
         variable = str(payload.get("variable", "extra_packages"))
         output_name = payload.get("output") if isinstance(payload.get("output"), str) else None
 
@@ -69,11 +90,22 @@ class FragmentPiece:
             kind=kind_raw,  # type: ignore[arg-type]
             variable=variable,
             output_name=output_name,
+            backend=backend_raw,  # type: ignore[arg-type]
         )
 
     def _ensure_suffix(self, name: str) -> str:
-        suffix = ".sty" if self.kind == "package" else ".tex"
+        suffix = _SUFFIXES[(self.backend, self.kind)]
         return name if name.endswith(suffix) else f"{name}{suffix}"
+
+    def injection(self, output_name: str) -> str:
+        """The line that loads the rendered file ``output_name`` from the document."""
+        if self.backend == "typst":
+            if self.kind == "package":
+                return f'#import "{output_name}": *'
+            return f'#include "{output_name}"'
+        if self.kind == "package":
+            return f"\\usepackage{{{Path(output_name).stem}}}"
+        return f"\\input{{{output_name}}}"
 
     def output_filename(self, fragment_name: str) -> str | None:
         """Return the rendered filename, if applicable."""
@@ -153,4 +185,10 @@ class BaseFragment(ABC, Generic[C]):
         return config
 
 
-__all__ = ["BaseFragment", "FragmentKind", "FragmentPiece"]
+__all__ = [
+    "FRAGMENT_BACKENDS",
+    "BaseFragment",
+    "FragmentBackend",
+    "FragmentKind",
+    "FragmentPiece",
+]

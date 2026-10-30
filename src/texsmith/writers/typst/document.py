@@ -17,11 +17,13 @@ def render_document(
     uses_mitex: bool = False,
     uses_eqnref: bool = False,
     has_index: bool = False,
+    extra_packages: str = "",
 ) -> str:
     """Wrap a Typst writer ``body`` into a standalone, compilable document.
 
     ``has_index`` prints the index the body's ``#ts-index`` entries make, at
-    the end, as ``\\printindex`` does for LaTeX.
+    the end, as ``\\printindex`` does for LaTeX. ``extra_packages`` is what the
+    document's fragments inject, after the set rules and before any content.
     """
     lines: list[str] = []
     if uses_mitex:
@@ -33,6 +35,8 @@ def render_document(
     ]
     if uses_eqnref:
         lines.append('#set math.equation(numbering: "(1)")')
+    if extra_packages.strip():
+        lines.append(extra_packages.strip())
     if title.strip():
         lines.append("")
         lines.append(f'#align(center)[#text(size: 1.6em, weight: "bold")[{title.strip()}]]')

@@ -8,8 +8,8 @@ from typing import Any
 
 from jinja2 import meta
 
-from texsmith.core.fragments import FRAGMENT_REGISTRY, FragmentDefinition
-from texsmith.core.templates.base import WrappableTemplate, _build_environment
+from texsmith.core.fragments import FRAGMENT_REGISTRY, FragmentDefinition, piece_environment
+from texsmith.core.templates.base import WrappableTemplate
 
 
 def _format_value_preview(value: Any, *, limit: int = 60) -> str:
@@ -47,7 +47,7 @@ def _discover_fragment_variables(fragment: Any) -> set[str]:
     variables: set[str] = set()
     pieces = getattr(fragment, "pieces", None) or []
     for piece in pieces:
-        env = _build_environment(piece.template_path.parent)
+        env = piece_environment(piece)
         try:
             source, _, _ = env.loader.get_source(env, piece.template_path.name)
         except Exception:

@@ -14,7 +14,14 @@ try:  # Python >=3.11
 except ModuleNotFoundError:  # Python 3.10
     import tomli as tomllib
 
-from texsmith.core.fragments.base import BaseFragment, FragmentKind, FragmentPiece
+from jinja2 import Environment
+
+from texsmith.core.fragments.base import (
+    BaseFragment,
+    FragmentBackend,
+    FragmentKind,
+    FragmentPiece,
+)
 from texsmith.core.templates.base import _build_environment
 from texsmith.core.templates.manifest import (
     TemplateAttributeResolver,
@@ -376,6 +383,15 @@ def register_fragment(
     FRAGMENT_REGISTRY.register_fragment(fragment, name=name)
 
 
+def piece_environment(piece: FragmentPiece) -> Environment:
+    """The Jinja environment a piece is written for, by its backend."""
+    if piece.backend == "typst":
+        from texsmith.core.templates.typst import _build_typst_environment
+
+        return _build_typst_environment(piece.template_path.parent)
+    return _build_environment(piece.template_path.parent)
+
+
 def _resolve_fragments(
     names: Iterable[str], *, source_dir: Path | None = None
 ) -> list[BaseFragment[Any] | FragmentDefinition]:
@@ -460,9 +476,13 @@ def render_fragments(
     template_name: str | None = None,
     declared_attribute_owners: Mapping[str, str] | None = None,
     emitter: DiagnosticEmitter | None = None,
+    backend: FragmentBackend = "latex",
 ) -> FragmentRenderResult:
     """
     Render the selected fragments into ``output_dir`` and return the injected variables.
+
+    Only the pieces written for ``backend`` render; a fragment whose pieces are
+    all for another backend is skipped whole, without building its config.
     """
     rendered_packages: list[str] = []
     written: list[Path] = []
@@ -476,8 +496,11 @@ def render_fragments(
     fragments = _resolve_fragments(names, source_dir=source_dir)
 
     for fragment in fragments:
+        pieces = [piece for piece in fragment.pieces if piece.backend == backend]
+        if fragment.pieces and not pieces:
+            continue
         if declared_slots is not None:
-            for piece in fragment.pieces:
+            for piece in pieces:
                 target = piece.variable
                 if target in declared_slots:
                     # A slot is a region a *document* is assigned to. A fragment
@@ -563,10 +586,10 @@ def render_fragments(
                     exc=exc,
                 )
 
-        for piece in fragment.pieces:
+        for piece in pieces:
             if not piece.is_enabled(context):
                 continue
-            env = _build_environment(piece.template_path.parent)
+            env = piece_environment(piece)
             template = env.get_template(piece.template_path.name)
             payload = template.render(**context)
 
@@ -589,9 +612,7 @@ def render_fragments(
 
             if piece.kind == "package":
                 rendered_packages.append(Path(output_name).stem)
-                injection = f"\\usepackage{{{Path(output_name).stem}}}"
-            else:
-                injection = f"\\input{{{Path(output_name).name}}}"
+            injection = piece.injection(output_name)
 
             variable_injections.setdefault(target_variable, []).append(injection)
             providers.setdefault(target_variable, []).append(fragment.name)
@@ -613,6 +634,7 @@ __all__ = [
     "FragmentRenderResult",
     "collect_fragment_attribute_defaults",
     "inject_fragment_attributes",
+    "piece_environment",
     "register_fragment",
     "render_fragments",
 ]
