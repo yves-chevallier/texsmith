@@ -32,9 +32,12 @@ from texsmith.core.bibliography.loading import load_inline_bibliography
 from texsmith.core.context import DocumentState
 from texsmith.core.conversion_contexts import ConversionContext, GenerationStrategy
 from texsmith.core.exceptions import raise_conversion_error
+from texsmith.core.fragments import render_fragments
+from texsmith.core.fragments.resolution import merge_fragments, parse_modifiers
 from texsmith.core.metadata import PressMetadataError, normalise_press_metadata
 from texsmith.core.mustache import replace_mustaches_in_structure
 from texsmith.core.templates import resolve_template_language
+from texsmith.core.templates.context_usage import _discover_template_variables
 from texsmith.core.templates.typst import TypstTemplate, load_typst_template
 from texsmith.diagnostics import (
     DiagnosticEmitter,
@@ -338,6 +341,66 @@ def _callout_style(overrides: Mapping[str, Any]) -> str:
     return str(resolved or spec.default)
 
 
+#: The one variable the standalone wrapper offers fragments: its preamble.
+_STANDALONE_VARIABLE = "extra_packages"
+
+
+def _render_typst_fragments(
+    request: ConversionRequest,
+    overrides: Mapping[str, Any],
+    context: Mapping[str, Any],
+    *,
+    typst_template: TypstTemplate | None,
+    output_dir: Path,
+    source_dir: Path,
+    emitter: DiagnosticEmitter,
+) -> dict[str, str]:
+    """Render the Typst pieces of the fragments the document names.
+
+    The fragments are those of ``press.fragments`` and ``-f``/``-F``, as on the
+    LaTeX path, but without the template's defaults: those are the LaTeX
+    contract and configuration fragments, whose Typst side is the inlined
+    ``texsmith.typ``. Each fragment renders its ``typst`` pieces only, and the
+    result is the template variables to extend, ``extra_packages`` first among
+    them.
+    """
+    names = merge_fragments(
+        (),
+        parse_modifiers(overrides.get("fragments")),
+        cli_enable=request.enable_fragments,
+        cli_disable=request.disable_fragments,
+    )
+    if not names:
+        return {}
+    fragment_context = dict(context)
+    for key, value in overrides.items():
+        fragment_context.setdefault(key, value)
+    if typst_template is not None:
+        declared_slots = set(typst_template.info.resolve_slots()[0])
+        declared_variables = _discover_template_variables(typst_template)
+        template_name: str | None = typst_template.info.name
+    else:
+        declared_slots = set()
+        declared_variables = {_STANDALONE_VARIABLE}
+        template_name = None
+    result = render_fragments(
+        names,
+        context=fragment_context,
+        output_dir=output_dir,
+        source_dir=source_dir,
+        overrides=overrides,
+        declared_slots=declared_slots,
+        declared_variables=declared_variables,
+        template_name=template_name,
+        emitter=emitter,
+        backend="typst",
+    )
+    return {
+        variable: "\n".join(injections)
+        for variable, injections in result.variable_injections.items()
+    }
+
+
 def _typst_string(value: str) -> str:
     escaped = value.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
@@ -518,14 +581,26 @@ def render_typst_documents(
     preamble = f"{typst_prelude()}\n\n#ts-callout-style.update({_typst_string(callout_style)})"
     body = slot_text(default_slot)
     mainmatter = f"{preamble}\n\n{body}"
+    source_dir = first.document.source_path.parent
+    fragment_output_dir = output_dir if output_dir is not None else source_dir
 
     if typst_template is None:
+        injections = _render_typst_fragments(
+            request,
+            first.template_overrides,
+            {"title": title, "date": first.overrides.get("date")},
+            typst_template=None,
+            output_dir=fragment_output_dir,
+            source_dir=source_dir,
+            emitter=active_emitter,
+        )
         return render_document(
             mainmatter,
             title=title,
             uses_mitex=_uses_mitex(requires),
             uses_eqnref=_uses_eqnref(requires),
             has_index=has_index,
+            extra_packages=injections.get(_STANDALONE_VARIABLE, ""),
         )
 
     if not title:
@@ -543,7 +618,6 @@ def render_typst_documents(
         if resource and resource not in resources:
             resources.append(resource)
 
-    source_dir = first.document.source_path.parent
     # The attributes are prose: a moustache in a subtitle names a value of the
     # front matter or of a ``-a`` option, resolved before the attribute is
     # rendered, as the LaTeX path does in ``resolve_conversion_context``.
@@ -608,6 +682,20 @@ def render_typst_documents(
     )
     template_context["uses_mitex"] = _uses_mitex(requires)
     template_context["uses_eqnref"] = _uses_eqnref(requires)
+    # Fragments extend the template's variables, as ``render_fragments``'
+    # injections do in the LaTeX wrapper.
+    injections = _render_typst_fragments(
+        request,
+        first.template_overrides,
+        template_context,
+        typst_template=typst_template,
+        output_dir=fragment_output_dir,
+        source_dir=source_dir,
+        emitter=active_emitter,
+    )
+    for variable, injection in injections.items():
+        base = template_context.get(variable) or ""
+        template_context[variable] = f"{base}\n{injection}" if base else injection
     # The declared ``[typst.template.assets]`` go next to the ``.typ``, as the
     # LaTeX wrapper copies its template's assets next to ``main.tex``.
     if output_dir is not None:

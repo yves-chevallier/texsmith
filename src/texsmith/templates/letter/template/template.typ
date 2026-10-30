@@ -24,6 +24,10 @@
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "{{ language | default('en') }}")
 #set par(justify: true)
+{# What the document's fragments inject: imports, set and show rules. #}
+{% if extra_packages %}
+{{ extra_packages }}
+{% endif %}
 
 // The first page is laid out from the page's top-left corner: the sender's
 // head, the address window with the return address on its top line, the
