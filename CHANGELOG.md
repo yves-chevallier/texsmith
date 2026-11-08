@@ -7,6 +7,8 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-11-08
+
 ### Fixed
 
 - **Typst warnings are shown.** `--format typst --build` printed `Compiled …` and nothing else, whichever compiler ran: the embedded package went through `typst.compile`, which drops the warnings, and the `typst` binary's stderr was read only on failure. A successful build can still be a wrong one: a layout that does not converge within Typst's five passes is laid out with stale introspection (a page counter or a `here().page()` test on the last page sees the first one). `TypstBuildResult` now carries the compiler's `warnings`, one rendered diagnostic each, from `typst.compile_with_warnings` or from the binary's stderr, and the CLI prints them on stderr before the `Compiled` line. `build_typst_pdf` returns the `TypstBuildResult` instead of an `(ok, message)` pair.
