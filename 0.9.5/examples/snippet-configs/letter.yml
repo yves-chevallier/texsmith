@@ -1,0 +1,6 @@
+cwd: ../../examples/letter
+sources:
+  - letter.md
+press:
+  format: din
+drop_title: true

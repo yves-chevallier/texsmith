@@ -1,0 +1,16 @@
+nav:
+  - getting-started.md
+  - Migrating to TMark: migration.md
+  - front-matter.md
+  - metadata.md
+  - extensions.md
+  - fonts.md
+  - fragments/
+  - features/
+  - templates/
+  - plumbing/
+  - MkDocs Integration: mkdocs.md
+  - tectonic.md
+  - diagnostics.md
+  - limitations.md
+  - troubleshooting.md
