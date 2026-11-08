@@ -46,7 +46,7 @@ from texsmith.diagnostics import (
 )
 from texsmith.passes import PassContext, SlotTemplate, build_pipeline, run_pipeline
 from texsmith.writers.typst import render_document
-from texsmith.writers.typst.build import compile_typst
+from texsmith.writers.typst.build import TypstBuildResult, compile_typst
 from texsmith.writers.typst.escaper import citation_label
 
 from .bodies import Body, Requires
@@ -249,10 +249,9 @@ def _acronym_backmatter(abbreviations: Mapping[str, str]) -> str:
     return "\n".join(lines)
 
 
-def build_typst_pdf(source: Path) -> tuple[bool, str]:
+def build_typst_pdf(source: Path) -> TypstBuildResult:
     """Compile ``source`` to PDF when a Typst compiler is available (graceful otherwise)."""
-    result = compile_typst(source)
-    return result.ok, result.message
+    return compile_typst(source)
 
 
 _PRELUDE_PATH = Path(__file__).resolve().parents[2] / "templates" / "common" / "texsmith.typ"

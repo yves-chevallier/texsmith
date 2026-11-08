@@ -10,6 +10,7 @@ of what is installed on the machine.
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -91,3 +92,50 @@ def test_package_compiles_real_pdf(tmp_path: Path) -> None:
     assert result.ok is True
     assert result.pdf_path is not None
     assert result.pdf_path.read_bytes().startswith(b"%PDF")
+
+
+def test_binary_returns_its_warnings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    stderr = (
+        "warning: layout did not converge within 5 attempts\n"
+        "  = hint: check if any states or queries are updating themselves\n"
+        "\n"
+        "warning: unknown font family: nosuchfont\n"
+        "  ┌─ doc.typ:1:16\n"
+    )
+
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=stderr)
+
+    monkeypatch.setattr(build.subprocess, "run", fake_run)
+
+    result = build._compile_with_binary("typst", tmp_path / "doc.typ", tmp_path / "doc.pdf")
+
+    assert result.ok is True
+    assert result.warnings == (
+        "warning: layout did not converge within 5 attempts\n"
+        "  = hint: check if any states or queries are updating themselves",
+        "warning: unknown font family: nosuchfont\n  ┌─ doc.typ:1:16",
+    )
+
+
+def test_binary_without_warnings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(build.subprocess, "run", fake_run)
+
+    result = build._compile_with_binary("typst", tmp_path / "doc.typ", tmp_path / "doc.pdf")
+
+    assert result.warnings == ()
+
+
+@pytest.mark.skipif(not build._package_available(), reason="typst package not installed")
+def test_package_returns_its_warnings(tmp_path: Path) -> None:
+    source = tmp_path / "doc.typ"
+    source.write_text('#set text(font: "NoSuchFont")\nHi\n', encoding="utf-8")
+
+    result = build._compile_with_package(source, tmp_path / "doc.pdf")
+
+    assert result.ok is True
+    assert len(result.warnings) == 1
+    assert result.warnings[0].startswith("warning: unknown font family: nosuchfont")

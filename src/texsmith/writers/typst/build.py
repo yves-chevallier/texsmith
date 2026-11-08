@@ -17,6 +17,11 @@ Typst versions, whereas the embedded package floats to the latest release
 for ``\\partial``). The embedded package remains a zero-PATH fallback.
 
 If neither is available the result carries an actionable message.
+
+A successful build can still carry warnings (an unknown font, a layout that
+did not converge within Typst's passes and was laid out with stale
+introspection): both paths return them, one rendered diagnostic each, for the
+caller to show.
 """
 
 from __future__ import annotations
@@ -42,6 +47,7 @@ class TypstBuildResult:
     ok: bool
     pdf_path: Path | None
     message: str
+    warnings: tuple[str, ...] = ()
 
 
 def _package_available() -> bool:
@@ -64,10 +70,30 @@ def _compile_with_package(source: Path, pdf_path: Path) -> TypstBuildResult:
     import typst
 
     try:
-        typst.compile(str(source), output=str(pdf_path))
+        _, warnings = typst.compile_with_warnings(str(source), output=str(pdf_path))
     except typst.TypstError as exc:
         return TypstBuildResult(ok=False, pdf_path=None, message=f"typst compile failed:\n{exc}")
-    return TypstBuildResult(ok=True, pdf_path=pdf_path, message=f"Compiled {pdf_path}")
+    return TypstBuildResult(
+        ok=True,
+        pdf_path=pdf_path,
+        message=f"Compiled {pdf_path}",
+        warnings=tuple(warning.diagnostic.strip() for warning in warnings),
+    )
+
+
+def _split_diagnostics(stderr: str) -> tuple[str, ...]:
+    """The diagnostics the ``typst`` binary printed, one block each.
+
+    A diagnostic opens with ``warning:`` (or ``error:``) and runs until the
+    next one: its source excerpt and ``= hint:`` lines belong to it.
+    """
+    blocks: list[list[str]] = []
+    for line in stderr.splitlines():
+        if line.startswith(("warning:", "error:")) or not blocks:
+            blocks.append([line])
+        else:
+            blocks[-1].append(line)
+    return tuple(text for block in blocks if (text := "\n".join(block).strip()))
 
 
 def _compile_with_binary(binary: str, source: Path, pdf_path: Path) -> TypstBuildResult:
@@ -83,7 +109,12 @@ def _compile_with_binary(binary: str, source: Path, pdf_path: Path) -> TypstBuil
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
         return TypstBuildResult(ok=False, pdf_path=None, message=f"typst compile failed:\n{detail}")
-    return TypstBuildResult(ok=True, pdf_path=pdf_path, message=f"Compiled {pdf_path}")
+    return TypstBuildResult(
+        ok=True,
+        pdf_path=pdf_path,
+        message=f"Compiled {pdf_path}",
+        warnings=_split_diagnostics(proc.stderr or ""),
+    )
 
 
 def compile_typst(source: Path, *, output: Path | None = None) -> TypstBuildResult:

@@ -840,9 +840,11 @@ def render(
             raise typer.Exit(code=1) from exc
         typer.echo(f"Wrote {target}")
         if build_pdf:
-            ok, message = build_typst_pdf(target)
-            typer.echo(message)
-            if not ok and debug_enabled():
+            result = build_typst_pdf(target)
+            for warning in result.warnings:
+                typer.echo(warning, err=True)
+            typer.echo(result.message)
+            if not result.ok and debug_enabled():
                 raise typer.Exit(code=1)
         _flush_diagnostics()
         return
