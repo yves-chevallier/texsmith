@@ -15,6 +15,14 @@ paper size, fonts, margins, callout style, title, authors) lives in the **YAML f
 matter**. The body carries only ideas, prose, and equations. Never hardcode LaTeX
 styling in the body unless there is no TMark equivalent.
 
+**Quotation marks — type straight double quotes, never the glyphs.** Write `"texte"`,
+not `« texte »`, `“text”` or `„Text“`. TeXSmith turns a straight-quoted phrase into a
+real quotation whose glyphs and spacing follow the document's `language:` (French gets
+`« »` with the right non-breaking spaces). Hand-typed guillemets bypass this, so the
+spacing is wrong and the document mixes two conventions. This holds when *editing* an
+existing file too: never "correct" `"…"` into `« »`. Quotes stay balanced within one
+run of text; `\"` escapes a literal one. See § 3, "What is substituted for you".
+
 **Check your work.** `tmark check --strict document.md` parses, resolves and lints the
 file: unresolved references, undeclared counter prefixes, malformed tables, deprecated
 spellings. `tmark lint --fix document.md` rewrites the deprecated spellings (use
