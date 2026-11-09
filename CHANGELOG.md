@@ -11,6 +11,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - **A Typst document has appendices.** The `article` and `book` manifests declared the `appendix` slot under `[latex.template]` only, so a front matter that named one (`press.slots.appendix: Annexe`) was honoured by the LaTeX build and silently dropped by `--format typst`: the Typst binding only requests the slots its own half declares, the section stayed in `mainmatter` and kept its arabic number, and no diagnostic said so. Both `[typst.template]` halves now declare `appendix` (at the section depth for `article`, the chapter depth for `book`) and the scaffoldings place the body after the main matter, behind a `#counter(heading).update(0)` and a `#set heading(numbering: "A.1")` — what `\appendix` does on the LaTeX path. An `article` rendered with `numbering: false` keeps its appendix unnumbered too.
 
+### Fixed
+
+- **French lists have their en dash again.** Since 0.8.0 a `language: french` document set a bullet in front of every list item: `texsmith-lists.sty`, which lifts LaTeX's nesting limit with enumitem's `\renewlist`, restates the itemize labels the kernel attaches (`\textbullet` first), and a list declared that way reads enumitem's own label store rather than the `\labelitemi` babel-french rebinds at `\begin{document}` — so the French label never reached the page. The package now hands French lists back to babel-french under its own rules: when it is loaded with `StandardItemLabels` off (its default when French is babel's main language), every level is labelled with `\FrenchLabelItem`, globally under `GlobalLayoutFrench` and on each `\selectlanguage` otherwise; a `\frenchsetup{ItemLabels=…}` choice is kept, but babel-french's stock em dash becomes the en dash of French enumerations. The Typst scaffoldings of `article`, `book` and `letter`, which never localised the marker, emit `#set list(marker: [–])` for `fr`, so both outputs print the same list. `examples/book-fr` gains a list and a Typst parity entry (`book-fr@typst`).
+
 ## [0.9.5] - 2026-11-08
 
 ### Fixed

@@ -47,6 +47,19 @@ def test_iter_assets_declares_required_files(book_template: WrappableTemplate) -
     assert assets[1].source.parent.name == "common"
 
 
+def test_the_lists_package_hands_french_lists_to_babel(book_template: WrappableTemplate) -> None:
+    """``texsmith-lists.sty`` restates the itemize labels ``\\renewlist`` drops;
+    the restatement must not bury the label babel-french installs for a French
+    document — 0.8.0 did, and every French list came out with a bullet."""
+    asset = next(
+        a for a in book_template.iter_assets() if a.destination.name == "texsmith-lists.sty"
+    )
+    source = asset.source.read_text(encoding="utf-8")
+    assert "\\ifFBStandardItemLabels" in source
+    assert "label=\\FrenchLabelItem" in source
+    assert "\\addto\\extrasfrench" in source
+
+
 def test_wrap_document_injects_mainmatter(book_template: WrappableTemplate) -> None:
     body = "\\section{Demo}"
     wrapped = book_template.wrap_document(body)

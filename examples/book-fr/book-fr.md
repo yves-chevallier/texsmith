@@ -36,6 +36,15 @@ insécable. Les guillemets français encadrent la citation : « ainsi ».
 Une citation dans une citation se marque avec les guillemets anglais :
 « il a dit “non” puis il est parti ».
 
+## Les énumérations
+
+Une liste se compose avec le tiret demi-cadratin, et non avec la puce :
+
+- chaque élément s'ouvre sur un tiret ;
+- un élément imbriqué garde le même tiret :
+  - à tous les niveaux ;
+- le dernier élément se termine par un point.
+
 # Les mesures
 
 ## Le cicéro

@@ -16,6 +16,11 @@
   numbering: "1",
 )
 #set text(font: "New Computer Modern", size: 10pt, lang: "{{ language | default('en') }}")
+{% if language == "fr" %}
+// French lists set their items off with an en dash, the label babel-french
+// gives the LaTeX output; every other language keeps Typst's bullet.
+#set list(marker: [–])
+{% endif %}
 #set par(justify: true)
 #set heading(numbering: "1.1")
 {# What the document's fragments inject: imports, set and show rules. #}

@@ -18,8 +18,8 @@
           583,
           827
         ],
-        "ink": 0.00639,
-        "text": "Petit trait\u00e9 de typographie Ada Lovelace 16 septembre 2026"
+        "ink": 0.00634,
+        "text": "Petit trait\u00e9 de typographie Ada Lovelace 9 novembre 2026"
       },
       {
         "size": [
@@ -42,8 +42,8 @@
           583,
           827
         ],
-        "ink": 0.01117,
-        "text": "Table des mati\u00e8res Premi\u00e8re partie Les caract\u00e8res 1 1 L\u2019alphabet 3 2 La ponctuation 5 2.1 Les guillemets . . . . . . . . . . . . . . . . . . . . . . . . 5 Deuxi\u00e8me partie Les mesures 7 3 Le cic\u00e9ro 9 4 Le corps 11 iv"
+        "ink": 0.01226,
+        "text": "Table des mati\u00e8res Premi\u00e8re partie Les caract\u00e8res 1 1 L\u2019alphabet 3 2 La ponctuation 5 2.1 Les guillemets . . . . . . . . . . . . . . . . . . . . . . . . 5 3 Les \u00e9num\u00e9rations 7 Deuxi\u00e8me partie Les mesures 9 4 Le cic\u00e9ro 11 5 Le corps 13 iv"
       },
       {
         "size": [
@@ -98,6 +98,22 @@
           583,
           827
         ],
+        "ink": 0.01165,
+        "text": "Chapitre 3 Les \u00e9num\u00e9rations Une liste se compose avec le tiret demi-cadratin, et non avec la puce : \u2013 chaque \u00e9l\u00e9ment s\u2019ouvre sur un tiret ; \u2013 un \u00e9l\u00e9ment imbriqu\u00e9 garde le m\u00eame tiret : \u2013 \u00e0 tous les niveaux ; \u2013 le dernier \u00e9l\u00e9ment se termine par un point. 7"
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
+        "ink": 0.0,
+        "text": ""
+      },
+      {
+        "size": [
+          583,
+          827
+        ],
         "ink": 0.00544,
         "text": "Deuxi\u00e8me partie Les mesures"
       },
@@ -114,8 +130,8 @@
           583,
           827
         ],
-        "ink": 0.0059,
-        "text": "Chapitre 3 Le cic\u00e9ro Le cic\u00e9ro vaut douze points Didot, soit 4,512 mm. Le point pica anglo-saxon, lui, vaut 0,3528 mm. 9"
+        "ink": 0.00592,
+        "text": "Chapitre 4 Le cic\u00e9ro Le cic\u00e9ro vaut douze points Didot, soit 4,512 mm. Le point pica anglo-saxon, lui, vaut 0,3528 mm. 11"
       },
       {
         "size": [
@@ -130,8 +146,8 @@
           583,
           827
         ],
-        "ink": 0.01243,
-        "text": "Chapitre 4 Le corps Usage Corps Interligne Note 8 pt 10 pt Texte 10 pt 12 pt Titre 14 pt 16 pt Une formule pour finir : c = 12 \u00d7 d, o\u00f9 d est le point Didot. 11"
+        "ink": 0.0125,
+        "text": "Chapitre 5 Le corps Usage Corps Interligne Note 8 pt 10 pt Texte 10 pt 12 pt Titre 14 pt 16 pt Une formule pour finir : c = 12 \u00d7 d, o\u00f9 d est le point Didot. 13"
       },
       {
         "size": [
@@ -236,8 +252,8 @@
           827,
           1170
         ],
-        "ink": 0.00182,
-        "text": "Nested Lists TeXSmith September 16, 2026"
+        "ink": 0.00176,
+        "text": "Nested Lists TeXSmith November 9, 2026"
       },
       {
         "size": [

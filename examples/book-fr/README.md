@@ -7,3 +7,7 @@ Babel's French names the parts with an ordinal built from the `part` counter
 (`Première partie`, `Deuxième partie`), which the template's `fixtoc` package
 has to measure when it sizes the table-of-contents number columns. This example
 is the regression guard for that path: it is the corpus entry `book-fr`.
+
+Its list is the guard for the French list label: an en dash in front of every
+item, from babel-french in the LaTeX output and from `#set list(marker: [–])`
+in the Typst one (the corpus entry `book-fr@typst`).

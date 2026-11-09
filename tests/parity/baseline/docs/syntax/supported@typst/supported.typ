@@ -64,6 +64,10 @@ a `:::` div, a list item — the same `—` emits `\tsrule` instead (`<hr
 class="rule">` on the web): a separator, never a page break, because a page
 break there would tear the container in two.
 
+A French document (`language: french`) sets the items of a bullet list off
+with an en dash rather than a bullet, in both outputs: babel-french's label in
+#ts-logo("LaTeX"), `#set list(marker: [–])` in Typst.
+
 = Cheat sheet
 
 #table(

@@ -79,6 +79,10 @@ redefines it at will. Inside a container --- a block quote, a callout, a figure,
 a \tscodeinline{:::} div, a list item --- the same \tscodeinline{-\allowbreak{}-\allowbreak{}-\allowbreak{}} emits \tscodeinline{\textbackslash{}tsrule} instead (\tscodeinline{<hr
 class="rule">} on the web): a separator, never a page break, because a page
 break there would tear the container in two.
+
+A French document (\tscodeinline{language: french}) sets the items of a bullet list off
+with an en dash rather than a bullet, in both outputs: babel-french's label in
+\LaTeX{}, \tscodeinline{\#set list(marker: [–])} in Typst.
 \section{Cheat sheet}
 \begin{center}
 \begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}

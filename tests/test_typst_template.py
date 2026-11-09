@@ -57,6 +57,38 @@ def test_article_scaffolding_renders_title_and_body() -> None:
     assert "#bibliography(" not in out
 
 
+def _scaffold_context(template: TypstTemplate, **overrides: object) -> dict[str, object]:
+    context = template.resolve_attributes({"title": "T", **overrides})
+    context.update(
+        {
+            "title": "T",
+            "author_names": [],
+            "author_blocks": [],
+            "mainmatter": "= Section\n\n- un\n- deux",
+            "abstract": "",
+            "has_bibliography": False,
+            "bibliography_sources": '""',
+            "uses_mitex": False,
+            "asset": lambda value: value,
+        }
+    )
+    return context
+
+
+@pytest.mark.parametrize("template", ["article", "book", "letter"])
+def test_a_french_document_marks_its_list_items_with_an_en_dash(template: str) -> None:
+    """``language: french`` (the babel name the LaTeX path shares) sets the list
+    marker to the en dash babel-french prints; other languages keep the bullet."""
+    scaffold = load_typst_template(template)
+    french = scaffold.render(_scaffold_context(scaffold, language="french"))
+    english = scaffold.render(_scaffold_context(scaffold, language="english"))
+    marker = "#set list(marker: [\u2013])"  # the en dash
+    assert 'lang: "fr"' in french
+    assert marker in french
+    assert french.index('lang: "fr"') < french.index(marker) < french.index("= Section")
+    assert "#set list(marker:" not in english
+
+
 def test_article_scaffolding_emits_bibliography_when_present() -> None:
     template = load_typst_template("article")
     context = template.resolve_attributes({})

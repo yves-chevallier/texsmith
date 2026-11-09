@@ -25,6 +25,11 @@
 {% endif %}
 )
 #set text(font: "New Computer Modern", size: 11pt, lang: "{{ language | default('en') }}")
+{% if language == "fr" %}
+// French lists set their items off with an en dash, the label babel-french
+// gives the LaTeX output; every other language keeps Typst's bullet.
+#set list(marker: [–])
+{% endif %}
 #set par(justify: true)
 // Section headings get a little more breathing room (closer to LaTeX article).
 #show heading: set block(above: 1.8em, below: 1.0em)

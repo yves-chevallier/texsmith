@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{texsmith-lists}[2026/09/16 TeXSmith list nesting depth]
+\ProvidesPackage{texsmith-lists}[2026/11/09 TeXSmith list nesting depth]
 
 % Markdown nests a list as deeply as its author indents it; LaTeX stops
 % earlier and says ``Too deeply nested'': four levels of itemize, four of
@@ -20,15 +20,18 @@
 \setlistdepth{9}
 
 \renewlist{itemize}{itemize}{9}
-\setlist[itemize,1]{label=\textbullet}
-\setlist[itemize,2]{label=\normalfont\bfseries\textendash}
-\setlist[itemize,3]{label=\textasteriskcentered}
-\setlist[itemize,4]{label=\textperiodcentered}
-\setlist[itemize,5]{label=\textbullet}
-\setlist[itemize,6]{label=\normalfont\bfseries\textendash}
-\setlist[itemize,7]{label=\textasteriskcentered}
-\setlist[itemize,8]{label=\textperiodcentered}
-\setlist[itemize,9]{label=\textbullet}
+\newcommand*{\ts@lists@standardlabels}{%
+  \setlist[itemize,1]{label=\textbullet}%
+  \setlist[itemize,2]{label=\normalfont\bfseries\textendash}%
+  \setlist[itemize,3]{label=\textasteriskcentered}%
+  \setlist[itemize,4]{label=\textperiodcentered}%
+  \setlist[itemize,5]{label=\textbullet}%
+  \setlist[itemize,6]{label=\normalfont\bfseries\textendash}%
+  \setlist[itemize,7]{label=\textasteriskcentered}%
+  \setlist[itemize,8]{label=\textperiodcentered}%
+  \setlist[itemize,9]{label=\textbullet}%
+}
+\ts@lists@standardlabels
 
 \renewlist{enumerate}{enumerate}{9}
 \setlist[enumerate,1]{label=\arabic*., ref=\arabic*}
@@ -40,5 +43,46 @@
 \setlist[enumerate,7]{label=\roman*., ref=\roman*}
 \setlist[enumerate,8]{label=\Alph*., ref=\Alph*}
 \setlist[enumerate,9]{label=\arabic*., ref=\arabic*}
+
+% French lists. babel-french labels every itemize level with \FrenchLabelItem
+% by rebinding \labelitemi.. at \begin{document}; a list \renewlist declared
+% reads enumitem's own label store instead, so the restatement above buried
+% that label and a French document got bullets (0.8.0 to 0.9.5). The hook
+% below gives babel-french its lists back, under its own rules: nothing
+% happens unless it is loaded with StandardItemLabels off (its default when
+% French is babel's main language, an opt-in otherwise); the label is
+% \FrenchLabelItem, so a \frenchsetup{ItemLabels=...} choice is kept, but
+% babel-french's stock em dash is replaced by the en dash — French typography's
+% tiret for enumerations, and what the Typst scaffoldings print, so the two
+% outputs agree. With GlobalLayoutFrench the labels apply to the whole
+% document, as babel-french applies its own; otherwise they follow
+% \selectlanguage, French labels in, standard labels out.
+\newcommand*{\ts@lists@frenchlabels}{%
+  \setlist[itemize,1]{label=\FrenchLabelItem}%
+  \setlist[itemize,2]{label=\FrenchLabelItem}%
+  \setlist[itemize,3]{label=\FrenchLabelItem}%
+  \setlist[itemize,4]{label=\FrenchLabelItem}%
+  \setlist[itemize,5]{label=\FrenchLabelItem}%
+  \setlist[itemize,6]{label=\FrenchLabelItem}%
+  \setlist[itemize,7]{label=\FrenchLabelItem}%
+  \setlist[itemize,8]{label=\FrenchLabelItem}%
+  \setlist[itemize,9]{label=\FrenchLabelItem}%
+}
+\newcommand*{\ts@lists@babeldefaultlabel}{\textemdash}
+\AtBeginDocument{%
+  \@ifundefined{FrenchLabelItem}{}{%
+    \ifFBStandardItemLabels\else
+      \ifx\FrenchLabelItem\ts@lists@babeldefaultlabel
+        \renewcommand*{\FrenchLabelItem}{\textendash}%
+      \fi
+      \ifFBGlobalLayoutFrench
+        \ts@lists@frenchlabels
+      \else
+        \addto\extrasfrench{\ts@lists@frenchlabels}%
+        \addto\noextrasfrench{\ts@lists@standardlabels}%
+      \fi
+    \fi
+  }%
+}
 
 \endinput

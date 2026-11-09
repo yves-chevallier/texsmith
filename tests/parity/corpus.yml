@@ -142,6 +142,11 @@ examples:
     cwd: examples/book-fr
     args: [book-fr.md, -tbook]
     backend: latex
+  - id: book-fr@typst
+    cwd: examples/book-fr
+    args: [book-fr.md, -tbook, --format, typst]
+    backend: typst
+    requires: [typst]
 
   # ---- examples/code (no template: bare fragments) ------------------------
   - id: code-block
