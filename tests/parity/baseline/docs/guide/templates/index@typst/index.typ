@@ -251,7 +251,7 @@ Attributes are resolved before `WrappableTemplate.prepare_context` runs, meaning
 == Template slots and built-ins
 
 - Templates must declare at least one slot; `mainmatter` is the default when absent. Slots surface `depth`, `offset`, `strip_heading`, and optional `base_level`.
-- Built-in `article` exposes `mainmatter`, `abstract`, `appendix`, and `backmatter`. `book` inserts `appendix` before `backmatter` and supports `part` toggling. `letter` uses `mainmatter` only.
+- Built-in `article` exposes `mainmatter`, `abstract`, `appendix`, and `backmatter`. `book` inserts `appendix` before `backmatter` and supports `part` toggling. `letter` uses `mainmatter` only. The Typst halves of `article` and `book` declare `appendix` as well: the body lands after the main matter, the heading counter restarts and counts in letters, as `\appendix` does.
 - Deprecated attributes removed from built-ins: `article`\/`book` no longer accept `cover`, `covercolor`, `twocolumn`, or template-owned `emoji`. Backmatter/preamble overrides moved into fragments where applicable.
 
 === Built-in normalisers

@@ -240,3 +240,7 @@ depth = "section"
 [typst.template.slots.abstract]
 depth = "section"
 strip_heading = true
+
+[typst.template.slots.appendix]
+depth = "section"
+description = "Appendix content inserted after the main matter; its sections are lettered, as \\appendix does."

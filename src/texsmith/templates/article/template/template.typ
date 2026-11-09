@@ -81,6 +81,17 @@
 
 {{ mainmatter }}
 
+{% if appendix %}
+// Appendices: the section counter restarts and counts in letters, as
+// LaTeX's \appendix does. The headings keep the document's numbering choice.
+#counter(heading).update(0)
+{% if numbering | default(true) %}
+#set heading(numbering: "A.1")
+{% endif %}
+
+{{ appendix }}
+{% endif %}
+
 {% if acronyms %}
 #v(1em)
 {{ acronyms }}

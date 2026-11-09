@@ -64,6 +64,15 @@
 
 {{ mainmatter }}
 
+{% if appendix %}
+// Appendices: the chapter counter restarts and counts in letters, as
+// LaTeX's \appendix does; each one still opens on a fresh page.
+#counter(heading).update(0)
+#set heading(numbering: "A.1")
+
+{{ appendix }}
+{% endif %}
+
 {% if acronyms %}
 #pagebreak()
 {{ acronyms }}

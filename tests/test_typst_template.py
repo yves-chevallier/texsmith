@@ -172,3 +172,90 @@ def test_the_declared_typst_assets_are_copied_next_to_the_source(tmp_path) -> No
     )
 
     assert (tmp_path / "out" / "logo.svg").read_text(encoding="utf-8") == "<svg/>"
+
+
+@pytest.mark.parametrize(
+    ("template", "slot_depth"),
+    [("article", "section"), ("book", "chapter")],
+)
+def test_the_built_in_templates_declare_an_appendix_slot_for_typst(template, slot_depth) -> None:
+    """The Typst half declares ``appendix`` as the LaTeX half does."""
+    slots, default = load_typst_template(template).info.resolve_slots()
+    assert default == "mainmatter"
+    assert "appendix" in slots
+    assert slots["appendix"].depth == slot_depth
+
+
+def test_an_appendix_section_is_lettered_after_the_main_matter(tmp_path) -> None:
+    """``press.slots.appendix`` moves the section after the body and restarts the
+    heading counter in letters — what ``\\appendix`` does on the LaTeX path."""
+    from pathlib import Path
+
+    from texsmith.core.conversion import ConversionRequest
+    from texsmith.core.conversion.typst import render_typst_document
+    from texsmith.core.documents import Document
+
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "\n".join(
+            [
+                "---",
+                "title: Report",
+                "press:",
+                "  template: article",
+                "  slots:",
+                "    appendix: Measurements",
+                "---",
+                "",
+                "# Measurements",
+                "",
+                "Raw data.",
+                "",
+                "## Setup",
+                "",
+                "# Findings",
+                "",
+                "Body.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    document = Document.from_markdown(source).prepare_for_conversion()
+    out = render_typst_document(
+        document,
+        ConversionRequest(documents=[Path(source)], template="article"),
+        output_dir=tmp_path / "out",
+    )
+
+    findings = out.index("= Findings")
+    reset = out.index("#counter(heading).update(0)")
+    lettered = out.index('#set heading(numbering: "A.1")')
+    appendix = out.index("= Measurements")
+    assert findings < reset < lettered < appendix
+    assert "== Setup" in out
+
+
+def test_an_unnumbered_article_keeps_its_appendix_unnumbered(tmp_path) -> None:
+    from pathlib import Path
+
+    from texsmith.core.conversion import ConversionRequest
+    from texsmith.core.conversion.typst import render_typst_document
+    from texsmith.core.documents import Document
+
+    source = tmp_path / "doc.md"
+    source.write_text(
+        "---\ntitle: T\npress:\n  template: article\n  numbering: false\n"
+        "  slots:\n    appendix: Data\n---\n\n# Data\n\nRaw.\n\n# Body\n\nText.\n",
+        encoding="utf-8",
+    )
+    document = Document.from_markdown(source).prepare_for_conversion()
+    out = render_typst_document(
+        document,
+        ConversionRequest(documents=[Path(source)], template="article"),
+        output_dir=tmp_path / "out",
+    )
+    assert "#counter(heading).update(0)" in out
+    assert '#set heading(numbering: "A.1")' not in out
+    assert out.index("= Body") < out.index("= Data")

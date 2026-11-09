@@ -299,3 +299,7 @@ sources = ["bibliography_style"]
 [typst.template.slots.mainmatter]
 default = true
 depth = "chapter"
+
+[typst.template.slots.appendix]
+depth = "chapter"
+description = "Appendix content inserted after the main matter; its chapters are lettered, as \\appendix does."

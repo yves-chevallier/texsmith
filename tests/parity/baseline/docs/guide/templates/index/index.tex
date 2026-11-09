@@ -260,7 +260,7 @@ Attributes are resolved before \tscodeinline{WrappableTemplate.prepare\_context}
 \subsection{Template slots and built-ins}
 \begin{itemize}
 \item Templates must declare at least one slot; \tscodeinline{mainmatter} is the default when absent. Slots surface \tscodeinline{depth}, \tscodeinline{offset}, \tscodeinline{strip\_heading}, and optional \tscodeinline{base\_level}.
-\item Built-in \tscodeinline{article} exposes \tscodeinline{mainmatter}, \tscodeinline{abstract}, \tscodeinline{appendix}, and \tscodeinline{backmatter}. \tscodeinline{book} inserts \tscodeinline{appendix} before \tscodeinline{backmatter} and supports \tscodeinline{part} toggling. \tscodeinline{letter} uses \tscodeinline{mainmatter} only.
+\item Built-in \tscodeinline{article} exposes \tscodeinline{mainmatter}, \tscodeinline{abstract}, \tscodeinline{appendix}, and \tscodeinline{backmatter}. \tscodeinline{book} inserts \tscodeinline{appendix} before \tscodeinline{backmatter} and supports \tscodeinline{part} toggling. \tscodeinline{letter} uses \tscodeinline{mainmatter} only. The Typst halves of \tscodeinline{article} and \tscodeinline{book} declare \tscodeinline{appendix} as well: the body lands after the main matter, the heading counter restarts and counts in letters, as \tscodeinline{\textbackslash{}appendix} does.
 \item Deprecated attributes removed from built-ins: \tscodeinline{article}/\tscodeinline{book} no longer accept \tscodeinline{cover}, \tscodeinline{covercolor}, \tscodeinline{twocolumn}, or template-owned \tscodeinline{emoji}. Backmatter/preamble overrides moved into fragments where applicable.
 \end{itemize}
 \subsubsection{Built-in normalisers}
